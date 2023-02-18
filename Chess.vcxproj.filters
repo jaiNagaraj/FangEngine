@@ -46,7 +46,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\..\..\Downloads\tree_sunset.bmp">
+    <Image Include="board.bmp">
       <Filter>Source Files</Filter>
     </Image>
   </ItemGroup>
