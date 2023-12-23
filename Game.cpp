@@ -3,7 +3,7 @@
 #include <bitset>
 #include <string>
 
-bool isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY)
+bool Game::isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY)
 {
 	// White's turn, check white king
 	if (turn == 0)
@@ -38,6 +38,12 @@ bool isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY)
 		while (posX >= 0 && posY >= 0)
 		{
 			if ((gameBoard[posY][posX] & BLACK_BISHOP) == BLACK_BISHOP || (gameBoard[posY][posX] & BLACK_QUEEN) == BLACK_QUEEN) return true;
+			// if another piece blocks a check
+			if ((gameBoard[posY][posX] & WHITE) == WHITE ||
+				(gameBoard[posY][posX] & BLACK_PAWN) == BLACK_PAWN ||
+				(gameBoard[posY][posX] & BLACK_KNIGHT) == BLACK_KNIGHT ||
+				(gameBoard[posY][posX] & BLACK_ROOK) == BLACK_ROOK ||
+				(gameBoard[posY][posX] & BLACK_KING) == BLACK_KING) break;
 			posX--; posY--;
 		}
 		// check up-right:
@@ -45,6 +51,12 @@ bool isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY)
 		while (posX < 8 && posY >= 0)
 		{
 			if ((gameBoard[posY][posX] & BLACK_BISHOP) == BLACK_BISHOP || (gameBoard[posY][posX] & BLACK_QUEEN) == BLACK_QUEEN) return true;
+			// if another piece blocks a check
+			if ((gameBoard[posY][posX] & WHITE) == WHITE ||
+				(gameBoard[posY][posX] & BLACK_PAWN) == BLACK_PAWN ||
+				(gameBoard[posY][posX] & BLACK_KNIGHT) == BLACK_KNIGHT ||
+				(gameBoard[posY][posX] & BLACK_ROOK) == BLACK_ROOK ||
+				(gameBoard[posY][posX] & BLACK_KING) == BLACK_KING) break;
 			posX++; posY--;
 		}
 		// check down-right:
@@ -52,6 +64,12 @@ bool isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY)
 		while (posX < 8 && posY < 8)
 		{
 			if ((gameBoard[posY][posX] & BLACK_BISHOP) == BLACK_BISHOP || (gameBoard[posY][posX] & BLACK_QUEEN) == BLACK_QUEEN) return true;
+			// if another piece blocks a check
+			if ((gameBoard[posY][posX] & WHITE) == WHITE ||
+				(gameBoard[posY][posX] & BLACK_PAWN) == BLACK_PAWN ||
+				(gameBoard[posY][posX] & BLACK_KNIGHT) == BLACK_KNIGHT ||
+				(gameBoard[posY][posX] & BLACK_ROOK) == BLACK_ROOK ||
+				(gameBoard[posY][posX] & BLACK_KING) == BLACK_KING) break;
 			posX++; posY++;
 		}
 		// check down-left:
@@ -59,6 +77,12 @@ bool isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY)
 		while (posX < 8 && posY < 8)
 		{
 			if ((gameBoard[posY][posX] & BLACK_BISHOP) == BLACK_BISHOP || (gameBoard[posY][posX] & BLACK_QUEEN) == BLACK_QUEEN) return true;
+			// if another piece blocks a check
+			if ((gameBoard[posY][posX] & WHITE) == WHITE ||
+				(gameBoard[posY][posX] & BLACK_PAWN) == BLACK_PAWN ||
+				(gameBoard[posY][posX] & BLACK_KNIGHT) == BLACK_KNIGHT ||
+				(gameBoard[posY][posX] & BLACK_ROOK) == BLACK_ROOK ||
+				(gameBoard[posY][posX] & BLACK_KING) == BLACK_KING) break;
 			posX--; posY++;
 		}
 
@@ -68,6 +92,12 @@ bool isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY)
 		while (posY >= 0)
 		{
 			if ((gameBoard[posY][posX] & BLACK_BISHOP) == BLACK_BISHOP || (gameBoard[posY][posX] & BLACK_QUEEN) == BLACK_QUEEN) return true;
+			// if another piece blocks a check
+			if ((gameBoard[posY][posX] & WHITE) == WHITE ||
+				(gameBoard[posY][posX] & BLACK_PAWN) == BLACK_PAWN ||
+				(gameBoard[posY][posX] & BLACK_KNIGHT) == BLACK_KNIGHT ||
+				(gameBoard[posY][posX] & BLACK_BISHOP) == BLACK_ROOK ||
+				(gameBoard[posY][posX] & BLACK_KING) == BLACK_KING) break;
 			posY--;
 		}
 		// check right:
@@ -75,6 +105,12 @@ bool isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY)
 		while (posX < 8)
 		{
 			if ((gameBoard[posY][posX] & BLACK_BISHOP) == BLACK_BISHOP || (gameBoard[posY][posX] & BLACK_QUEEN) == BLACK_QUEEN) return true;
+			// if another piece blocks a check
+			if ((gameBoard[posY][posX] & WHITE) == WHITE ||
+				(gameBoard[posY][posX] & BLACK_PAWN) == BLACK_PAWN ||
+				(gameBoard[posY][posX] & BLACK_KNIGHT) == BLACK_KNIGHT ||
+				(gameBoard[posY][posX] & BLACK_BISHOP) == BLACK_ROOK ||
+				(gameBoard[posY][posX] & BLACK_KING) == BLACK_KING) break;
 			posX++;
 		}
 		// check down:
@@ -82,6 +118,12 @@ bool isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY)
 		while (posY < 8)
 		{
 			if ((gameBoard[posY][posX] & BLACK_BISHOP) == BLACK_BISHOP || (gameBoard[posY][posX] & BLACK_QUEEN) == BLACK_QUEEN) return true;
+			// if another piece blocks a check
+			if ((gameBoard[posY][posX] & WHITE) == WHITE ||
+				(gameBoard[posY][posX] & BLACK_PAWN) == BLACK_PAWN ||
+				(gameBoard[posY][posX] & BLACK_KNIGHT) == BLACK_KNIGHT ||
+				(gameBoard[posY][posX] & BLACK_BISHOP) == BLACK_ROOK ||
+				(gameBoard[posY][posX] & BLACK_KING) == BLACK_KING) break;
 			posY++;
 		}
 		// check left:
@@ -89,6 +131,12 @@ bool isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY)
 		while (posX < 8)
 		{
 			if ((gameBoard[posY][posX] & BLACK_BISHOP) == BLACK_BISHOP || (gameBoard[posY][posX] & BLACK_QUEEN) == BLACK_QUEEN) return true;
+			// if another piece blocks a check
+			if ((gameBoard[posY][posX] & WHITE) == WHITE ||
+				(gameBoard[posY][posX] & BLACK_PAWN) == BLACK_PAWN ||
+				(gameBoard[posY][posX] & BLACK_KNIGHT) == BLACK_KNIGHT ||
+				(gameBoard[posY][posX] & BLACK_BISHOP) == BLACK_ROOK ||
+				(gameBoard[posY][posX] & BLACK_KING) == BLACK_KING) break;
 			posX--;
 		}
 
@@ -102,6 +150,155 @@ bool isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY)
 			(kingY < 7 && kingX > 0 && (gameBoard[kingY + 1][kingX - 1] & BLACK_KING) == BLACK_KING) ||
 			(kingX > 0 && (gameBoard[kingY][kingX - 1] & BLACK_KING) == BLACK_KING) ||
 			(kingY > 0 && kingX > 0 && (gameBoard[kingY - 1][kingX - 1] & BLACK_KING) == BLACK_KING)) return true;
+
+		// passed the gauntlet
+		return false;
+	}
+	// black's turn, check black king
+	else
+	{
+		// check for pawn checks!
+		if (kingY < 7 && ((kingX > 0 && (gameBoard[kingY + 1][kingX - 1] & WHITE_PAWN) == WHITE_PAWN)
+			|| (kingX < 7 && (gameBoard[kingY + 1][kingX + 1] & WHITE_PAWN) == WHITE_PAWN))) return true;
+
+		// check for knight checks!
+		// check up2left1
+		if (kingY > 1 && kingX > 0 && (gameBoard[kingY - 2][kingX - 1] & WHITE_KNIGHT) == WHITE_KNIGHT) return true;
+		// check up2right1
+		if (kingY > 1 && kingX < 7 && (gameBoard[kingY - 2][kingX + 1] & WHITE_KNIGHT) == WHITE_KNIGHT) return true;
+		// check right2up1
+		if (kingY > 0 && kingX < 6 && (gameBoard[kingY - 1][kingX + 2] & WHITE_KNIGHT) == WHITE_KNIGHT) return true;
+		// check right2down1
+		if (kingY < 7 && kingX < 6 && (gameBoard[kingY + 1][kingX + 2] & WHITE_KNIGHT) == WHITE_KNIGHT) return true;
+		// check down2left1
+		if (kingY < 6 && kingX > 0 && (gameBoard[kingY + 2][kingX - 1] & WHITE_KNIGHT) == WHITE_KNIGHT) return true;
+		// check down2right1
+		if (kingY < 6 && kingX < 7 && (gameBoard[kingY + 2][kingX + 1] & WHITE_KNIGHT) == WHITE_KNIGHT) return true;
+		// check left2up1
+		if (kingY > 0 && kingX > 1 && (gameBoard[kingY - 1][kingX - 2] & WHITE_KNIGHT) == WHITE_KNIGHT) return true;
+		// check left2down1
+		if (kingY < 7 && kingX > 1 && (gameBoard[kingY + 1][kingX - 2] & WHITE_KNIGHT) == WHITE_KNIGHT) return true;
+
+		int posX, posY; // declare temp position vars
+
+		// check for diagonal checks!
+		// check up-left:
+		posX = kingX - 1; posY = kingY - 1;
+		while (posX >= 0 && posY >= 0)
+		{
+			if ((gameBoard[posY][posX] & WHITE_BISHOP) == WHITE_BISHOP || (gameBoard[posY][posX] & WHITE_QUEEN) == WHITE_QUEEN) return true;
+			// if another piece blocks a check
+			if ((gameBoard[posY][posX] & BLACK) == BLACK ||
+				(gameBoard[posY][posX] & WHITE_PAWN) == WHITE_PAWN ||
+				(gameBoard[posY][posX] & WHITE_KNIGHT) == WHITE_KNIGHT ||
+				(gameBoard[posY][posX] & WHITE_ROOK) == WHITE_ROOK ||
+				(gameBoard[posY][posX] & WHITE_KING) == WHITE_KING) break;
+			posX--; posY--;
+		}
+		// check up-right:
+		posX = kingX + 1; posY = kingY - 1;
+		while (posX < 8 && posY >= 0)
+		{
+			if ((gameBoard[posY][posX] & WHITE_BISHOP) == WHITE_BISHOP || (gameBoard[posY][posX] & WHITE_QUEEN) == WHITE_QUEEN) return true;
+			// if another piece blocks a check
+			if ((gameBoard[posY][posX] & BLACK) == BLACK ||
+				(gameBoard[posY][posX] & WHITE_PAWN) == WHITE_PAWN ||
+				(gameBoard[posY][posX] & WHITE_KNIGHT) == WHITE_KNIGHT ||
+				(gameBoard[posY][posX] & WHITE_ROOK) == WHITE_ROOK ||
+				(gameBoard[posY][posX] & WHITE_KING) == WHITE_KING) break;
+			posX++; posY--;
+		}
+		// check down-right:
+		posX = kingX + 1; posY = kingY + 1;
+		while (posX < 8 && posY < 8)
+		{
+			if ((gameBoard[posY][posX] & WHITE_BISHOP) == WHITE_BISHOP || (gameBoard[posY][posX] & WHITE_QUEEN) == WHITE_QUEEN) return true;
+			// if another piece blocks a check
+			if ((gameBoard[posY][posX] & BLACK) == BLACK ||
+				(gameBoard[posY][posX] & WHITE_PAWN) == WHITE_PAWN ||
+				(gameBoard[posY][posX] & WHITE_KNIGHT) == WHITE_KNIGHT ||
+				(gameBoard[posY][posX] & WHITE_ROOK) == WHITE_ROOK ||
+				(gameBoard[posY][posX] & WHITE_KING) == WHITE_KING) break;
+			posX++; posY++;
+		}
+		// check down-left:
+		posX = kingX - 1; posY = kingY + 1;
+		while (posX < 8 && posY < 8)
+		{
+			if ((gameBoard[posY][posX] & WHITE_BISHOP) == WHITE_BISHOP || (gameBoard[posY][posX] & WHITE_QUEEN) == WHITE_QUEEN) return true;
+			// if another piece blocks a check
+			if ((gameBoard[posY][posX] & BLACK) == BLACK ||
+				(gameBoard[posY][posX] & WHITE_PAWN) == WHITE_PAWN ||
+				(gameBoard[posY][posX] & WHITE_KNIGHT) == WHITE_KNIGHT ||
+				(gameBoard[posY][posX] & WHITE_ROOK) == WHITE_ROOK ||
+				(gameBoard[posY][posX] & WHITE_KING) == WHITE_KING) break;
+			posX--; posY++;
+		}
+
+		// check for rank/file checks!
+		// check up:
+		posX = kingX; posY = kingY - 1;
+		while (posY >= 0)
+		{
+			if ((gameBoard[posY][posX] & WHITE_ROOK) == WHITE_ROOK || (gameBoard[posY][posX] & WHITE_QUEEN) == WHITE_QUEEN) return true;
+			// if another piece blocks a check
+			if ((gameBoard[posY][posX] & BLACK) == BLACK ||
+				(gameBoard[posY][posX] & WHITE_PAWN) == WHITE_PAWN ||
+				(gameBoard[posY][posX] & WHITE_KNIGHT) == WHITE_KNIGHT ||
+				(gameBoard[posY][posX] & WHITE_BISHOP) == WHITE_ROOK ||
+				(gameBoard[posY][posX] & WHITE_KING) == WHITE_KING) break;
+			posY--;
+		}
+		// check right:
+		posX = kingX + 1; posY = kingY;
+		while (posX < 8)
+		{
+			if ((gameBoard[posY][posX] & WHITE_ROOK) == WHITE_ROOK || (gameBoard[posY][posX] & WHITE_QUEEN) == WHITE_QUEEN) return true;
+			// if another piece blocks a check
+			if ((gameBoard[posY][posX] & BLACK) == BLACK ||
+				(gameBoard[posY][posX] & WHITE_PAWN) == WHITE_PAWN ||
+				(gameBoard[posY][posX] & WHITE_KNIGHT) == WHITE_KNIGHT ||
+				(gameBoard[posY][posX] & WHITE_BISHOP) == WHITE_ROOK ||
+				(gameBoard[posY][posX] & WHITE_KING) == WHITE_KING) break;
+			posX++;
+		}
+		// check down:
+		posX = kingX; posY = kingY + 1;
+		while (posY < 8)
+		{
+			if ((gameBoard[posY][posX] & WHITE_ROOK) == WHITE_ROOK || (gameBoard[posY][posX] & WHITE_QUEEN) == WHITE_QUEEN) return true;
+			// if another piece blocks a check
+			if ((gameBoard[posY][posX] & BLACK) == BLACK ||
+				(gameBoard[posY][posX] & WHITE_PAWN) == WHITE_PAWN ||
+				(gameBoard[posY][posX] & WHITE_KNIGHT) == WHITE_KNIGHT ||
+				(gameBoard[posY][posX] & WHITE_BISHOP) == WHITE_ROOK ||
+				(gameBoard[posY][posX] & WHITE_KING) == WHITE_KING) break;
+			posY++;
+		}
+		// check left:
+		posX = kingX - 1; posY = kingY;
+		while (posX < 8)
+		{
+			if ((gameBoard[posY][posX] & WHITE_ROOK) == WHITE_ROOK || (gameBoard[posY][posX] & WHITE_QUEEN) == WHITE_QUEEN) return true;
+			// if another piece blocks a check
+			if ((gameBoard[posY][posX] & BLACK) == BLACK ||
+				(gameBoard[posY][posX] & WHITE_PAWN) == WHITE_PAWN ||
+				(gameBoard[posY][posX] & WHITE_KNIGHT) == WHITE_KNIGHT ||
+				(gameBoard[posY][posX] & WHITE_BISHOP) == WHITE_ROOK ||
+				(gameBoard[posY][posX] & WHITE_KING) == WHITE_KING) break;
+			posX--;
+		}
+
+		// check for king checks!
+		// start at the top and cycle clockwise
+		if ((kingY > 0 && (gameBoard[kingY - 1][kingX] & WHITE_KING) == WHITE_KING) ||
+			(kingY > 0 && kingX < 7 && (gameBoard[kingY - 1][kingX + 1] & WHITE_KING) == WHITE_KING) ||
+			(kingX < 7 && (gameBoard[kingY][kingX + 1] & WHITE_KING) == WHITE_KING) ||
+			(kingY < 7 && kingX < 7 && (gameBoard[kingY + 1][kingX + 1] & WHITE_KING) == WHITE_KING) ||
+			(kingY < 7 && (gameBoard[kingY + 1][kingX] & WHITE_KING) == WHITE_KING) ||
+			(kingY < 7 && kingX > 0 && (gameBoard[kingY + 1][kingX - 1] & WHITE_KING) == WHITE_KING) ||
+			(kingX > 0 && (gameBoard[kingY][kingX - 1] & WHITE_KING) == WHITE_KING) ||
+			(kingY > 0 && kingX > 0 && (gameBoard[kingY - 1][kingX - 1] & WHITE_KING) == WHITE_KING)) return true;
 
 		// passed the gauntlet
 		return false;
@@ -356,7 +553,56 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY)
 	}
 	
 
+	/*
+		******MAKE SURE THE KING WON'T BE IN CHECK AFTER THE MOVE******
+	*/
+	// open up parallel universe where move has been made
+	uint8_t altBoard[8][8];
+	std::copy(&board[0][0], &board[0][0] + 8 * 8, &altBoard[0][0]);
+	altBoard[newYCoord][newXCoord] = altBoard[oldYCoord][oldXCoord];
+	altBoard[oldYCoord][oldXCoord] = 0;
 
+	int kingX, kingY;
+	// for white
+	if (turn % 2 == 0)
+	{
+		for (int i = 0; i < 8; i++)
+		{
+			bool breakout = false;
+			for (int j = 0; j < 8; j++)
+			{
+				if ((altBoard[i][j] & WHITE_KING) == WHITE_KING)
+				{
+					kingX = j;
+					kingY = i;
+					breakout = true;
+					break;
+				}
+			}
+			if (breakout) break;
+		}
+		if (isInCheck(altBoard, 0, kingX, kingY)) return false;
+	}
+	// for black
+	else
+	{
+		for (int i = 0; i < 8; i++)
+		{
+			bool breakout = false;
+			for (int j = 0; j < 8; j++)
+			{
+				if ((altBoard[i][j] & BLACK_KING) == BLACK_KING)
+				{
+					kingX = j;
+					kingY = i;
+					breakout = true;
+					break;
+				}
+			}
+			if (breakout) break;
+		}
+		if (isInCheck(altBoard, 1, kingX, kingY)) return false;
+	}
 
 
 	if (isCapturing)
