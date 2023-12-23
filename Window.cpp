@@ -97,11 +97,11 @@ void Window::init()
                     }
                     break;
                 case SDL_MOUSEBUTTONDOWN:
-                    std::cout << "da mouse is downnnnn\n";
+                    //std::cout << "da mouse is downnnnn\n";
                     dragPiece();
                     break;
                 case SDL_MOUSEBUTTONUP:
-                    std::cout << "da mouse is back up fool\n";
+                    //std::cout << "da mouse is back up fool\n";
                     if (draggedPiece) dropPiece();
                     break;
             }
@@ -128,6 +128,7 @@ void Window::refresh()
     SDL_BlitSurface(boardImage, NULL, window_surface, NULL);
     for (Piece* piece : game.piecesOnBoard)
     {
+        if (piece == draggedPiece) continue;
         switch (piece->info)
         {
             case WHITE_PAWN:
@@ -167,6 +168,49 @@ void Window::refresh()
                 SDL_BlitSurface(blackKing, NULL, window_surface, piece->rect);
                 break;
 
+        }
+    }
+    // blit the dragged piece last so it won't go under anything
+    if (draggedPiece)
+    {
+        switch (draggedPiece->info)
+        {
+            case WHITE_PAWN:
+                SDL_BlitSurface(whitePawn, NULL, window_surface, draggedPiece->rect);
+                break;
+            case WHITE_KNIGHT:
+                SDL_BlitSurface(whiteKnight, NULL, window_surface, draggedPiece->rect);
+                break;
+            case WHITE_BISHOP:
+                SDL_BlitSurface(whiteBishop, NULL, window_surface, draggedPiece->rect);
+                break;
+            case WHITE_ROOK:
+                SDL_BlitSurface(whiteRook, NULL, window_surface, draggedPiece->rect);
+                break;
+            case WHITE_QUEEN:
+                SDL_BlitSurface(whiteQueen, NULL, window_surface, draggedPiece->rect);
+                break;
+            case WHITE_KING:
+                SDL_BlitSurface(whiteKing, NULL, window_surface, draggedPiece->rect);
+                break;
+            case BLACK_PAWN:
+                SDL_BlitSurface(blackPawn, NULL, window_surface, draggedPiece->rect);
+                break;
+            case BLACK_KNIGHT:
+                SDL_BlitSurface(blackKnight, NULL, window_surface, draggedPiece->rect);
+                break;
+            case BLACK_BISHOP:
+                SDL_BlitSurface(blackBishop, NULL, window_surface, draggedPiece->rect);
+                break;
+            case BLACK_ROOK:
+                SDL_BlitSurface(blackRook, NULL, window_surface, draggedPiece->rect);
+                break;
+            case BLACK_QUEEN:
+                SDL_BlitSurface(blackQueen, NULL, window_surface, draggedPiece->rect);
+                break;
+            case BLACK_KING:
+                SDL_BlitSurface(blackKing, NULL, window_surface, draggedPiece->rect);
+                break;
         }
     }
 }
@@ -214,17 +258,18 @@ void Window::dropPiece()
     if (x < 0) x = 0;
     if (y >= 480) y = 479;
     if (y < 0) y = 0;
-
+    
     int newX = x / 60 * 60, newY = y / 60 * 60;
 
     if (game.validMove(draggedPiece, initX, initY, newX, newY))
     {
         // set the x and y coordinates to be multiples of 60 (this makes the piece snap to the grid)
-        draggedPiece->rect->x = x / 60 * 60;
-        draggedPiece->rect->y = y / 60 * 60;
+        draggedPiece->rect->x = newX;
+        draggedPiece->rect->y = newY;
         game.board[newY / 60][newX / 60] = game.board[initY / 60][initX / 60];
         game.board[initY / 60][initX / 60] = 0;
         game.turn++;
+        game.printBoard();
     }
     else
     {

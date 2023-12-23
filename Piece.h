@@ -27,6 +27,7 @@ class Piece
 	private:
 		;
 	public:
+		// gives position/area of piece
 		SDL_Rect* rect;	
 
 		/*

@@ -12,6 +12,7 @@ class Game
 		uint8_t board[8][8] = {0};
 		int turn = 0;
 
+		bool isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY);
 		bool validMove(Piece* piece, int oldX, int oldY, int newX, int newY);
 		void printBoard();
 };
