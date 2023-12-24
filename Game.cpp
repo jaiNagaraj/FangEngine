@@ -96,7 +96,7 @@ bool Game::isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY)
 			if ((gameBoard[posY][posX] & WHITE) == WHITE ||
 				(gameBoard[posY][posX] & BLACK_PAWN) == BLACK_PAWN ||
 				(gameBoard[posY][posX] & BLACK_KNIGHT) == BLACK_KNIGHT ||
-				(gameBoard[posY][posX] & BLACK_BISHOP) == BLACK_ROOK ||
+				(gameBoard[posY][posX] & BLACK_BISHOP) == BLACK_BISHOP ||
 				(gameBoard[posY][posX] & BLACK_KING) == BLACK_KING) break;
 			posY--;
 		}
@@ -109,7 +109,7 @@ bool Game::isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY)
 			if ((gameBoard[posY][posX] & WHITE) == WHITE ||
 				(gameBoard[posY][posX] & BLACK_PAWN) == BLACK_PAWN ||
 				(gameBoard[posY][posX] & BLACK_KNIGHT) == BLACK_KNIGHT ||
-				(gameBoard[posY][posX] & BLACK_BISHOP) == BLACK_ROOK ||
+				(gameBoard[posY][posX] & BLACK_BISHOP) == BLACK_BISHOP ||
 				(gameBoard[posY][posX] & BLACK_KING) == BLACK_KING) break;
 			posX++;
 		}
@@ -122,7 +122,7 @@ bool Game::isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY)
 			if ((gameBoard[posY][posX] & WHITE) == WHITE ||
 				(gameBoard[posY][posX] & BLACK_PAWN) == BLACK_PAWN ||
 				(gameBoard[posY][posX] & BLACK_KNIGHT) == BLACK_KNIGHT ||
-				(gameBoard[posY][posX] & BLACK_BISHOP) == BLACK_ROOK ||
+				(gameBoard[posY][posX] & BLACK_BISHOP) == BLACK_BISHOP ||
 				(gameBoard[posY][posX] & BLACK_KING) == BLACK_KING) break;
 			posY++;
 		}
@@ -130,12 +130,12 @@ bool Game::isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY)
 		posX = kingX - 1; posY = kingY;
 		while (posX < 8)
 		{
-			if ((gameBoard[posY][posX] & BLACK_BISHOP) == BLACK_BISHOP || (gameBoard[posY][posX] & BLACK_QUEEN) == BLACK_QUEEN) return true;
+			if ((gameBoard[posY][posX] & BLACK_ROOK) == BLACK_ROOK || (gameBoard[posY][posX] & BLACK_QUEEN) == BLACK_QUEEN) return true;
 			// if another piece blocks a check
 			if ((gameBoard[posY][posX] & WHITE) == WHITE ||
 				(gameBoard[posY][posX] & BLACK_PAWN) == BLACK_PAWN ||
 				(gameBoard[posY][posX] & BLACK_KNIGHT) == BLACK_KNIGHT ||
-				(gameBoard[posY][posX] & BLACK_BISHOP) == BLACK_ROOK ||
+				(gameBoard[posY][posX] & BLACK_BISHOP) == BLACK_BISHOP ||
 				(gameBoard[posY][posX] & BLACK_KING) == BLACK_KING) break;
 			posX--;
 		}
@@ -245,7 +245,7 @@ bool Game::isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY)
 			if ((gameBoard[posY][posX] & BLACK) == BLACK ||
 				(gameBoard[posY][posX] & WHITE_PAWN) == WHITE_PAWN ||
 				(gameBoard[posY][posX] & WHITE_KNIGHT) == WHITE_KNIGHT ||
-				(gameBoard[posY][posX] & WHITE_BISHOP) == WHITE_ROOK ||
+				(gameBoard[posY][posX] & WHITE_BISHOP) == WHITE_BISHOP ||
 				(gameBoard[posY][posX] & WHITE_KING) == WHITE_KING) break;
 			posY--;
 		}
@@ -258,7 +258,7 @@ bool Game::isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY)
 			if ((gameBoard[posY][posX] & BLACK) == BLACK ||
 				(gameBoard[posY][posX] & WHITE_PAWN) == WHITE_PAWN ||
 				(gameBoard[posY][posX] & WHITE_KNIGHT) == WHITE_KNIGHT ||
-				(gameBoard[posY][posX] & WHITE_BISHOP) == WHITE_ROOK ||
+				(gameBoard[posY][posX] & WHITE_BISHOP) == WHITE_BISHOP ||
 				(gameBoard[posY][posX] & WHITE_KING) == WHITE_KING) break;
 			posX++;
 		}
@@ -271,20 +271,20 @@ bool Game::isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY)
 			if ((gameBoard[posY][posX] & BLACK) == BLACK ||
 				(gameBoard[posY][posX] & WHITE_PAWN) == WHITE_PAWN ||
 				(gameBoard[posY][posX] & WHITE_KNIGHT) == WHITE_KNIGHT ||
-				(gameBoard[posY][posX] & WHITE_BISHOP) == WHITE_ROOK ||
+				(gameBoard[posY][posX] & WHITE_BISHOP) == WHITE_BISHOP ||
 				(gameBoard[posY][posX] & WHITE_KING) == WHITE_KING) break;
 			posY++;
 		}
 		// check left:
 		posX = kingX - 1; posY = kingY;
-		while (posX < 8)
+		while (posX >= 0)
 		{
 			if ((gameBoard[posY][posX] & WHITE_ROOK) == WHITE_ROOK || (gameBoard[posY][posX] & WHITE_QUEEN) == WHITE_QUEEN) return true;
 			// if another piece blocks a check
 			if ((gameBoard[posY][posX] & BLACK) == BLACK ||
 				(gameBoard[posY][posX] & WHITE_PAWN) == WHITE_PAWN ||
 				(gameBoard[posY][posX] & WHITE_KNIGHT) == WHITE_KNIGHT ||
-				(gameBoard[posY][posX] & WHITE_BISHOP) == WHITE_ROOK ||
+				(gameBoard[posY][posX] & WHITE_BISHOP) == WHITE_BISHOP ||
 				(gameBoard[posY][posX] & WHITE_KING) == WHITE_KING) break;
 			posX--;
 		}
@@ -313,6 +313,8 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY)
 	std::cout << "TURN: " << (turn % 2 == 0 ? "White" : "Black") << '\n';
 
 	bool isCapturing = false;
+	bool isEP = false;
+	Piece* passantPiece = nullptr;
 
 	// if it's white's turn but black played
 	if (turn % 2 == 0 && !(piece->info & WHITE)) return false;
@@ -338,24 +340,63 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY)
 			// if it didn't move diagonally by one
 			if (!(distMovedY == -1)) return false;
 			// if the capturing square does not hold a black piece
-			if ((board[newYCoord][newXCoord] & BLACK) != BLACK) return false;
+			if ((board[newYCoord][newXCoord] & BLACK) != BLACK)
+			{
+				// if there's a black pawn beside it, check for en passant
+				if ((board[oldYCoord][newXCoord] & BLACK_PAWN) == BLACK_PAWN)
+				{
+					// iterate thru pieces to get piece on that square
+					for (Piece* p : piecesOnBoard)
+					{
+						if (p->rect->x == newX && p->rect->y == oldYCoord * 60)
+						{
+							// if that piece was enPassantable
+							if (p->enPassantable)
+							{
+								isEP = true;
+								passantPiece = p;
+								board[oldYCoord][newXCoord] = 0; // gotta update bitboard too!
+								break;
+							}
+							else return false;
+						}
+					}
+				}
+				else return false;
+			}
 			isCapturing = true;
 		}
 
-		// if the pawn was on the starting row
-		else if (oldYCoord == 6)
+		//// if the pawn was on the starting row
+		//else if (oldYCoord == 6)
+		//{
+		//	// if it didn't move 1 or 2 spaces forwards
+		//	if (!((distMovedY == -1) || (distMovedY == -2))) return false;
+		//	// if something is blocking the pawn
+		//	if (!(board[newYCoord][newXCoord] == 0b00000000) || (distMovedY == -2 && !(board[newYCoord + 1][newXCoord] == 0b00000000))) return false;
+		//}
+		//// if something is blocking the pawn
+		//else if (!(distMovedY == -1) || !(board[newYCoord][newXCoord] == 0b00000000)) return false;
+
+		// if the pawn moved one space
+		else if (distMovedY == -1)
 		{
-			// if it didn't move 1 or 2 spaces forwards
-			if (!((distMovedY == -1) || (distMovedY == -2))) return false;
 			// if something is blocking the pawn
-			if (!(board[newYCoord][newXCoord] == 0b00000000) || (distMovedY == -2 && !(board[newYCoord + 1][newXCoord] == 0b00000000))) return false;
+			if (!(board[newYCoord][newXCoord] == 0b00000000)) return false;
 		}
-		// if something is blocking the pawn
-		else if (!(distMovedY == -1) || !(board[newYCoord][newXCoord] == 0b00000000)) return false;
+		// if the pawn moved two spaces
+		else if (distMovedY == -2)
+		{
+			// if the pawn isn't on the starting rank
+			if (oldYCoord != 6) return false;
+			// if something is blocking the pawn
+			else if (!(board[newYCoord][newXCoord] == 0b00000000) || !(board[newYCoord + 1][newXCoord] == 0b00000000)) return false;
+			// passes checks; make it vulnerable to en passant
+			else piece->enPassantable = true;
+		}
 	}
 	else if ((piece->info & BLACK_PAWN) == BLACK_PAWN)
 	{
-
 		// if the pawn moved impossibly
 		if ((abs(distMovedX) > 1) || (distMovedY < 1) || (distMovedY > 2)) return false;
 
@@ -363,22 +404,61 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY)
 		if (abs(distMovedX) == 1)
 		{
 			// if it didn't move diagonally by one
-			if (!(distMovedY == 1)) return false;
+			if (distMovedY != 1) return false;
 			// if the capturing square does not hold a white piece
-			if ((board[newYCoord][newXCoord] & WHITE) != WHITE) return false;
+			if ((board[newYCoord][newXCoord] & WHITE) != WHITE)
+			{
+				// if there's a white pawn beside it, check for en passant
+				if ((board[oldYCoord][newXCoord] & WHITE_PAWN) == WHITE_PAWN)
+				{
+					// iterate thru pieces to get piece on that square
+					for (Piece* p : piecesOnBoard)
+					{
+						if (p->rect->x == newX && p->rect->y == oldYCoord * 60)
+						{
+							// if that piece was enPassantable
+							if (p->enPassantable)
+							{
+								isEP = true;
+								passantPiece = p;
+								break;
+							}
+							else return false;
+						}
+					}
+				}
+				else return false;
+			}
 			isCapturing = true;
 		}
 
-		// if the pawn was on the starting row
-		else if (oldYCoord == 1)
+		//// if the pawn was on the starting row
+		//else if (oldYCoord == 6)
+		//{
+		//	// if it didn't move 1 or 2 spaces forwards
+		//	if (!((distMovedY == -1) || (distMovedY == -2))) return false;
+		//	// if something is blocking the pawn
+		//	if (!(board[newYCoord][newXCoord] == 0b00000000) || (distMovedY == -2 && !(board[newYCoord + 1][newXCoord] == 0b00000000))) return false;
+		//}
+		//// if something is blocking the pawn
+		//else if (!(distMovedY == -1) || !(board[newYCoord][newXCoord] == 0b00000000)) return false;
+
+		// if the pawn moved one space
+		else if (distMovedY == 1)
 		{
-			// if it didn't move 1 or 2 spaces forwards
-			if (!((distMovedY == 1) || (distMovedY == 2))) return false;
 			// if something is blocking the pawn
-			if (!(board[newYCoord][newXCoord] == 0b00000000) || (distMovedY == 2 && !(board[newYCoord - 1][newXCoord] == 0b00000000))) return false;
+			if (!(board[newYCoord][newXCoord] == 0b00000000)) return false;
 		}
-		// if something is blocking the pawn
-		else if (!(distMovedY == 1) || !(board[newYCoord][newXCoord] == 0b00000000)) return false;
+		// if the pawn moved two spaces
+		else if (distMovedY == 2)
+		{
+			// if the pawn isn't on the starting rank
+			if (oldYCoord != 1) return false;
+			// if something is blocking the pawn
+			else if (board[newYCoord][newXCoord] != 0b00000000 || board[newYCoord - 1][newXCoord] != 0b00000000) return false;
+			// passes checks; make it vulnerable to en passant
+			else piece->enPassantable = true;
+		}
 	}
 
 	/*
@@ -607,18 +687,38 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY)
 
 	if (isCapturing)
 	{
-		// remove piece from board vector
-		uint8_t capturedPiece = board[newYCoord][newXCoord];
-		//std::cout << std::bitset< 8 >(capturedPiece).to_string() << '\n';
-		for (Piece* piece : piecesOnBoard)
+		// check if it's an en passant capture
+		if (isEP)
 		{
-			if (piece->rect->x == newX && piece->rect->y == newY)
+			piecesOnBoard.erase(std::remove(piecesOnBoard.begin(), piecesOnBoard.end(), passantPiece), piecesOnBoard.end());
+		}
+		// remove piece from board vector normally
+		else
+		{
+			for (Piece* p : piecesOnBoard)
 			{
-				// use the combination of erase and remove to capture piece
-				piecesOnBoard.erase(std::remove(piecesOnBoard.begin(), piecesOnBoard.end(), piece),piecesOnBoard.end());
-				//std::cout << "Piece removed!\n";
-				break;
+				if (p->rect->x == newX && p->rect->y == newY)
+				{
+					// use the combination of erase and remove to capture piece
+					piecesOnBoard.erase(std::remove(piecesOnBoard.begin(), piecesOnBoard.end(), p),piecesOnBoard.end());
+					//std::cout << "Piece removed!\n";
+					break;
+				}
 			}
+		}
+	}
+	// reset all previously enPassantable pieces
+	for (Piece* piece : piecesOnBoard)
+	{
+		// if it is white's turn
+		if (turn % 2 == 0 && (piece->info & BLACK) == BLACK)
+		{
+			piece->enPassantable = false;
+		}
+		// if it is black's turn
+		if (turn % 2 == 1 && (piece->info & WHITE) == WHITE)
+		{
+			piece->enPassantable = false;
 		}
 	}
 	//printBoard();

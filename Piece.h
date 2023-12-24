@@ -35,6 +35,7 @@ class Piece
 			w b k q r b n p
 		*/
 		uint8_t info;
+		bool enPassantable;
 		Piece();
 		Piece(SDL_Rect*, uint8_t);
 		~Piece();
