@@ -14,5 +14,6 @@ class Game
 
 		bool isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY);
 		bool validMove(Piece* piece, int oldX, int oldY, int newX, int newY);
+		bool validCastle(Piece* piece, int initX, int initY, int kingX, int kingY);
 		void printBoard();
 };

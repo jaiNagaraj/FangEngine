@@ -36,6 +36,7 @@ class Piece
 		*/
 		uint8_t info;
 		bool enPassantable;
+		bool canCastle;
 		Piece();
 		Piece(SDL_Rect*, uint8_t);
 		~Piece();
