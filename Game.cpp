@@ -500,7 +500,7 @@ bool Game::validCastle(Piece* piece, int initX, int initY, int kingX, int kingY)
 	}
 }
 
-bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY)
+bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool test)
 {
 	int oldXCoord = oldX / 60, oldYCoord = oldY / 60, newXCoord = newX / 60, newYCoord = newY / 60;
 	std::cout << oldX << " " << oldY << " " << newX << " " << newY << '\n';
@@ -510,6 +510,9 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY)
 	bool isCapturing = false;
 	bool isEP = false;
 	Piece* passantPiece = nullptr;
+
+	// first, is the move on the board?
+	if (newXCoord > 7 || newXCoord < 0 || newYCoord > 7 || newYCoord < 0) return false;
 
 	// if it's white's turn but black played
 	if (turn % 2 == 0 && !(piece->info & WHITE)) return false;
@@ -947,45 +950,921 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY)
 	}
 
 
-	if (isCapturing)
+	// if we actually want to play this move
+	if (!test)
 	{
-		// check if it's an en passant capture
-		if (isEP)
+		if (isCapturing)
 		{
-			piecesOnBoard.erase(std::remove(piecesOnBoard.begin(), piecesOnBoard.end(), passantPiece), piecesOnBoard.end());
-		}
-		// remove piece from board vector normally
-		else
-		{
-			for (Piece* p : piecesOnBoard)
+			// check if it's an en passant capture
+			if (isEP)
 			{
-				if (p->rect->x == newX && p->rect->y == newY)
+				piecesOnBoard.erase(std::remove(piecesOnBoard.begin(), piecesOnBoard.end(), passantPiece), piecesOnBoard.end());
+			}
+			// remove piece from board vector normally
+			else
+			{
+				for (Piece* p : piecesOnBoard)
 				{
-					// use the combination of erase and remove to capture piece
-					piecesOnBoard.erase(std::remove(piecesOnBoard.begin(), piecesOnBoard.end(), p),piecesOnBoard.end());
-					//std::cout << "Piece removed!\n";
-					break;
+					if (p->rect->x == newX && p->rect->y == newY)
+					{
+						// use the combination of erase and remove to capture piece
+						piecesOnBoard.erase(std::remove(piecesOnBoard.begin(), piecesOnBoard.end(), p),piecesOnBoard.end());
+						//std::cout << "Piece removed!\n";
+						break;
+					}
 				}
 			}
 		}
-	}
-	// reset all previously enPassantable pieces
-	for (Piece* piece : piecesOnBoard)
-	{
-		// if it is white's turn
-		if (turn % 2 == 0 && (piece->info & BLACK) == BLACK)
+		// reset all previously enPassantable pieces
+		for (Piece* piece : piecesOnBoard)
 		{
-			piece->enPassantable = false;
+			// if it is white's turn
+			if (turn % 2 == 0 && (piece->info & BLACK) == BLACK)
+			{
+				piece->enPassantable = false;
+			}
+			// if it is black's turn
+			if (turn % 2 == 1 && (piece->info & WHITE) == WHITE)
+			{
+				piece->enPassantable = false;
+			}
 		}
-		// if it is black's turn
-		if (turn % 2 == 1 && (piece->info & WHITE) == WHITE)
-		{
-			piece->enPassantable = false;
-		}
+		// make sure rooks/kings can't castle after movement
+		piece->canCastle = false;
 	}
-	// make sure rooks/kings can't castle after movement
-	piece->canCastle = false;
+
+	// passed the gauntlet!
 	return true;
+}
+
+/*
+	Returns a code representing the end of a game:
+	-1 represents continuation
+	0 represents stalemate
+	1 represents checkmate
+*/
+int Game::isCheckmate(int turn)
+{
+	int kingX, kingY;
+	Piece* king = nullptr;
+	// for white
+	if (turn % 2 == 0)
+	{
+		// get king pointer
+		for (Piece* p : piecesOnBoard)
+		{
+			if ((p->info & WHITE_KING) == WHITE_KING)
+			{
+				king = p;
+				break;
+			}
+		}
+		if (!king)
+		{
+			std::cout << "Couldn't find white king in isCheckmate!! Oh no!!\n";
+			return 0;
+		}
+		// get king coordinates
+		for (int i = 0; i < 8; i++)
+		{
+			bool breakout = false;
+			for (int j = 0; j < 8; j++)
+			{
+				if ((board[i][j] & WHITE_KING) == WHITE_KING)
+				{
+					kingX = j;
+					kingY = i;
+					breakout = true;
+					break;
+				}
+			}
+			if (breakout) break;
+		}
+		// First check if king is trapped; there are no legal moves.
+		bool trapped = true;
+		// KING MOVES
+		if (kingY > 0)
+		{
+			// move up
+			if (validMove(king, kingX * 60, kingY * 60, kingX * 60, (kingY - 1) * 60, true)) trapped = false;
+			if (kingX > 0)
+			{
+				// move up-left
+				if (validMove(king, kingX * 60, kingY * 60, (kingX - 1) * 60, (kingY - 1) * 60, true)) trapped = false;
+			}
+			if (kingX < 7)
+			{
+				// move up-right
+				if (validMove(king, kingX * 60, kingY * 60, (kingX + 1) * 60, (kingY - 1) * 60, true)) trapped = false;
+			}
+		}
+		if (kingY < 7)
+		{
+			// move down
+			if (validMove(king, kingX * 60, kingY * 60, kingX * 60, (kingY + 1) * 60, true)) trapped = false;
+			if (kingX > 0)
+			{
+				// move down-left
+				if (validMove(king, kingX * 60, kingY * 60, (kingX - 1) * 60, (kingY + 1) * 60, true)) trapped = false;
+			}
+			if (kingX < 7)
+			{
+				// move down-right
+				if (validMove(king, kingX * 60, kingY * 60, (kingX + 1) * 60, (kingY + 1) * 60, true)) trapped = false;
+			}
+		}
+		if (kingX > 0)
+		{
+			// move left
+			if (validMove(king, kingX * 60, kingY * 60, (kingX - 1) * 60, kingY * 60, true)) trapped = false;
+		}
+		if (kingX < 7)
+		{
+			// move right
+			if (validMove(king, kingX * 60, kingY * 60, (kingX + 1) * 60, kingY * 60, true)) trapped = false;
+		}
+
+		if (!trapped) return -1;
+
+		// the king can't move; cycle thru possible moves
+		bool reallyTrapped = true;
+		for (Piece* p : piecesOnBoard)
+		{
+			if ((p->info & WHITE) == WHITE)
+			{
+				// go thru all pieces
+				/* PAWN MOVES */
+				if ((p->info & PAWN) == PAWN)
+				{
+					// one space up
+					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60)) * 60, ((p->rect->y / 60) - 1) * 60, true))
+					{
+						reallyTrapped = false;
+						break;
+					}
+					// two spaces up
+					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60)) * 60, ((p->rect->y / 60) - 2) * 60, true))
+					{
+						reallyTrapped = false;
+						break;
+					}
+					// capture left
+					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) - 1) * 60, ((p->rect->y / 60) - 1) * 60, true))
+					{
+						reallyTrapped = false;
+						break;
+					}
+					// capture right
+					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) + 1) * 60, ((p->rect->y / 60) - 1) * 60, true))
+					{
+						reallyTrapped = false;
+						break;
+					}
+
+					if (!reallyTrapped) return -1;
+				}
+
+				/* KNIGHT MOVES */
+				else if ((p->info & KNIGHT))
+				{
+					// up-left
+					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) - 1) * 60, ((p->rect->y / 60) - 2) * 60, true))
+					{
+						reallyTrapped = false;
+						break;
+					}
+					// up-right
+					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) + 1) * 60, ((p->rect->y / 60) - 2) * 60, true))
+					{
+						reallyTrapped = false;
+						break;
+					}
+					// down-left
+					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) - 1) * 60, ((p->rect->y / 60) + 2) * 60, true))
+					{
+						reallyTrapped = false;
+						break;
+					}
+					// down-right
+					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) + 1) * 60, ((p->rect->y / 60) + 2) * 60, true))
+					{
+						reallyTrapped = false;
+						break;
+					}
+					// left-up
+					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) - 2) * 60, ((p->rect->y / 60) - 1) * 60, true))
+					{
+						reallyTrapped = false;
+						break;
+					}
+					// left-down
+					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) - 2) * 60, ((p->rect->y / 60) + 1) * 60, true))
+					{
+						reallyTrapped = false;
+						break;
+					}
+					// right-up
+					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) + 2) * 60, ((p->rect->y / 60) - 1) * 60, true))
+					{
+						reallyTrapped = false;
+						break;
+					}
+					// right-down
+					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) + 2) * 60, ((p->rect->y / 60) + 1) * 60, true))
+					{
+						reallyTrapped = false;
+						break;
+					}
+					if (!reallyTrapped) return -1;
+				}
+
+				/* BISHOP MOVES */
+				else if ((p->info & BISHOP) == BISHOP)
+				{
+					int initX = p->rect->x / 60, initY = p->rect->y / 60;
+					int tmpX = initX, tmpY = initY;
+					// check up-left diagonal
+					while (tmpX >= 0 && tmpY >= 0)
+					{
+						if (validMove(p, initX, initY, tmpX, tmpY, true))
+						{
+							reallyTrapped = false;
+							break;
+						}
+						tmpX--;
+						tmpY--;
+					}
+					if (reallyTrapped) // make sure we don't do unnecessary checks
+					{
+						tmpX = initX, tmpY = initY;
+						// check up-right diagonal
+						while (tmpX <= 7 && tmpY >= 0)
+						{
+							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							{
+								reallyTrapped = false;
+								break;
+							}
+							tmpX++;
+							tmpY--;
+						}
+					}
+					if (reallyTrapped) // make sure we don't do unnecessary checks
+					{
+						tmpX = initX, tmpY = initY;
+						// check down-left diagonal
+						while (tmpX >= 0 && tmpY <= 7)
+						{
+							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							{
+								reallyTrapped = false;
+								break;
+							}
+							tmpX--;
+							tmpY++;
+						}
+					}
+					if (reallyTrapped) // make sure we don't do unnecessary checks
+					{
+						tmpX = initX, tmpY = initY;
+						// check down-right diagonal
+						while (tmpX <= 7 && tmpY <= 7)
+						{
+							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							{
+								reallyTrapped = false;
+								break;
+							}
+							tmpX++;
+							tmpY++;
+						}
+					}
+
+					if (!reallyTrapped) return -1;
+				}
+
+				/* ROOK MOVES */
+				else if ((p->info & ROOK) == ROOK)
+				{
+					int initX = p->rect->x / 60, initY = p->rect->y / 60;
+					int tmpX = initX, tmpY = initY;
+					// check up
+					while (tmpY >= 0)
+					{
+						if (validMove(p, initX, initY, tmpX, tmpY, true))
+						{
+							reallyTrapped = false;
+							break;
+						}
+						tmpY--;
+					}
+					if (reallyTrapped) // make sure we don't do unnecessary checks
+					{
+						tmpX = initX, tmpY = initY;
+						// check right
+						while (tmpX <= 7)
+						{
+							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							{
+								reallyTrapped = false;
+								break;
+							}
+							tmpX++;
+						}
+					}
+					if (reallyTrapped) // make sure we don't do unnecessary checks
+					{
+						tmpX = initX, tmpY = initY;
+						// check down
+						while (tmpY <= 7)
+						{
+							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							{
+								reallyTrapped = false;
+								break;
+							}
+							tmpY++;
+						}
+					}
+					if (reallyTrapped) // make sure we don't do unnecessary checks
+					{
+						tmpX = initX, tmpY = initY;
+						// check left
+						while (tmpX >= 0)
+						{
+							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							{
+								reallyTrapped = false;
+								break;
+							}
+							tmpX--;
+						}
+					}
+
+					if (!reallyTrapped) return -1;
+				}
+
+				/* QUEEN MOVES */
+				else if ((p->info & QUEEN) == QUEEN) // fix
+				{
+					// CHECK DIAGONALS
+
+					int initX = p->rect->x / 60, initY = p->rect->y / 60;
+					int tmpX = initX, tmpY = initY;
+					// check up-left diagonal
+					while (tmpX >= 0 && tmpY >= 0)
+					{
+						if (validMove(p, initX, initY, tmpX, tmpY, true))
+						{
+							reallyTrapped = false;
+							break;
+						}
+						tmpX--;
+						tmpY--;
+					}
+					if (reallyTrapped) // make sure we don't do unnecessary checks
+					{
+						tmpX = initX, tmpY = initY;
+						// check up-right diagonal
+						while (tmpX <= 7 && tmpY >= 0)
+						{
+							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							{
+								reallyTrapped = false;
+								break;
+							}
+							tmpX++;
+							tmpY--;
+						}
+					}
+					if (reallyTrapped) // make sure we don't do unnecessary checks
+					{
+						tmpX = initX, tmpY = initY;
+						// check down-left diagonal
+						while (tmpX >= 0 && tmpY <= 7)
+						{
+							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							{
+								reallyTrapped = false;
+								break;
+							}
+							tmpX--;
+							tmpY++;
+						}
+					}
+					if (reallyTrapped) // make sure we don't do unnecessary checks
+					{
+						tmpX = initX, tmpY = initY;
+						// check down-right diagonal
+						while (tmpX <= 7 && tmpY <= 7)
+						{
+							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							{
+								reallyTrapped = false;
+								break;
+							}
+							tmpX++;
+							tmpY++;
+						}
+					}
+
+					// CHECK ADJACENCIES
+
+					tmpX = initX, tmpY = initY;
+					// check up
+					while (tmpY >= 0)
+					{
+						if (validMove(p, initX, initY, tmpX, tmpY, true))
+						{
+							reallyTrapped = false;
+							break;
+						}
+						tmpY--;
+					}
+					if (reallyTrapped) // make sure we don't do unnecessary checks
+					{
+						tmpX = initX, tmpY = initY;
+						// check right
+						while (tmpX <= 7)
+						{
+							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							{
+								reallyTrapped = false;
+								break;
+							}
+							tmpX++;
+						}
+					}
+					if (reallyTrapped) // make sure we don't do unnecessary checks
+					{
+						tmpX = initX, tmpY = initY;
+						// check down
+						while (tmpY <= 7)
+						{
+							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							{
+								reallyTrapped = false;
+								break;
+							}
+							tmpY++;
+						}
+					}
+					if (reallyTrapped) // make sure we don't do unnecessary checks
+					{
+						tmpX = initX, tmpY = initY;
+						// check left
+						while (tmpX >= 0)
+						{
+							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							{
+								reallyTrapped = false;
+								break;
+							}
+							tmpX--;
+						}
+					}
+
+					if (!reallyTrapped) return -1;
+				}
+
+			}
+		}
+		// ok the king really is trapped, but just check to make sure
+		if (!reallyTrapped) return -1;
+
+		// now the king is trapped. is it stalemate though?
+		if (isInCheck(board, 0, kingX, kingY)) return 1; // checkmate, liberals
+		else { std::cout << "yum\n"; return 0; } // stalemate, liberals
+	}
+	// for black
+	else // fix
+	{
+		// get king pointer
+		for (Piece* p : piecesOnBoard)
+		{
+			if ((p->info & BLACK_KING) == BLACK_KING)
+			{
+				king = p;
+				break;
+			}
+		}
+		if (!king)
+		{
+			std::cout << "Couldn't find black king in isCheckmate!! Oh no!!\n";
+			return 0;
+		}
+		// get king coordinates
+		for (int i = 0; i < 8; i++)
+		{
+			bool breakout = false;
+			for (int j = 0; j < 8; j++)
+			{
+				if ((board[i][j] & BLACK_KING) == BLACK_KING)
+				{
+					kingX = j;
+					kingY = i;
+					breakout = true;
+					break;
+				}
+			}
+			if (breakout) break;
+		}
+		// First check if king is trapped; there are no legal moves.
+		bool trapped = true;
+		// KING MOVES
+		if (kingY > 0)
+		{
+			// move up
+			if (validMove(king, kingX * 60, kingY * 60, kingX * 60, (kingY - 1) * 60, true)) trapped = false;
+			if (kingX > 0)
+			{
+				// move up-left
+				if (validMove(king, kingX * 60, kingY * 60, (kingX - 1) * 60, (kingY - 1) * 60, true)) trapped = false;
+			}
+			if (kingX < 7)
+			{
+				// move up-right
+				if (validMove(king, kingX * 60, kingY * 60, (kingX + 1) * 60, (kingY - 1) * 60, true)) trapped = false;
+			}
+		}
+		if (kingY < 7)
+		{
+			// move down
+			if (validMove(king, kingX * 60, kingY * 60, kingX * 60, (kingY + 1) * 60, true)) trapped = false;
+			if (kingX > 0)
+			{
+				// move down-left
+				if (validMove(king, kingX * 60, kingY * 60, (kingX - 1) * 60, (kingY + 1) * 60, true)) trapped = false;
+			}
+			if (kingX < 7)
+			{
+				// move down-right
+				if (validMove(king, kingX * 60, kingY * 60, (kingX + 1) * 60, (kingY + 1) * 60, true)) trapped = false;
+			}
+		}
+		if (kingX > 0)
+		{
+			// move left
+			if (validMove(king, kingX * 60, kingY * 60, (kingX - 1) * 60, kingY * 60, true)) trapped = false;
+		}
+		if (kingX < 7)
+		{
+			// move right
+			if (validMove(king, kingX * 60, kingY * 60, (kingX + 1) * 60, kingY * 60, true)) trapped = false;
+		}
+
+		if (!trapped) return -1;
+
+		// the king can't move; cycle thru possible moves
+		bool reallyTrapped = true;
+		for (Piece* p : piecesOnBoard)
+		{
+			if ((p->info & BLACK) == BLACK)
+			{
+				// go thru all pieces
+				/* PAWN MOVES */
+				if ((p->info & PAWN) == PAWN)
+				{
+					// one space up
+					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60)) * 60, ((p->rect->y / 60) + 1) * 60, true))
+					{
+						reallyTrapped = false;
+						break;
+					}
+					// two spaces up
+					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60)) * 60, ((p->rect->y / 60) + 2) * 60, true))
+					{
+						reallyTrapped = false;
+						break;
+					}
+					// capture left
+					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) - 1) * 60, ((p->rect->y / 60) + 1) * 60, true))
+					{
+						reallyTrapped = false;
+						break;
+					}
+					// capture right
+					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) + 1) * 60, ((p->rect->y / 60) + 1) * 60, true))
+					{
+						reallyTrapped = false;
+						break;
+					}
+
+					if (!reallyTrapped) return -1;
+				}
+
+				/* KNIGHT MOVES */
+				else if ((p->info & KNIGHT))
+				{
+					// up-left
+					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) - 1) * 60, ((p->rect->y / 60) - 2) * 60, true))
+					{
+						reallyTrapped = false;
+						break;
+					}
+					// up-right
+					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) + 1) * 60, ((p->rect->y / 60) - 2) * 60, true))
+					{
+						reallyTrapped = false;
+						break;
+					}
+					// down-left
+					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) - 1) * 60, ((p->rect->y / 60) + 2) * 60, true))
+					{
+						reallyTrapped = false;
+						break;
+					}
+					// down-right
+					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) + 1) * 60, ((p->rect->y / 60) + 2) * 60, true))
+					{
+						reallyTrapped = false;
+						break;
+					}
+					// left-up
+					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) - 2) * 60, ((p->rect->y / 60) - 1) * 60, true))
+					{
+						reallyTrapped = false;
+						break;
+					}
+					// left-down
+					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) - 2) * 60, ((p->rect->y / 60) + 1) * 60, true))
+					{
+						reallyTrapped = false;
+						break;
+					}
+					// right-up
+					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) + 2) * 60, ((p->rect->y / 60) - 1) * 60, true))
+					{
+						reallyTrapped = false;
+						break;
+					}
+					// right-down
+					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) + 2) * 60, ((p->rect->y / 60) + 1) * 60, true))
+					{
+						reallyTrapped = false;
+						break;
+					}
+					if (!reallyTrapped) return -1;
+				}
+
+				/* BISHOP MOVES */
+				else if ((p->info & BISHOP) == BISHOP)
+				{
+					int initX = p->rect->x / 60, initY = p->rect->y / 60;
+					int tmpX = initX, tmpY = initY;
+					// check up-left diagonal
+					while (tmpX >= 0 && tmpY >= 0)
+					{
+						if (validMove(p, initX, initY, tmpX, tmpY, true))
+						{
+							reallyTrapped = false;
+							break;
+						}
+						tmpX--;
+						tmpY--;
+					}
+					if (reallyTrapped) // make sure we don't do unnecessary checks
+					{
+						tmpX = initX, tmpY = initY;
+						// check up-right diagonal
+						while (tmpX <= 7 && tmpY >= 0)
+						{
+							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							{
+								reallyTrapped = false;
+								break;
+							}
+							tmpX++;
+							tmpY--;
+						}
+					}
+					if (reallyTrapped) // make sure we don't do unnecessary checks
+					{
+						tmpX = initX, tmpY = initY;
+						// check down-left diagonal
+						while (tmpX >= 0 && tmpY <= 7)
+						{
+							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							{
+								reallyTrapped = false;
+								break;
+							}
+							tmpX--;
+							tmpY++;
+						}
+					}
+					if (reallyTrapped) // make sure we don't do unnecessary checks
+					{
+						tmpX = initX, tmpY = initY;
+						// check down-right diagonal
+						while (tmpX <= 7 && tmpY <= 7)
+						{
+							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							{
+								reallyTrapped = false;
+								break;
+							}
+							tmpX++;
+							tmpY++;
+						}
+					}
+
+					if (!reallyTrapped) return -1;
+				}
+
+				/* ROOK MOVES */
+				else if ((p->info & ROOK) == ROOK)
+				{
+					int initX = p->rect->x / 60, initY = p->rect->y / 60;
+					int tmpX = initX, tmpY = initY;
+					// check up
+					while (tmpY >= 0)
+					{
+						if (validMove(p, initX, initY, tmpX, tmpY, true))
+						{
+							reallyTrapped = false;
+							break;
+						}
+						tmpY--;
+					}
+					if (reallyTrapped) // make sure we don't do unnecessary checks
+					{
+						tmpX = initX, tmpY = initY;
+						// check right
+						while (tmpX <= 7)
+						{
+							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							{
+								reallyTrapped = false;
+								break;
+							}
+							tmpX++;
+						}
+					}
+					if (reallyTrapped) // make sure we don't do unnecessary checks
+					{
+						tmpX = initX, tmpY = initY;
+						// check down
+						while (tmpY <= 7)
+						{
+							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							{
+								reallyTrapped = false;
+								break;
+							}
+							tmpY++;
+						}
+					}
+					if (reallyTrapped) // make sure we don't do unnecessary checks
+					{
+						tmpX = initX, tmpY = initY;
+						// check left
+						while (tmpX >= 0)
+						{
+							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							{
+								reallyTrapped = false;
+								break;
+							}
+							tmpX--;
+						}
+					}
+
+					if (!reallyTrapped) return -1;
+				}
+
+				/* QUEEN MOVES */
+				else if ((p->info & QUEEN) == QUEEN) // fix
+				{
+					// CHECK DIAGONALS
+
+					int initX = p->rect->x / 60, initY = p->rect->y / 60;
+					int tmpX = initX, tmpY = initY;
+					// check up-left diagonal
+					while (tmpX >= 0 && tmpY >= 0)
+					{
+						if (validMove(p, initX, initY, tmpX, tmpY, true))
+						{
+							reallyTrapped = false;
+							break;
+						}
+						tmpX--;
+						tmpY--;
+					}
+					if (reallyTrapped) // make sure we don't do unnecessary checks
+					{
+						tmpX = initX, tmpY = initY;
+						// check up-right diagonal
+						while (tmpX <= 7 && tmpY >= 0)
+						{
+							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							{
+								reallyTrapped = false;
+								break;
+							}
+							tmpX++;
+							tmpY--;
+						}
+					}
+					if (reallyTrapped) // make sure we don't do unnecessary checks
+					{
+						tmpX = initX, tmpY = initY;
+						// check down-left diagonal
+						while (tmpX >= 0 && tmpY <= 7)
+						{
+							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							{
+								reallyTrapped = false;
+								break;
+							}
+							tmpX--;
+							tmpY++;
+						}
+					}
+					if (reallyTrapped) // make sure we don't do unnecessary checks
+					{
+						tmpX = initX, tmpY = initY;
+						// check down-right diagonal
+						while (tmpX <= 7 && tmpY <= 7)
+						{
+							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							{
+								reallyTrapped = false;
+								break;
+							}
+							tmpX++;
+							tmpY++;
+						}
+					}
+
+					// CHECK ADJACENCIES
+
+					tmpX = initX, tmpY = initY;
+					// check up
+					while (tmpY >= 0)
+					{
+						if (validMove(p, initX, initY, tmpX, tmpY, true))
+						{
+							reallyTrapped = false;
+							break;
+						}
+						tmpY--;
+					}
+					if (reallyTrapped) // make sure we don't do unnecessary checks
+					{
+						tmpX = initX, tmpY = initY;
+						// check right
+						while (tmpX <= 7)
+						{
+							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							{
+								reallyTrapped = false;
+								break;
+							}
+							tmpX++;
+						}
+					}
+					if (reallyTrapped) // make sure we don't do unnecessary checks
+					{
+						tmpX = initX, tmpY = initY;
+						// check down
+						while (tmpY <= 7)
+						{
+							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							{
+								reallyTrapped = false;
+								break;
+							}
+							tmpY++;
+						}
+					}
+					if (reallyTrapped) // make sure we don't do unnecessary checks
+					{
+						tmpX = initX, tmpY = initY;
+						// check left
+						while (tmpX >= 0)
+						{
+							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							{
+								reallyTrapped = false;
+								break;
+							}
+							tmpX--;
+						}
+					}
+
+					if (!reallyTrapped) return -1;
+				}
+
+			}
+		}
+		// ok the king really is trapped, but just check to make sure
+		if (!reallyTrapped) return -1;
+
+		// now the king is trapped. is it stalemate though?
+		if (isInCheck(board, 1, kingX, kingY)) return 1; // checkmate, liberals
+		else { std::cout << "yum\n"; return 0; }// stalemate, liberals 
+	}
 }
 
 void Game::printBoard()

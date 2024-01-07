@@ -8,7 +8,7 @@ class Window
 		void refresh();
 		Piece* makePiece(int x, int y, uint8_t info);
 		void dragPiece();
-		void dropPiece();
+		int dropPiece();
 	private:
 		SDL_Window* window;
 		Game game;

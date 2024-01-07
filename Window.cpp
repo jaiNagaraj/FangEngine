@@ -4,6 +4,7 @@
 #include <string>
 #include <fstream>
 #include <SDL.h>
+#include <SDL_ttf.h>
 #include <Windows.h>
 #define PIECE_WIDTH 60
 #define PIECE_HEIGHT 60
@@ -70,21 +71,30 @@ void Window::init()
 
     SDL_UpdateWindowSurface(window);
 
-    //draggedPiece = new Piece();
-
     bool keep_window_open = true;
+    bool endLock = false;
+    int endCode = -1; // Used to make sure we don't use isCheckmate over and over
+    // Initialize SDL_ttf
+    if (TTF_Init() == -1)
+    {
+        printf("SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError());
+        // return -1;
+    }
+    TTF_Font* font = TTF_OpenFont("Fonts/chess_font.ttf",30);
     while (keep_window_open)
     {
         int xMouse, yMouse;
         SDL_Event e;
         while (SDL_PollEvent(&e) > 0)
         {
+            ;
             switch (e.type)
             {
                 case SDL_QUIT:
                     keep_window_open = false;
                     break;
                 case SDL_MOUSEMOTION:
+                    if (endLock) continue;
                     if (draggedPiece)
                     {
                         int x, y;
@@ -97,15 +107,48 @@ void Window::init()
                     }
                     break;
                 case SDL_MOUSEBUTTONDOWN:
-                    //std::cout << "da mouse is downnnnn\n";
-                    dragPiece();
+                    if (endLock) break;
+                    if (e.button.button == SDL_BUTTON_LEFT) dragPiece();
                     break;
                 case SDL_MOUSEBUTTONUP:
-                    //std::cout << "da mouse is back up fool\n";
-                    if (draggedPiece) dropPiece();
+                    if (endLock) break;
+                    if (draggedPiece && e.button.button == SDL_BUTTON_LEFT) endCode = dropPiece();
                     break;
             }
-            refresh();
+            // check for checkmate!
+            if (endCode == 1)
+            {
+                endLock = true;
+                std::string text;
+                SDL_Color color = { 255, 255, 255, 255 };
+
+                if (game.turn % 2 == 0) text = "Black wins!";
+                else text = "White wins!";
+                SDL_Surface* textSurface = TTF_RenderText_Solid(font, text.c_str(), color);
+                SDL_Rect* textRect = new SDL_Rect;
+                textRect->x = 60;
+                textRect->y = 60;
+                textRect->w = 60;
+                textRect->h = 60;
+                refresh();
+                SDL_BlitSurface(textSurface, NULL, window_surface, textRect);
+
+            }
+            else if (endCode == 0)
+            {
+                endLock = true;
+                std::string text = "Stalemate!";
+                SDL_Color color = { 255, 255, 255, 255 };
+                SDL_Surface* textSurface = TTF_RenderText_Solid(font, text.c_str(), color);
+                SDL_Rect* textRect = new SDL_Rect;
+                textRect->x = 60;
+                textRect->y = 60;
+                textRect->w = 60;
+                textRect->h = 60;
+                refresh();
+                SDL_BlitSurface(textSurface, NULL, window_surface, textRect);
+            }
+            else refresh();
             SDL_UpdateWindowSurface(window);
 
             //debugging
@@ -250,7 +293,7 @@ void Window::dragPiece()
     }
 }
 
-void Window::dropPiece()
+int Window::dropPiece()
 {
     int x, y;
     SDL_GetMouseState(&x, &y);
@@ -270,12 +313,14 @@ void Window::dropPiece()
         game.board[initY / 60][initX / 60] = 0;
         game.turn++;
         game.printBoard();
+        draggedPiece = nullptr; // drop the bass- i mean piece
+        return game.isCheckmate(game.turn); // check for checkmate!
     }
     else
     {
         draggedPiece->rect->x = initX;
         draggedPiece->rect->y = initY;
+        draggedPiece = nullptr; // drop the bass- i mean piece
+        return -1;
     }
-    // drop the bass- i mean piece
-    draggedPiece = nullptr;
 }

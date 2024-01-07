@@ -13,7 +13,8 @@ class Game
 		int turn = 0;
 
 		bool isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY);
-		bool validMove(Piece* piece, int oldX, int oldY, int newX, int newY);
+		bool validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool test = false);
 		bool validCastle(Piece* piece, int initX, int initY, int kingX, int kingY);
+		int isCheckmate(int turn);
 		void printBoard();
 };
