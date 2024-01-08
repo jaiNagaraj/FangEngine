@@ -51,23 +51,29 @@ void Window::init()
     for (int i = 0; i < 8; i++) makePiece(i, 1, WHITE_PAWN);
     for (int i = 0; i < 8; i++) makePiece(i, 6, BLACK_PAWN);
     // Make rest of white
-    makePiece(0, 0, WHITE_ROOK);
+    makePiece(0, 0, WHITE_ROOK, 0);
     makePiece(1, 0, WHITE_KNIGHT);
     makePiece(2, 0, WHITE_BISHOP);
     makePiece(3, 0, WHITE_QUEEN);
     makePiece(4, 0, WHITE_KING);
     makePiece(5, 0, WHITE_BISHOP);
     makePiece(6, 0, WHITE_KNIGHT);
-    makePiece(7, 0, WHITE_ROOK);
+    makePiece(7, 0, WHITE_ROOK, 1);
     // Make rest of black
-    makePiece(0, 7, BLACK_ROOK);
+    makePiece(0, 7, BLACK_ROOK, 0);
     makePiece(1, 7, BLACK_KNIGHT);
     makePiece(2, 7, BLACK_BISHOP);
     makePiece(3, 7, BLACK_QUEEN);
     makePiece(4, 7, BLACK_KING);
     makePiece(5, 7, BLACK_BISHOP);
     makePiece(6, 7, BLACK_KNIGHT);
-    makePiece(7, 7, BLACK_ROOK);
+    makePiece(7, 7, BLACK_ROOK, 1);
+    std::string fen = game.getFEN();
+    game.fens.push_back(fen);
+    std::string pos = fen.substr(0, fen.find(" "));
+    if (game.positions.find(pos) == game.positions.end()) game.positions[pos] = 1;
+    else game.positions[pos]++;
+    std::cout << "FEN: " << fen << "\n";
 
     SDL_UpdateWindowSurface(window);
 
@@ -120,7 +126,7 @@ void Window::init()
             {
                 endLock = true;
                 std::string text;
-                SDL_Color color = { 255, 255, 255, 255 };
+                SDL_Color color = { 0, 255, 0, 255 };
 
                 if (game.turn % 2 == 0) text = "Black wins!";
                 else text = "White wins!";
@@ -138,7 +144,7 @@ void Window::init()
             {
                 endLock = true;
                 std::string text = "Stalemate!";
-                SDL_Color color = { 255, 255, 255, 255 };
+                SDL_Color color = { 255, 0, 0, 255 };
                 SDL_Surface* textSurface = TTF_RenderText_Solid(font, text.c_str(), color);
                 SDL_Rect* textRect = new SDL_Rect;
                 textRect->x = 60;
@@ -148,7 +154,49 @@ void Window::init()
                 refresh();
                 SDL_BlitSurface(textSurface, NULL, window_surface, textRect);
             }
-            else refresh();
+            else // check for other types for draws
+            {
+                // check repetition
+                bool rep = false;
+                for (auto str : game.positions)
+                {
+                    if (str.second == 3)
+                    {
+                        rep = true;
+                        endLock = true;
+                        std::string text = "Draw by repetition!";
+                        SDL_Color color = { 255, 0, 0, 255 };
+                        SDL_Surface* textSurface = TTF_RenderText_Solid(font, text.c_str(), color);
+                        SDL_Rect* textRect = new SDL_Rect;
+                        textRect->x = 60;
+                        textRect->y = 60;
+                        textRect->w = 60;
+                        textRect->h = 60;
+                        refresh();
+                        SDL_BlitSurface(textSurface, NULL, window_surface, textRect);
+                        break;
+                    }
+                }
+                if (!rep)
+                {
+                    // check for 50 move rule
+                    if (game.halfmoves == 100)
+                    {
+                        endLock = true;
+                        std::string text = "Draw by 50 move rule!";
+                        SDL_Color color = { 255, 0, 0, 255 };
+                        SDL_Surface* textSurface = TTF_RenderText_Solid(font, text.c_str(), color);
+                        SDL_Rect* textRect = new SDL_Rect;
+                        textRect->x = 60;
+                        textRect->y = 60;
+                        textRect->w = 60;
+                        textRect->h = 60;
+                        refresh();
+                        SDL_BlitSurface(textSurface, NULL, window_surface, textRect);
+                    }
+                    else refresh(); // nothing found
+                }
+            }
             SDL_UpdateWindowSurface(window);
 
             //debugging
@@ -258,17 +306,19 @@ void Window::refresh()
     }
 }
 
-Piece* Window::makePiece(int x, int y, uint8_t info)
+Piece* Window::makePiece(int x, int y, uint8_t info, int side)
 {
+    // ad to game board
     game.board[7-y][x] = info;
+    // set up graphic rect
     SDL_Rect* dstRect = new SDL_Rect;
     dstRect->x = x*60;
     dstRect->y = (7-y)*60;
     dstRect->w = PIECE_WIDTH;
     dstRect->h = PIECE_HEIGHT;
     std::cout << "Piece stats: " << dstRect->x << " " << dstRect->y << " " << dstRect->w << " " << dstRect->h << '\n';
-    //SDL_BlitSurface(*piece, NULL, *source, dstRect);
-    Piece* tmp = new Piece(dstRect, info);
+    // make piece, add it to board!
+    Piece* tmp = new Piece(dstRect, info, side);
     game.piecesOnBoard.push_back(tmp);
     return tmp;
 }
@@ -314,6 +364,13 @@ int Window::dropPiece()
         game.turn++;
         game.printBoard();
         draggedPiece = nullptr; // drop the bass- i mean piece
+        // update fen
+        std::string fen = game.getFEN();
+        game.fens.push_back(fen);
+        std::string pos = fen.substr(0, fen.find(" "));
+        if (game.positions.find(pos) == game.positions.end()) game.positions[pos] = 1;
+        else game.positions[pos]++;
+        std::cout << "FEN: " << fen << "\n";
         return game.isCheckmate(game.turn); // check for checkmate!
     }
     else

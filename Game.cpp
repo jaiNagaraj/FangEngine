@@ -950,7 +950,7 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 	}
 
 
-	// if we actually want to play this move
+	// if we actually want to play this move, make changes
 	if (!test)
 	{
 		if (isCapturing)
@@ -991,6 +991,10 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 		}
 		// make sure rooks/kings can't castle after movement
 		piece->canCastle = false;
+
+		// if pawn move or capture, reset halfmove counter
+		if (isCapturing || (piece->info & PAWN) == PAWN) halfmoves = 0;
+		else halfmoves++;
 	}
 
 	// passed the gauntlet!
@@ -1865,6 +1869,196 @@ int Game::isCheckmate(int turn)
 		if (isInCheck(board, 1, kingX, kingY)) return 1; // checkmate, liberals
 		else { std::cout << "yum\n"; return 0; }// stalemate, liberals 
 	}
+}
+
+std::string Game::getFEN()
+{
+	std::string fenStr = "";
+	// First, determine piece arrangement on board
+	for (int i = 0; i < 8; i++)
+	{
+		int blanks = 0;
+		for (int j = 0; j < 8; j++)
+		{
+			switch (board[i][j])
+			{
+				case WHITE_PAWN:
+					if (blanks > 0)
+					{
+						fenStr += std::to_string(blanks);
+						blanks = 0;
+					}
+					fenStr += "P";
+					break;
+				case WHITE_KNIGHT:
+					if (blanks > 0)
+					{
+						fenStr += std::to_string(blanks);
+						blanks = 0;
+					}
+					fenStr += "N";
+					break;
+				case WHITE_BISHOP:
+					if (blanks > 0)
+					{
+						fenStr += std::to_string(blanks);
+						blanks = 0;
+					}
+					fenStr += "B";
+					break;
+				case WHITE_ROOK:
+					if (blanks > 0)
+					{
+						fenStr += std::to_string(blanks);
+						blanks = 0;
+					}
+					fenStr += "R";
+					break;
+				case WHITE_QUEEN:
+					if (blanks > 0)
+					{
+						fenStr += std::to_string(blanks);
+						blanks = 0;
+					}
+					fenStr += "Q";
+					break;
+				case WHITE_KING:
+					if (blanks > 0)
+					{
+						fenStr += std::to_string(blanks);
+						blanks = 0;
+					}
+					fenStr += "K";
+					break;
+				case BLACK_PAWN:
+					if (blanks > 0)
+					{
+						fenStr += std::to_string(blanks);
+						blanks = 0;
+					}
+					fenStr += "p";
+					break;
+				case BLACK_KNIGHT:
+					if (blanks > 0)
+					{
+						fenStr += std::to_string(blanks);
+						blanks = 0;
+					}
+					fenStr += "n";
+					break;
+				case BLACK_BISHOP:
+					if (blanks > 0)
+					{
+						fenStr += std::to_string(blanks);
+						blanks = 0;
+					}
+					fenStr += "b";
+					break;
+				case BLACK_ROOK:
+					if (blanks > 0)
+					{
+						fenStr += std::to_string(blanks);
+						blanks = 0;
+					}
+					fenStr += "r";
+					break;
+				case BLACK_QUEEN:
+					if (blanks > 0)
+					{
+						fenStr += std::to_string(blanks);
+						blanks = 0;
+					}
+					fenStr += "q";
+					break;
+				case BLACK_KING:
+					if (blanks > 0)
+					{
+						fenStr += std::to_string(blanks);
+						blanks = 0;
+					}
+					fenStr += "k";
+					break;
+				default:
+					blanks++; // i got a blank space baby, and i'll add one to the count
+			}
+		}
+		if (blanks > 0) fenStr += std::to_string(blanks);
+		if (i != 7) fenStr += "/"; // indicate next line
+	}
+
+	// next, whose turn is it?
+	if (turn % 2 == 0) fenStr += " w ";
+	else fenStr += " b ";
+
+	// determine castling rights
+	std::string castlingStr = "";
+	Piece* queenRookWhite = nullptr;
+	Piece* kingRookWhite = nullptr;
+	Piece* kingWhite = nullptr;
+	Piece* queenRookBlack = nullptr;
+	Piece* kingRookBlack = nullptr;
+	Piece* kingBlack = nullptr;
+	// get pieces
+	for (Piece* p : piecesOnBoard)
+	{
+		switch (p->info)
+		{
+			case WHITE_KING:
+				kingWhite = p;
+				break;
+			case BLACK_KING:
+				kingBlack = p;
+				break;
+			case WHITE_ROOK:
+				if (p->rookSide == 0) queenRookWhite = p;
+				else kingRookWhite = p;
+				break;
+			case BLACK_ROOK:
+				if (p->rookSide == 0) queenRookBlack = p;
+				else kingRookBlack = p;
+				break;
+		}
+	}
+	// check white kingside castle
+	if (kingRookWhite && kingRookWhite->canCastle && kingWhite->canCastle) castlingStr += "K";
+	// check white queenside castle
+	if (queenRookWhite && queenRookWhite->canCastle && kingWhite->canCastle) castlingStr += "Q";
+	// check black kingside castle
+	if (kingRookBlack && kingRookBlack->canCastle && kingBlack->canCastle) castlingStr += "k";
+	// check black queenside castle
+	if (queenRookBlack && queenRookBlack->canCastle && kingBlack->canCastle) castlingStr += "q ";
+	// if neither side can castle
+	if (castlingStr == "") castlingStr = "- ";
+	fenStr += castlingStr;
+
+	// get en passant square
+	bool noPassant = true;
+	std::string passantStr = "";
+	for (Piece* p : piecesOnBoard)
+	{
+		if (p->enPassantable)
+		{
+			noPassant = false;
+			// get chess board coordinates
+			int xCoord = p->rect->x / 60, yCoord = 8 - (p->rect->y / 60);
+			// adjust yCoord for passant sqaure based on color
+			if ((p->info & WHITE) == WHITE) yCoord--;
+			else yCoord++;
+			char fileLetter = xCoord + 97;
+			passantStr = fileLetter + std::to_string(yCoord) + " ";
+			break;
+		}
+	}
+	if (noPassant) passantStr = "- ";
+	fenStr += passantStr;
+
+	// fifty-move-rule counter (halfmove clock)
+	fenStr += std::to_string(halfmoves);
+
+	// move counter
+	fenStr += " " + std::to_string(turn / 2 + 1);
+
+	return fenStr;
 }
 
 void Game::printBoard()

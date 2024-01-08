@@ -6,7 +6,7 @@ class Window
 	public:
 		void init();
 		void refresh();
-		Piece* makePiece(int x, int y, uint8_t info);
+		Piece* makePiece(int x, int y, uint8_t info, int side = -1);
 		void dragPiece();
 		int dropPiece();
 	private:
