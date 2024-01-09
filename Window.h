@@ -11,6 +11,7 @@ class Window
 		int dropPiece();
 	private:
 		SDL_Window* window;
+		SDL_Renderer* window_renderer;
 		Game game;
 
 		// dragged piece info

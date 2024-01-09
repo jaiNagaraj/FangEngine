@@ -503,9 +503,9 @@ bool Game::validCastle(Piece* piece, int initX, int initY, int kingX, int kingY)
 bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool test)
 {
 	int oldXCoord = oldX / 60, oldYCoord = oldY / 60, newXCoord = newX / 60, newYCoord = newY / 60;
-	std::cout << oldX << " " << oldY << " " << newX << " " << newY << '\n';
-	std::cout << oldXCoord << " " << oldYCoord << " " << newXCoord << " " << newYCoord << '\n';
-	std::cout << "TURN: " << (turn % 2 == 0 ? "White" : "Black") << '\n';
+	//std::cout << oldX << " " << oldY << " " << newX << " " << newY << '\n';
+	//std::cout << oldXCoord << " " << oldYCoord << " " << newXCoord << " " << newYCoord << '\n';
+	//std::cout << "TURN: " << (turn % 2 == 0 ? "White" : "Black") << '\n';
 
 	bool isCapturing = false;
 	bool isEP = false;
@@ -565,17 +565,6 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 			isCapturing = true;
 		}
 
-		//// if the pawn was on the starting row
-		//else if (oldYCoord == 6)
-		//{
-		//	// if it didn't move 1 or 2 spaces forwards
-		//	if (!((distMovedY == -1) || (distMovedY == -2))) return false;
-		//	// if something is blocking the pawn
-		//	if (!(board[newYCoord][newXCoord] == 0b00000000) || (distMovedY == -2 && !(board[newYCoord + 1][newXCoord] == 0b00000000))) return false;
-		//}
-		//// if something is blocking the pawn
-		//else if (!(distMovedY == -1) || !(board[newYCoord][newXCoord] == 0b00000000)) return false;
-
 		// if the pawn moved one space
 		else if (distMovedY == -1)
 		{
@@ -591,6 +580,13 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 			else if (!(board[newYCoord][newXCoord] == 0b00000000) || !(board[newYCoord + 1][newXCoord] == 0b00000000)) return false;
 			// passes checks; make it vulnerable to en passant
 			else piece->enPassantable = true;
+		}
+
+		// valid move confirmed, check for end-rank promotion
+		if (newYCoord == 0)
+		{
+			isPromoting = true;
+			promotingPiece = piece;
 		}
 	}
 	else if ((piece->info & BLACK_PAWN) == BLACK_PAWN)
@@ -630,17 +626,6 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 			isCapturing = true;
 		}
 
-		//// if the pawn was on the starting row
-		//else if (oldYCoord == 6)
-		//{
-		//	// if it didn't move 1 or 2 spaces forwards
-		//	if (!((distMovedY == -1) || (distMovedY == -2))) return false;
-		//	// if something is blocking the pawn
-		//	if (!(board[newYCoord][newXCoord] == 0b00000000) || (distMovedY == -2 && !(board[newYCoord + 1][newXCoord] == 0b00000000))) return false;
-		//}
-		//// if something is blocking the pawn
-		//else if (!(distMovedY == -1) || !(board[newYCoord][newXCoord] == 0b00000000)) return false;
-
 		// if the pawn moved one space
 		else if (distMovedY == 1)
 		{
@@ -656,6 +641,13 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 			else if (board[newYCoord][newXCoord] != 0b00000000 || board[newYCoord - 1][newXCoord] != 0b00000000) return false;
 			// passes checks; make it vulnerable to en passant
 			else piece->enPassantable = true;
+		}
+
+		// valid move confirmed, check for end-rank promotion
+		if (newYCoord == 7)
+		{
+			isPromoting = true;
+			promotingPiece = piece;
 		}
 	}
 
@@ -2026,9 +2018,10 @@ std::string Game::getFEN()
 	// check black kingside castle
 	if (kingRookBlack && kingRookBlack->canCastle && kingBlack->canCastle) castlingStr += "k";
 	// check black queenside castle
-	if (queenRookBlack && queenRookBlack->canCastle && kingBlack->canCastle) castlingStr += "q ";
+	if (queenRookBlack && queenRookBlack->canCastle && kingBlack->canCastle) castlingStr += "q";
 	// if neither side can castle
-	if (castlingStr == "") castlingStr = "- ";
+	if (castlingStr == "") castlingStr = "-";
+	castlingStr += " ";
 	fenStr += castlingStr;
 
 	// get en passant square

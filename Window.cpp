@@ -39,6 +39,15 @@ void Window::init()
         //return -1;
     }
 
+    window_renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+
+    if (!window_renderer)
+    {
+        std::cout << "Failed to get window's surface!\n";
+        std::cout << "SDL2 Error: " << SDL_GetError() << "\n";
+        return;
+    }
+
     //if (!boardImage)
     //{
     //    std::cout << "Failed to load image\n";
@@ -362,6 +371,104 @@ int Window::dropPiece()
         game.board[newY / 60][newX / 60] = game.board[initY / 60][initX / 60];
         game.board[initY / 60][initX / 60] = 0;
         game.turn++;
+        // check for pawn promotion
+        if (game.isPromoting)
+        {
+            // form graphic for promotion!
+            // first, a white background
+            SDL_Rect* bgRect = new SDL_Rect;
+            bgRect->x = 120;
+            bgRect->y = 210;
+            bgRect->w = PIECE_WIDTH * 4;
+            bgRect->h = PIECE_HEIGHT;
+
+            // then, the rects (screen areas) for the piece graphics
+            SDL_Rect* nRect = new SDL_Rect; // knight
+            nRect->x = 120 + 60*0;
+            nRect->y = 210;
+            nRect->w = PIECE_WIDTH;
+            nRect->h = PIECE_HEIGHT;
+            SDL_Rect* bRect = new SDL_Rect; // bishop
+            bRect->x = 120 + 60 * 1;
+            bRect->y = 210;
+            bRect->w = PIECE_WIDTH;
+            bRect->h = PIECE_HEIGHT;
+            SDL_Rect* rRect = new SDL_Rect; // rook
+            rRect->x = 120 + 60 * 2;
+            rRect->y = 210;
+            rRect->w = PIECE_WIDTH;
+            rRect->h = PIECE_HEIGHT;
+            SDL_Rect* qRect = new SDL_Rect; // queen
+            qRect->x = 120 + 60 * 3;
+            qRect->y = 210;
+            qRect->w = PIECE_WIDTH;
+            qRect->h = PIECE_HEIGHT;
+
+            //SDL_RenderClear(window_renderer);
+            //SDL_SetRenderDrawColor(window_renderer, 255, 255, 255, 255);
+            //SDL_RenderFillRect(window_renderer, bgRect);
+            //SDL_RenderPresent(window_renderer);
+
+            // next, blit the graphic
+            if ((draggedPiece->info & WHITE) == WHITE)
+            {
+                SDL_BlitSurface(whiteKnight, NULL, window_surface, nRect);
+                SDL_BlitSurface(whiteBishop, NULL, window_surface, bRect);
+                SDL_BlitSurface(whiteRook, NULL, window_surface, rRect);
+                SDL_BlitSurface(whiteQueen, NULL, window_surface, qRect);
+            }
+            else
+            {
+                SDL_BlitSurface(blackKnight, NULL, window_surface, nRect);
+                SDL_BlitSurface(blackBishop, NULL, window_surface, bRect);
+                SDL_BlitSurface(blackRook, NULL, window_surface, rRect);
+                SDL_BlitSurface(blackQueen, NULL, window_surface, qRect);
+            }
+            SDL_UpdateWindowSurface(window);
+
+            // finally, loop until a choice is made
+            bool loop = true;
+            while (loop)
+            {
+                SDL_Event event;
+                // check if we clicked
+                if (SDL_PollEvent(&event) > 0 && event.type == SDL_MOUSEBUTTONUP)
+                {
+                    uint8_t infoChange = draggedPiece->info; // set the same for now, changes if we chose an option
+                    SDL_Point clickPoint; // mouse location
+                    SDL_GetMouseState(&clickPoint.x, &clickPoint.y); // get mouse location
+                    bool clicked = true;
+                    if ((draggedPiece->info & WHITE) == WHITE)
+                    {
+                        // check what piece we clicked on, if any
+                        if (SDL_PointInRect(&clickPoint, nRect)) infoChange = WHITE_KNIGHT;
+                        else if (SDL_PointInRect(&clickPoint, bRect)) infoChange = WHITE_BISHOP;
+                        else if (SDL_PointInRect(&clickPoint, rRect)) infoChange = WHITE_ROOK;
+                        else if (SDL_PointInRect(&clickPoint, qRect)) infoChange = WHITE_QUEEN;
+                        else clicked = false; // nothing selected
+                    }
+                    else
+                    {
+                        // check what piece we clicked on, if any
+                        if (SDL_PointInRect(&clickPoint, nRect)) infoChange = BLACK_KNIGHT;
+                        else if (SDL_PointInRect(&clickPoint, bRect)) infoChange = BLACK_BISHOP;
+                        else if (SDL_PointInRect(&clickPoint, rRect)) infoChange = BLACK_ROOK;
+                        else if (SDL_PointInRect(&clickPoint, qRect)) infoChange = BLACK_QUEEN;
+                        else clicked = false; // nothing selected
+                    }
+                    draggedPiece->info = infoChange;
+
+                    if (clicked) // we chose a piece!
+                    {
+                        // update the game and board to reflect this
+                        game.board[newY / 60][newX / 60] = draggedPiece->info;
+                        game.isPromoting = false;
+                        loop = false;
+                    }
+                }
+            }
+
+        }
         game.printBoard();
         draggedPiece = nullptr; // drop the bass- i mean piece
         // update fen

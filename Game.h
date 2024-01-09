@@ -15,6 +15,8 @@ class Game
 		std::vector<std::string> fens;
 		int turn = 0;
 		int halfmoves = 0;
+		bool isPromoting = false;
+		Piece* promotingPiece = nullptr;
 
 		bool isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY);
 		bool validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool test = false);
