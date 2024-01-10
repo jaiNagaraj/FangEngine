@@ -581,13 +581,6 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 			// passes checks; make it vulnerable to en passant
 			else piece->enPassantable = true;
 		}
-
-		// valid move confirmed, check for end-rank promotion
-		if (newYCoord == 0)
-		{
-			isPromoting = true;
-			promotingPiece = piece;
-		}
 	}
 	else if ((piece->info & BLACK_PAWN) == BLACK_PAWN)
 	{
@@ -641,13 +634,6 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 			else if (board[newYCoord][newXCoord] != 0b00000000 || board[newYCoord - 1][newXCoord] != 0b00000000) return false;
 			// passes checks; make it vulnerable to en passant
 			else piece->enPassantable = true;
-		}
-
-		// valid move confirmed, check for end-rank promotion
-		if (newYCoord == 7)
-		{
-			isPromoting = true;
-			promotingPiece = piece;
 		}
 	}
 
@@ -957,7 +943,7 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 			{
 				for (Piece* p : piecesOnBoard)
 				{
-					if (p->rect->x == newX && p->rect->y == newY)
+					if (p->rect->x == newX && p->rect->y == newY && p != piece)
 					{
 						// use the combination of erase and remove to capture piece
 						piecesOnBoard.erase(std::remove(piecesOnBoard.begin(), piecesOnBoard.end(), p),piecesOnBoard.end());
@@ -987,6 +973,19 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 		// if pawn move or capture, reset halfmove counter
 		if (isCapturing || (piece->info & PAWN) == PAWN) halfmoves = 0;
 		else halfmoves++;
+
+		// valid move confirmed, check for end-rank promotion in white
+		if ((piece->info & WHITE_PAWN) == WHITE_PAWN && newYCoord == 0)
+		{
+			isPromoting = true;
+			promotingPiece = piece;
+		}
+		// valid move confirmed, check for end-rank promotion in white
+		else if ((piece->info & BLACK_PAWN) == BLACK_PAWN && newYCoord == 7)
+		{
+			isPromoting = true;
+			promotingPiece = piece;
+		}
 	}
 
 	// passed the gauntlet!
@@ -1121,7 +1120,7 @@ int Game::isCheckmate(int turn)
 				}
 
 				/* KNIGHT MOVES */
-				else if ((p->info & KNIGHT))
+				else if ((p->info & KNIGHT) == KNIGHT)
 				{
 					// up-left
 					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) - 1) * 60, ((p->rect->y / 60) - 2) * 60, true))
@@ -1182,7 +1181,7 @@ int Game::isCheckmate(int turn)
 					// check up-left diagonal
 					while (tmpX >= 0 && tmpY >= 0)
 					{
-						if (validMove(p, initX, initY, tmpX, tmpY, true))
+						if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 						{
 							reallyTrapped = false;
 							break;
@@ -1196,7 +1195,7 @@ int Game::isCheckmate(int turn)
 						// check up-right diagonal
 						while (tmpX <= 7 && tmpY >= 0)
 						{
-							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 							{
 								reallyTrapped = false;
 								break;
@@ -1211,7 +1210,7 @@ int Game::isCheckmate(int turn)
 						// check down-left diagonal
 						while (tmpX >= 0 && tmpY <= 7)
 						{
-							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 							{
 								reallyTrapped = false;
 								break;
@@ -1226,7 +1225,7 @@ int Game::isCheckmate(int turn)
 						// check down-right diagonal
 						while (tmpX <= 7 && tmpY <= 7)
 						{
-							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 							{
 								reallyTrapped = false;
 								break;
@@ -1247,7 +1246,7 @@ int Game::isCheckmate(int turn)
 					// check up
 					while (tmpY >= 0)
 					{
-						if (validMove(p, initX, initY, tmpX, tmpY, true))
+						if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 						{
 							reallyTrapped = false;
 							break;
@@ -1260,7 +1259,7 @@ int Game::isCheckmate(int turn)
 						// check right
 						while (tmpX <= 7)
 						{
-							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 							{
 								reallyTrapped = false;
 								break;
@@ -1274,7 +1273,7 @@ int Game::isCheckmate(int turn)
 						// check down
 						while (tmpY <= 7)
 						{
-							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 							{
 								reallyTrapped = false;
 								break;
@@ -1288,7 +1287,7 @@ int Game::isCheckmate(int turn)
 						// check left
 						while (tmpX >= 0)
 						{
-							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 							{
 								reallyTrapped = false;
 								break;
@@ -1310,7 +1309,7 @@ int Game::isCheckmate(int turn)
 					// check up-left diagonal
 					while (tmpX >= 0 && tmpY >= 0)
 					{
-						if (validMove(p, initX, initY, tmpX, tmpY, true))
+						if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 						{
 							reallyTrapped = false;
 							break;
@@ -1324,7 +1323,7 @@ int Game::isCheckmate(int turn)
 						// check up-right diagonal
 						while (tmpX <= 7 && tmpY >= 0)
 						{
-							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 							{
 								reallyTrapped = false;
 								break;
@@ -1339,7 +1338,7 @@ int Game::isCheckmate(int turn)
 						// check down-left diagonal
 						while (tmpX >= 0 && tmpY <= 7)
 						{
-							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 							{
 								reallyTrapped = false;
 								break;
@@ -1354,7 +1353,7 @@ int Game::isCheckmate(int turn)
 						// check down-right diagonal
 						while (tmpX <= 7 && tmpY <= 7)
 						{
-							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 							{
 								reallyTrapped = false;
 								break;
@@ -1370,7 +1369,7 @@ int Game::isCheckmate(int turn)
 					// check up
 					while (tmpY >= 0)
 					{
-						if (validMove(p, initX, initY, tmpX, tmpY, true))
+						if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 						{
 							reallyTrapped = false;
 							break;
@@ -1383,7 +1382,7 @@ int Game::isCheckmate(int turn)
 						// check right
 						while (tmpX <= 7)
 						{
-							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 							{
 								reallyTrapped = false;
 								break;
@@ -1397,7 +1396,7 @@ int Game::isCheckmate(int turn)
 						// check down
 						while (tmpY <= 7)
 						{
-							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 							{
 								reallyTrapped = false;
 								break;
@@ -1411,7 +1410,7 @@ int Game::isCheckmate(int turn)
 						// check left
 						while (tmpX >= 0)
 						{
-							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 							{
 								reallyTrapped = false;
 								break;
@@ -1550,7 +1549,7 @@ int Game::isCheckmate(int turn)
 				}
 
 				/* KNIGHT MOVES */
-				else if ((p->info & KNIGHT))
+				else if ((p->info & KNIGHT) == KNIGHT)
 				{
 					// up-left
 					if (validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) - 1) * 60, ((p->rect->y / 60) - 2) * 60, true))
@@ -1611,7 +1610,7 @@ int Game::isCheckmate(int turn)
 					// check up-left diagonal
 					while (tmpX >= 0 && tmpY >= 0)
 					{
-						if (validMove(p, initX, initY, tmpX, tmpY, true))
+						if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 						{
 							reallyTrapped = false;
 							break;
@@ -1625,7 +1624,7 @@ int Game::isCheckmate(int turn)
 						// check up-right diagonal
 						while (tmpX <= 7 && tmpY >= 0)
 						{
-							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 							{
 								reallyTrapped = false;
 								break;
@@ -1640,7 +1639,7 @@ int Game::isCheckmate(int turn)
 						// check down-left diagonal
 						while (tmpX >= 0 && tmpY <= 7)
 						{
-							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 							{
 								reallyTrapped = false;
 								break;
@@ -1655,7 +1654,7 @@ int Game::isCheckmate(int turn)
 						// check down-right diagonal
 						while (tmpX <= 7 && tmpY <= 7)
 						{
-							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 							{
 								reallyTrapped = false;
 								break;
@@ -1676,7 +1675,7 @@ int Game::isCheckmate(int turn)
 					// check up
 					while (tmpY >= 0)
 					{
-						if (validMove(p, initX, initY, tmpX, tmpY, true))
+						if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 						{
 							reallyTrapped = false;
 							break;
@@ -1689,7 +1688,7 @@ int Game::isCheckmate(int turn)
 						// check right
 						while (tmpX <= 7)
 						{
-							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 							{
 								reallyTrapped = false;
 								break;
@@ -1703,7 +1702,7 @@ int Game::isCheckmate(int turn)
 						// check down
 						while (tmpY <= 7)
 						{
-							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 							{
 								reallyTrapped = false;
 								break;
@@ -1717,7 +1716,7 @@ int Game::isCheckmate(int turn)
 						// check left
 						while (tmpX >= 0)
 						{
-							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 							{
 								reallyTrapped = false;
 								break;
@@ -1739,7 +1738,7 @@ int Game::isCheckmate(int turn)
 					// check up-left diagonal
 					while (tmpX >= 0 && tmpY >= 0)
 					{
-						if (validMove(p, initX, initY, tmpX, tmpY, true))
+						if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 						{
 							reallyTrapped = false;
 							break;
@@ -1753,7 +1752,7 @@ int Game::isCheckmate(int turn)
 						// check up-right diagonal
 						while (tmpX <= 7 && tmpY >= 0)
 						{
-							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 							{
 								reallyTrapped = false;
 								break;
@@ -1768,7 +1767,7 @@ int Game::isCheckmate(int turn)
 						// check down-left diagonal
 						while (tmpX >= 0 && tmpY <= 7)
 						{
-							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 							{
 								reallyTrapped = false;
 								break;
@@ -1783,7 +1782,7 @@ int Game::isCheckmate(int turn)
 						// check down-right diagonal
 						while (tmpX <= 7 && tmpY <= 7)
 						{
-							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 							{
 								reallyTrapped = false;
 								break;
@@ -1799,7 +1798,7 @@ int Game::isCheckmate(int turn)
 					// check up
 					while (tmpY >= 0)
 					{
-						if (validMove(p, initX, initY, tmpX, tmpY, true))
+						if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 						{
 							reallyTrapped = false;
 							break;
@@ -1812,7 +1811,7 @@ int Game::isCheckmate(int turn)
 						// check right
 						while (tmpX <= 7)
 						{
-							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 							{
 								reallyTrapped = false;
 								break;
@@ -1826,7 +1825,7 @@ int Game::isCheckmate(int turn)
 						// check down
 						while (tmpY <= 7)
 						{
-							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 							{
 								reallyTrapped = false;
 								break;
@@ -1840,7 +1839,7 @@ int Game::isCheckmate(int turn)
 						// check left
 						while (tmpX >= 0)
 						{
-							if (validMove(p, initX, initY, tmpX, tmpY, true))
+							if (validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
 							{
 								reallyTrapped = false;
 								break;
@@ -1859,7 +1858,7 @@ int Game::isCheckmate(int turn)
 
 		// now the king is trapped. is it stalemate though?
 		if (isInCheck(board, 1, kingX, kingY)) return 1; // checkmate, liberals
-		else { std::cout << "yum\n"; return 0; }// stalemate, liberals 
+		else { std::cout << "yum\n"; return 0; } // stalemate, liberals 
 	}
 }
 

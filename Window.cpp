@@ -39,22 +39,6 @@ void Window::init()
         //return -1;
     }
 
-    window_renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-
-    if (!window_renderer)
-    {
-        std::cout << "Failed to get window's surface!\n";
-        std::cout << "SDL2 Error: " << SDL_GetError() << "\n";
-        return;
-    }
-
-    //if (!boardImage)
-    //{
-    //    std::cout << "Failed to load image\n";
-    //    std::cout << "SDL2 Error: " << SDL_GetError() << "\n";
-    //    //return -1;
-    //}
-
 
     // Make pawns
     for (int i = 0; i < 8; i++) makePiece(i, 1, WHITE_PAWN);
