@@ -22,6 +22,7 @@ class Game
 		bool validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool test = false);
 		bool validCastle(Piece* piece, int initX, int initY, int kingX, int kingY);
 		int isCheckmate(int turn);
+		bool insufficientMaterial();
 		std::string getFEN();
 		void printBoard();
 };

@@ -1429,7 +1429,7 @@ int Game::isCheckmate(int turn)
 
 		// now the king is trapped. is it stalemate though?
 		if (isInCheck(board, 0, kingX, kingY)) return 1; // checkmate, liberals
-		else { std::cout << "yum\n"; return 0; } // stalemate, liberals
+		else return 0; // stalemate, liberals
 	}
 	// for black
 	else // fix
@@ -1858,8 +1858,13 @@ int Game::isCheckmate(int turn)
 
 		// now the king is trapped. is it stalemate though?
 		if (isInCheck(board, 1, kingX, kingY)) return 1; // checkmate, liberals
-		else { std::cout << "yum\n"; return 0; } // stalemate, liberals 
+		else return 0; // stalemate, liberals 
 	}
+}
+
+bool Game::insufficientMaterial()
+{
+	;
 }
 
 std::string Game::getFEN()
