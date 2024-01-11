@@ -91,7 +91,7 @@ bool Game::isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY)
 		posX = kingX; posY = kingY - 1;
 		while (posY >= 0)
 		{
-			if ((gameBoard[posY][posX] & BLACK_BISHOP) == BLACK_BISHOP || (gameBoard[posY][posX] & BLACK_QUEEN) == BLACK_QUEEN) return true;
+			if ((gameBoard[posY][posX] & BLACK_ROOK) == BLACK_ROOK || (gameBoard[posY][posX] & BLACK_QUEEN) == BLACK_QUEEN) return true;
 			// if another piece blocks a check
 			if ((gameBoard[posY][posX] & WHITE) == WHITE ||
 				(gameBoard[posY][posX] & BLACK_PAWN) == BLACK_PAWN ||
@@ -104,7 +104,7 @@ bool Game::isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY)
 		posX = kingX + 1; posY = kingY;
 		while (posX < 8)
 		{
-			if ((gameBoard[posY][posX] & BLACK_BISHOP) == BLACK_BISHOP || (gameBoard[posY][posX] & BLACK_QUEEN) == BLACK_QUEEN) return true;
+			if ((gameBoard[posY][posX] & BLACK_ROOK) == BLACK_ROOK || (gameBoard[posY][posX] & BLACK_QUEEN) == BLACK_QUEEN) return true;
 			// if another piece blocks a check
 			if ((gameBoard[posY][posX] & WHITE) == WHITE ||
 				(gameBoard[posY][posX] & BLACK_PAWN) == BLACK_PAWN ||
@@ -117,7 +117,7 @@ bool Game::isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY)
 		posX = kingX; posY = kingY + 1;
 		while (posY < 8)
 		{
-			if ((gameBoard[posY][posX] & BLACK_BISHOP) == BLACK_BISHOP || (gameBoard[posY][posX] & BLACK_QUEEN) == BLACK_QUEEN) return true;
+			if ((gameBoard[posY][posX] & BLACK_ROOK) == BLACK_ROOK || (gameBoard[posY][posX] & BLACK_QUEEN) == BLACK_QUEEN) return true;
 			// if another piece blocks a check
 			if ((gameBoard[posY][posX] & WHITE) == WHITE ||
 				(gameBoard[posY][posX] & BLACK_PAWN) == BLACK_PAWN ||
