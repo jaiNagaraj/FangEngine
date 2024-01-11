@@ -1864,7 +1864,47 @@ int Game::isCheckmate(int turn)
 
 bool Game::insufficientMaterial()
 {
-	;
+	// check white
+	bool darkWhiteBishop = false, lightWhiteBishop = false;
+	int whiteKnights = 0;
+	for (Piece* p : piecesOnBoard)
+	{
+		// common king + piece checkmates
+		if ((p->info & WHITE_PAWN) == WHITE_PAWN || (p->info & WHITE_ROOK) == WHITE_ROOK || (p->info & WHITE_QUEEN) == WHITE_QUEEN) return false;
+		else if ((p->info & WHITE_KNIGHT) == WHITE_KNIGHT) whiteKnights++;
+		else if ((p->info & WHITE_BISHOP) == WHITE_BISHOP)
+		{
+			// light square; x+y sum is odd
+			if ((p->rect->x / 60 + p->rect->y / 60) % 2) lightWhiteBishop = true;
+			else darkWhiteBishop = true;
+		}
+	}
+	// check all possible knight/bishop mates
+	if (whiteKnights > 1 || (darkWhiteBishop && lightWhiteBishop)) return false;
+
+	// check black
+	bool darkBlackBishop = false, lightBlackBishop = false;
+	int blackKnights = 0;
+	for (Piece* p : piecesOnBoard)
+	{
+		// common king + piece checkmates
+		if ((p->info & BLACK_PAWN) == BLACK_PAWN || (p->info & BLACK_ROOK) == BLACK_ROOK || (p->info & BLACK_QUEEN) == BLACK_QUEEN) return false;
+		else if ((p->info & BLACK_KNIGHT) == BLACK_KNIGHT) blackKnights++;
+		else if ((p->info & BLACK_BISHOP) == BLACK_BISHOP)
+		{
+			// light square; x+y sum is odd
+			if ((p->rect->x / 60 + p->rect->y / 60) % 2) lightBlackBishop = true;
+			else darkBlackBishop = true;
+		}
+	}
+	// check all possible knight/bishop mates
+	if (blackKnights > 1 || (darkBlackBishop && lightBlackBishop)) return false;
+
+	// now, check for opposite colored bishops
+	if ((darkWhiteBishop && lightBlackBishop) || (darkBlackBishop && lightWhiteBishop)) return false;
+
+	// anything else is insufficient
+	return true;
 }
 
 std::string Game::getFEN()

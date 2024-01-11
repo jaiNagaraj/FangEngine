@@ -151,6 +151,7 @@ void Window::init()
             {
                 // check repetition
                 bool rep = false;
+                bool fifty = false;
                 for (auto str : game.positions)
                 {
                     if (str.second == 3)
@@ -175,8 +176,27 @@ void Window::init()
                     // check for 50 move rule
                     if (game.halfmoves == 100)
                     {
+                        fifty = true;
                         endLock = true;
                         std::string text = "Draw by 50 move rule!";
+                        SDL_Color color = { 255, 0, 0, 255 };
+                        SDL_Surface* textSurface = TTF_RenderText_Solid(font, text.c_str(), color);
+                        SDL_Rect* textRect = new SDL_Rect;
+                        textRect->x = 60;
+                        textRect->y = 60;
+                        textRect->w = 60;
+                        textRect->h = 60;
+                        refresh();
+                        SDL_BlitSurface(textSurface, NULL, window_surface, textRect);
+                    }
+                }
+                if (!(rep || fifty))
+                {
+                    // check for insufficient material
+                    if (game.insufficientMaterial())
+                    {
+                        endLock = true;
+                        std::string text = "Draw by insufficient material!";
                         SDL_Color color = { 255, 0, 0, 255 };
                         SDL_Surface* textSurface = TTF_RenderText_Solid(font, text.c_str(), color);
                         SDL_Rect* textRect = new SDL_Rect;
@@ -191,17 +211,6 @@ void Window::init()
                 }
             }
             SDL_UpdateWindowSurface(window);
-
-            //debugging
-
-            /*SDL_GetMouseState(&xMouse, &yMouse); // 479 is max for both coordinates
-            std::string outStr((std::string("(") + std::to_string(xMouse) + std::string(", ") + std::to_string(yMouse) + std::string(")\n")));
-            std::cout << outStr;
-
-            std::string ltr = std::string(1, (char)(xMouse / 60 + 97));
-            std::string num = std::string(1, (char)(56 - yMouse / 60));
-            std::string sq = "I'm on " + ltr + num + "!\n";
-            std::cout << sq;*/
         }
     }
 }
