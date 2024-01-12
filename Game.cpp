@@ -2,6 +2,7 @@
 #include "Piece.h"
 #include <bitset>
 #include <string>
+typedef unsigned long long ull;
 
 bool Game::isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY)
 {
@@ -578,8 +579,6 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 			if (oldYCoord != 6) return false;
 			// if something is blocking the pawn
 			else if (!(board[newYCoord][newXCoord] == 0b00000000) || !(board[newYCoord + 1][newXCoord] == 0b00000000)) return false;
-			// passes checks; make it vulnerable to en passant
-			else piece->enPassantable = true;
 		}
 	}
 	else if ((piece->info & BLACK_PAWN) == BLACK_PAWN)
@@ -931,6 +930,8 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 	// if we actually want to play this move, make changes
 	if (!test)
 	{
+		// if pawn passes checks for two spaces
+		if ((piece->info & PAWN) == PAWN && abs(distMovedY) == 2) piece->enPassantable = true;
 		if (isCapturing)
 		{
 			// check if it's an en passant capture
@@ -990,6 +991,67 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 
 	// passed the gauntlet!
 	return true;
+}
+
+void Game::makeMove(Piece* piece, Piece* passantPiece, int oldXCoord, int oldYCoord, int newXCoord, int newYCoord, bool isCapturing, bool isEP)
+{
+	// if pawn passes checks for two spaces
+	if ((piece->info & PAWN) == PAWN && abs(distMovedY) == 2) piece->enPassantable = true;
+	if (isCapturing)
+	{
+		// check if it's an en passant capture
+		if (isEP)
+		{
+			piecesOnBoard.erase(std::remove(piecesOnBoard.begin(), piecesOnBoard.end(), passantPiece), piecesOnBoard.end());
+		}
+		// remove piece from board vector normally
+		else
+		{
+			for (Piece* p : piecesOnBoard)
+			{
+				if (p->rect->x == newX && p->rect->y == newY && p != piece)
+				{
+					// use the combination of erase and remove to capture piece
+					piecesOnBoard.erase(std::remove(piecesOnBoard.begin(), piecesOnBoard.end(), p), piecesOnBoard.end());
+					//std::cout << "Piece removed!\n";
+					break;
+				}
+			}
+		}
+	}
+	// reset all previously enPassantable pieces
+	for (Piece* piece : piecesOnBoard)
+	{
+		// if it is white's turn
+		if (turn % 2 == 0 && (piece->info & BLACK) == BLACK)
+		{
+			piece->enPassantable = false;
+		}
+		// if it is black's turn
+		if (turn % 2 == 1 && (piece->info & WHITE) == WHITE)
+		{
+			piece->enPassantable = false;
+		}
+	}
+	// make sure rooks/kings can't castle after movement
+	piece->canCastle = false;
+
+	// if pawn move or capture, reset halfmove counter
+	if (isCapturing || (piece->info & PAWN) == PAWN) halfmoves = 0;
+	else halfmoves++;
+
+	// valid move confirmed, check for end-rank promotion in white
+	if ((piece->info & WHITE_PAWN) == WHITE_PAWN && newYCoord == 0)
+	{
+		isPromoting = true;
+		promotingPiece = piece;
+	}
+	// valid move confirmed, check for end-rank promotion in white
+	else if ((piece->info & BLACK_PAWN) == BLACK_PAWN && newYCoord == 7)
+	{
+		isPromoting = true;
+		promotingPiece = piece;
+	}
 }
 
 /*

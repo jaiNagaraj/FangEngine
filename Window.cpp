@@ -82,7 +82,6 @@ void Window::init()
     TTF_Font* font = TTF_OpenFont("Fonts/chess_font.ttf",30);
     while (keep_window_open)
     {
-        int xMouse, yMouse;
         SDL_Event e;
         while (SDL_PollEvent(&e) > 0)
         {
