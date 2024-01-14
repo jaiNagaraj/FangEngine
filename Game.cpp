@@ -1,5 +1,6 @@
 #include "Game.h"
 #include "Piece.h"
+#include "Move.h"
 #include <bitset>
 #include <string>
 typedef unsigned long long ull;
@@ -501,7 +502,10 @@ bool Game::validCastle(Piece* piece, int initX, int initY, int kingX, int kingY)
 	}
 }
 
-bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool test)
+/*
+	Checks if a move is valid. If so, returns Move object, else returns null.
+*/
+Move* Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool test)
 {
 	int oldXCoord = oldX / 60, oldYCoord = oldY / 60, newXCoord = newX / 60, newYCoord = newY / 60;
 	//std::cout << oldX << " " << oldY << " " << newX << " " << newY << '\n';
@@ -513,12 +517,12 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 	Piece* passantPiece = nullptr;
 
 	// first, is the move on the board?
-	if (newXCoord > 7 || newXCoord < 0 || newYCoord > 7 || newYCoord < 0) return false;
+	if (newXCoord > 7 || newXCoord < 0 || newYCoord > 7 || newYCoord < 0) return nullptr;
 
 	// if it's white's turn but black played
-	if (turn % 2 == 0 && !(piece->info & WHITE)) return false;
+	if (turn % 2 == 0 && !(piece->info & WHITE)) return nullptr;
 	// if it's black's turn but white played
-	if (turn % 2 != 0 && !(piece->info & BLACK)) return false;
+	if (turn % 2 != 0 && !(piece->info & BLACK)) return nullptr;
 
 	int distMovedX = newXCoord - oldXCoord;
 	int distMovedY = newYCoord - oldYCoord;
@@ -531,13 +535,13 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 	if ((piece->info & WHITE_PAWN) == WHITE_PAWN)
 	{
 		// if the pawn moved impossibly
-		if ((abs(distMovedX) > 1) || (distMovedY > -1) || (distMovedY < -2)) return false;
+		if ((abs(distMovedX) > 1) || (distMovedY > -1) || (distMovedY < -2)) return nullptr;
 
 		//if the pawn wants to capture
 		if (abs(distMovedX) == 1)
 		{
 			// if it didn't move diagonally by one
-			if (!(distMovedY == -1)) return false;
+			if (!(distMovedY == -1)) return nullptr;
 			// if the capturing square does not hold a black piece
 			if ((board[newYCoord][newXCoord] & BLACK) != BLACK)
 			{
@@ -554,14 +558,14 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 							{
 								isEP = true;
 								passantPiece = p;
-								board[oldYCoord][newXCoord] = 0; // gotta update bitboard too!
+								// board[oldYCoord][newXCoord] = 0; // gotta update bitboard too!
 								break;
 							}
-							else return false;
+							else return nullptr;
 						}
 					}
 				}
-				else return false;
+				else return nullptr;
 			}
 			isCapturing = true;
 		}
@@ -570,27 +574,27 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 		else if (distMovedY == -1)
 		{
 			// if something is blocking the pawn
-			if (!(board[newYCoord][newXCoord] == 0b00000000)) return false;
+			if (!(board[newYCoord][newXCoord] == 0b00000000)) return nullptr;
 		}
 		// if the pawn moved two spaces
 		else if (distMovedY == -2)
 		{
 			// if the pawn isn't on the starting rank
-			if (oldYCoord != 6) return false;
+			if (oldYCoord != 6) return nullptr;
 			// if something is blocking the pawn
-			else if (!(board[newYCoord][newXCoord] == 0b00000000) || !(board[newYCoord + 1][newXCoord] == 0b00000000)) return false;
+			else if (!(board[newYCoord][newXCoord] == 0b00000000) || !(board[newYCoord + 1][newXCoord] == 0b00000000)) return nullptr;
 		}
 	}
 	else if ((piece->info & BLACK_PAWN) == BLACK_PAWN)
 	{
 		// if the pawn moved impossibly
-		if ((abs(distMovedX) > 1) || (distMovedY < 1) || (distMovedY > 2)) return false;
+		if ((abs(distMovedX) > 1) || (distMovedY < 1) || (distMovedY > 2)) return nullptr;
 
 		//if the pawn wants to capture
 		if (abs(distMovedX) == 1)
 		{
 			// if it didn't move diagonally by one
-			if (distMovedY != 1) return false;
+			if (distMovedY != 1) return nullptr;
 			// if the capturing square does not hold a white piece
 			if ((board[newYCoord][newXCoord] & WHITE) != WHITE)
 			{
@@ -609,11 +613,11 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 								passantPiece = p;
 								break;
 							}
-							else return false;
+							else return nullptr;
 						}
 					}
 				}
-				else return false;
+				else return nullptr;
 			}
 			isCapturing = true;
 		}
@@ -622,15 +626,15 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 		else if (distMovedY == 1)
 		{
 			// if something is blocking the pawn
-			if (!(board[newYCoord][newXCoord] == 0b00000000)) return false;
+			if (!(board[newYCoord][newXCoord] == 0b00000000)) return nullptr;
 		}
 		// if the pawn moved two spaces
 		else if (distMovedY == 2)
 		{
 			// if the pawn isn't on the starting rank
-			if (oldYCoord != 1) return false;
+			if (oldYCoord != 1) return nullptr;
 			// if something is blocking the pawn
-			else if (board[newYCoord][newXCoord] != 0b00000000 || board[newYCoord - 1][newXCoord] != 0b00000000) return false;
+			else if (board[newYCoord][newXCoord] != 0b00000000 || board[newYCoord - 1][newXCoord] != 0b00000000) return nullptr;
 			// passes checks; make it vulnerable to en passant
 			else piece->enPassantable = true;
 		}
@@ -644,14 +648,14 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 	else if ((piece->info & KNIGHT) == KNIGHT)
 	{
 		// if horsey didnt move in L shape :(
-		if (!((abs(distMovedX) == 2 && abs(distMovedY) == 1) || (abs(distMovedY) == 2 && abs(distMovedX) == 1))) return false;
+		if (!((abs(distMovedX) == 2 && abs(distMovedY) == 1) || (abs(distMovedY) == 2 && abs(distMovedX) == 1))) return nullptr;
 
 		//if the knight wants to capture
 		if (!(board[newYCoord][newXCoord] == 0b00000000))
 		{
 			// if the capturing square does not hold a different-color piece
 			if (((board[newYCoord][newXCoord] & BLACK) != BLACK && (piece->info & WHITE) == WHITE) 
-				|| ((board[newYCoord][newXCoord] & WHITE) != WHITE && (piece->info & BLACK) == BLACK)) return false;
+				|| ((board[newYCoord][newXCoord] & WHITE) != WHITE && (piece->info & BLACK) == BLACK)) return nullptr;
 			isCapturing = true;
 		}
 	}
@@ -664,14 +668,14 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 	else if ((piece->info & BISHOP) == BISHOP)
 	{
 		// if bishop doesn't move diagonally
-		if (abs(distMovedX) != abs(distMovedY)) return false;
+		if (abs(distMovedX) != abs(distMovedY)) return nullptr;
 
 		//if the bishop wants to capture
 		if (!(board[newYCoord][newXCoord] == 0b00000000))
 		{
 			// if the capturing square does not hold a different-color piece
 			if (((board[newYCoord][newXCoord] & BLACK) != BLACK && (piece->info & WHITE) == WHITE)
-				|| ((board[newYCoord][newXCoord] & WHITE) != WHITE && (piece->info & BLACK) == BLACK)) return false;
+				|| ((board[newYCoord][newXCoord] & WHITE) != WHITE && (piece->info & BLACK) == BLACK)) return nullptr;
 			isCapturing = true;
 		}
 
@@ -681,7 +685,7 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 		tmpY += newYCoord > oldYCoord ? 1 : -1;
 		while (tmpX != newXCoord && tmpY != newYCoord)
 		{
-			if (board[tmpY][tmpX] != 0b00000000) return false;
+			if (board[tmpY][tmpX] != 0b00000000) return nullptr;
 			tmpX += newXCoord > oldXCoord ? 1 : -1;
 			tmpY += newYCoord > oldYCoord ? 1 : -1;
 		}
@@ -695,14 +699,14 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 	else if ((piece->info & ROOK) == ROOK)
 	{
 		// if rook doesn't move along rank/file
-		if (!((abs(distMovedX) > 0 && abs(distMovedY) == 0) || (abs(distMovedY) > 0 && abs(distMovedX) == 0))) return false;
+		if (!((abs(distMovedX) > 0 && abs(distMovedY) == 0) || (abs(distMovedY) > 0 && abs(distMovedX) == 0))) return nullptr;
 
 		//if the rook wants to capture
 		if (!(board[newYCoord][newXCoord] == 0b00000000))
 		{
 			// if the capturing square does not hold a different-color piece
 			if (((board[newYCoord][newXCoord] & BLACK) != BLACK && (piece->info & WHITE) == WHITE)
-				|| ((board[newYCoord][newXCoord] & WHITE) != WHITE && (piece->info & BLACK) == BLACK)) return false;
+				|| ((board[newYCoord][newXCoord] & WHITE) != WHITE && (piece->info & BLACK) == BLACK)) return nullptr;
 			isCapturing = true;
 		}
 
@@ -713,7 +717,7 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 			tmpX += newXCoord > oldXCoord ? 1 : -1;
 			while (tmpX != newXCoord)
 			{
-				if (board[tmpY][tmpX] != 0b00000000) return false;
+				if (board[tmpY][tmpX] != 0b00000000) return nullptr;
 				tmpX += newXCoord > oldXCoord ? 1 : -1;
 			}
 		}
@@ -722,7 +726,7 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 			tmpY += newYCoord > oldYCoord ? 1 : -1;
 			while (tmpY != newYCoord)
 			{
-				if (board[tmpY][tmpX] != 0b00000000) return false;
+				if (board[tmpY][tmpX] != 0b00000000) return nullptr;
 				tmpY += newYCoord > oldYCoord ? 1 : -1;
 			}
 		}
@@ -740,7 +744,7 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 		{
 			// if the capturing square does not hold a different-color piece
 			if (((board[newYCoord][newXCoord] & BLACK) != BLACK && (piece->info & WHITE) == WHITE)
-				|| ((board[newYCoord][newXCoord] & WHITE) != WHITE && (piece->info & BLACK) == BLACK)) return false;
+				|| ((board[newYCoord][newXCoord] & WHITE) != WHITE && (piece->info & BLACK) == BLACK)) return nullptr;
 			isCapturing = true;
 		}
 
@@ -755,7 +759,7 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 				tmpX += newXCoord > oldXCoord ? 1 : -1;
 				while (tmpX != newXCoord)
 				{
-					if (board[tmpY][tmpX] != 0b00000000) return false;
+					if (board[tmpY][tmpX] != 0b00000000) return nullptr;
 					tmpX += newXCoord > oldXCoord ? 1 : -1;
 				}
 			}
@@ -764,7 +768,7 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 				tmpY += newYCoord > oldYCoord ? 1 : -1;
 				while (tmpY != newYCoord)
 				{
-					if (board[tmpY][tmpX] != 0b00000000) return false;
+					if (board[tmpY][tmpX] != 0b00000000) return nullptr;
 					tmpY += newYCoord > oldYCoord ? 1 : -1;
 				}
 			}
@@ -778,13 +782,13 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 			tmpY += newYCoord > oldYCoord ? 1 : -1;
 			while (tmpX != newXCoord && tmpY != newYCoord)
 			{
-				if (board[tmpY][tmpX] != 0b00000000) return false;
+				if (board[tmpY][tmpX] != 0b00000000) return nullptr;
 				tmpX += newXCoord > oldXCoord ? 1 : -1;
 				tmpY += newYCoord > oldYCoord ? 1 : -1;
 			}
 		}
 		// if queen moves impossibly
-		else return false;
+		else return nullptr;
 	}
 
 	/*
@@ -859,17 +863,17 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 					}
 				}
 			}
-			else return false;
+			else return nullptr;
 		}
 		// if the king moves illegally (more than a square)
-		else if (abs(distMovedX) > 1 || abs(distMovedY) > 1) return false;
+		else if (abs(distMovedX) > 1 || abs(distMovedY) > 1) return nullptr;
 		// if the king wants to capture
 		else if (!(board[newYCoord][newXCoord] == 0b00000000))
 		{
 			// if the capturing square does not hold a different-color piece OR if the piece is the king
 			if (((board[newYCoord][newXCoord] & BLACK) != BLACK && (piece->info & WHITE) == WHITE)
 				|| ((board[newYCoord][newXCoord] & WHITE) != WHITE && (piece->info & BLACK) == BLACK)
-				|| ((board[newYCoord][newXCoord] & KING) == KING)) return false;
+				|| ((board[newYCoord][newXCoord] & KING) == KING)) return nullptr;
 			isCapturing = true;
 		}
 	}
@@ -903,7 +907,7 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 			}
 			if (breakout) break;
 		}
-		if (isInCheck(altBoard, 0, kingX, kingY)) return false;
+		if (isInCheck(altBoard, 0, kingX, kingY)) return nullptr;
 	}
 	// for black
 	else
@@ -923,102 +927,52 @@ bool Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool 
 			}
 			if (breakout) break;
 		}
-		if (isInCheck(altBoard, 1, kingX, kingY)) return false;
+		if (isInCheck(altBoard, 1, kingX, kingY)) return nullptr;
 	}
 
 
-	// if we actually want to play this move, make changes
-	if (!test)
+	// checks valid; create Move object
+	Move* move = new Move;
+	move->isCapture = isCapturing;
+	move->isEP = isEP;
+	move->piece = piece;
+	move->newX = newXCoord;
+	move->newY = newYCoord;
+	move->oldX = oldXCoord;
+	move->oldY = oldYCoord;
+	if (move->isCapture)
 	{
-		// if pawn passes checks for two spaces
-		if ((piece->info & PAWN) == PAWN && abs(distMovedY) == 2) piece->enPassantable = true;
-		if (isCapturing)
-		{
-			// check if it's an en passant capture
-			if (isEP)
-			{
-				piecesOnBoard.erase(std::remove(piecesOnBoard.begin(), piecesOnBoard.end(), passantPiece), piecesOnBoard.end());
-			}
-			// remove piece from board vector normally
-			else
-			{
-				for (Piece* p : piecesOnBoard)
-				{
-					if (p->rect->x == newX && p->rect->y == newY && p != piece)
-					{
-						// use the combination of erase and remove to capture piece
-						piecesOnBoard.erase(std::remove(piecesOnBoard.begin(), piecesOnBoard.end(), p),piecesOnBoard.end());
-						//std::cout << "Piece removed!\n";
-						break;
-					}
-				}
-			}
-		}
-		// reset all previously enPassantable pieces
-		for (Piece* piece : piecesOnBoard)
-		{
-			// if it is white's turn
-			if (turn % 2 == 0 && (piece->info & BLACK) == BLACK)
-			{
-				piece->enPassantable = false;
-			}
-			// if it is black's turn
-			if (turn % 2 == 1 && (piece->info & WHITE) == WHITE)
-			{
-				piece->enPassantable = false;
-			}
-		}
-		// make sure rooks/kings can't castle after movement
-		piece->canCastle = false;
-
-		// if pawn move or capture, reset halfmove counter
-		if (isCapturing || (piece->info & PAWN) == PAWN) halfmoves = 0;
-		else halfmoves++;
-
-		// valid move confirmed, check for end-rank promotion in white
-		if ((piece->info & WHITE_PAWN) == WHITE_PAWN && newYCoord == 0)
-		{
-			isPromoting = true;
-			promotingPiece = piece;
-		}
-		// valid move confirmed, check for end-rank promotion in white
-		else if ((piece->info & BLACK_PAWN) == BLACK_PAWN && newYCoord == 7)
-		{
-			isPromoting = true;
-			promotingPiece = piece;
-		}
-	}
-
-	// passed the gauntlet!
-	return true;
-}
-
-void Game::makeMove(Piece* piece, Piece* passantPiece, int oldXCoord, int oldYCoord, int newXCoord, int newYCoord, bool isCapturing, bool isEP)
-{
-	// if pawn passes checks for two spaces
-	if ((piece->info & PAWN) == PAWN && abs(distMovedY) == 2) piece->enPassantable = true;
-	if (isCapturing)
-	{
-		// check if it's an en passant capture
-		if (isEP)
-		{
-			piecesOnBoard.erase(std::remove(piecesOnBoard.begin(), piecesOnBoard.end(), passantPiece), piecesOnBoard.end());
-		}
-		// remove piece from board vector normally
+		if (move->isEP) move->captured = passantPiece;
 		else
 		{
 			for (Piece* p : piecesOnBoard)
 			{
-				if (p->rect->x == newX && p->rect->y == newY && p != piece)
-				{
-					// use the combination of erase and remove to capture piece
-					piecesOnBoard.erase(std::remove(piecesOnBoard.begin(), piecesOnBoard.end(), p), piecesOnBoard.end());
-					//std::cout << "Piece removed!\n";
-					break;
-				}
+				if (p->rect->x == newX && p->rect->y == newY && p != piece) move->captured = p;
 			}
 		}
 	}
+	else move->captured = nullptr;
+
+	// passed the gauntlet!
+	return move;
+}
+
+/*
+	Function to execute a Move object and update game data
+*/
+void Game::makeMove(Move* move)
+{
+	int distMovedX = move->newX - move->oldX;
+	int distMovedY = move->newY - move->oldY;
+	// if pawn passes checks for two spaces
+	if ((move->piece->info & PAWN) == PAWN && abs(distMovedY) == 2) move->piece->enPassantable = true;
+	if (move->isCapture)
+	{
+		// use the combination of erase and remove to capture piece
+		piecesOnBoard.erase(std::remove(piecesOnBoard.begin(), piecesOnBoard.end(), move->captured), piecesOnBoard.end());
+		//std::cout << "Piece removed!\n";
+	}
+
 	// reset all previously enPassantable pieces
 	for (Piece* piece : piecesOnBoard)
 	{
@@ -1033,25 +987,42 @@ void Game::makeMove(Piece* piece, Piece* passantPiece, int oldXCoord, int oldYCo
 			piece->enPassantable = false;
 		}
 	}
+
 	// make sure rooks/kings can't castle after movement
-	piece->canCastle = false;
+	move->piece->canCastle = false;
 
 	// if pawn move or capture, reset halfmove counter
-	if (isCapturing || (piece->info & PAWN) == PAWN) halfmoves = 0;
+	if (move->isCapture || (move->piece->info & PAWN) == PAWN) halfmoves = 0;
 	else halfmoves++;
 
-	// valid move confirmed, check for end-rank promotion in white
-	if ((piece->info & WHITE_PAWN) == WHITE_PAWN && newYCoord == 0)
+	// check for end-rank promotion in white
+	if ((move->piece->info & WHITE_PAWN) == WHITE_PAWN && move->newY == 0)
 	{
 		isPromoting = true;
-		promotingPiece = piece;
+		promotingPiece = move->piece;
 	}
-	// valid move confirmed, check for end-rank promotion in white
-	else if ((piece->info & BLACK_PAWN) == BLACK_PAWN && newYCoord == 7)
+	// check for end-rank promotion in white
+	else if ((move->piece->info & BLACK_PAWN) == BLACK_PAWN && move->newY == 7)
 	{
 		isPromoting = true;
-		promotingPiece = piece;
+		promotingPiece = move->piece;
 	}
+
+	// if en passant, update board to reflect this
+	if (move->isEP) board[move->oldY][move->newX] = 0;
+
+	// update board and turn
+	board[move->newY][move->newX] = board[move->oldY][move->oldX];
+	board[move->oldY][move->oldX] = 0;
+	turn++;
+
+	// finaly, update fen and position data
+	std::string fen = getFEN();
+	fens.push_back(fen);
+	std::string pos = fen.substr(0, fen.find(" "));
+	if (positions.find(pos) == positions.end()) positions[pos] = 1;
+	else positions[pos]++;
+	std::cout << "FEN: " << fen << "\n";
 }
 
 /*
@@ -2172,4 +2143,5 @@ void Game::printBoard()
 		outStr += "]\n";
 		std::cout << outStr;
 	}
+	std::cout << '\n'; // extra newline for readability
 }

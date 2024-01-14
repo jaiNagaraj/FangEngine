@@ -329,7 +329,7 @@ void Window::dragPiece()
     int xMouse, yMouse;
     SDL_GetMouseState(&xMouse, &yMouse);
     std::string outStr((std::string("(") + std::to_string(xMouse) + std::string(", ") + std::to_string(yMouse) + std::string(")")));
-    std::cout << outStr << "  <-- where you clicked\n";
+    //std::cout << outStr << "  <-- where you clicked\n";
     for (Piece* piece : game.piecesOnBoard)
     {
         if ((xMouse >= piece->rect->x && xMouse < piece->rect->x + piece->rect->w) && (yMouse >= piece->rect->y && yMouse < piece->rect->y + piece->rect->h))
@@ -339,7 +339,7 @@ void Window::dragPiece()
             dragDY = yMouse - draggedPiece->rect->y;
             initX = draggedPiece->rect->x;
             initY = draggedPiece->rect->y;
-            std::cout << piece->rect->x << " " << piece->rect->y << " " << piece->rect->w << " " << piece->rect->h << '\n';
+            //std::cout << piece->rect->x << " " << piece->rect->y << " " << piece->rect->w << " " << piece->rect->h << '\n';
         }
     }
 }
@@ -354,15 +354,17 @@ int Window::dropPiece()
     if (y < 0) y = 0;
     
     int newX = x / 60 * 60, newY = y / 60 * 60;
-
-    if (game.validMove(draggedPiece, initX, initY, newX, newY))
+    Move* moveToMake = game.validMove(draggedPiece, initX, initY, newX, newY);
+    if (moveToMake)
     {
+        // execute the move
+        game.makeMove(moveToMake);
+
         // set the x and y coordinates to be multiples of 60 (this makes the piece snap to the grid)
         draggedPiece->rect->x = newX;
         draggedPiece->rect->y = newY;
-        game.board[newY / 60][newX / 60] = game.board[initY / 60][initX / 60];
-        game.board[initY / 60][initX / 60] = 0;
-        game.turn++;
+         
+
         // check for pawn promotion
         if (game.isPromoting)
         {
@@ -463,13 +465,6 @@ int Window::dropPiece()
         }
         game.printBoard();
         draggedPiece = nullptr; // drop the bass- i mean piece
-        // update fen
-        std::string fen = game.getFEN();
-        game.fens.push_back(fen);
-        std::string pos = fen.substr(0, fen.find(" "));
-        if (game.positions.find(pos) == game.positions.end()) game.positions[pos] = 1;
-        else game.positions[pos]++;
-        std::cout << "FEN: " << fen << "\n";
         return game.isCheckmate(game.turn); // check for checkmate!
     }
     else

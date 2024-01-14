@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include "Player.h"
 #include "Piece.h"
+#include "Move.h"
 class Game
 {
 	private:
@@ -19,9 +20,9 @@ class Game
 		Piece* promotingPiece = nullptr;
 
 		bool isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY);
-		bool validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool test = false);
+		Move* validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool test = false);
 		bool validCastle(Piece* piece, int initX, int initY, int kingX, int kingY);
-		void makeMove(Piece* piece, Piece* passantPiece, int oldXCoord, int oldYCoord, int newXCoord, int newYCoord, bool isCapturing, bool isEP);
+		void makeMove(Move* move);
 		int isCheckmate(int turn);
 		bool insufficientMaterial();
 		std::string getFEN();
