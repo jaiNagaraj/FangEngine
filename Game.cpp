@@ -558,7 +558,6 @@ Move* Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool
 							{
 								isEP = true;
 								passantPiece = p;
-								// board[oldYCoord][newXCoord] = 0; // gotta update bitboard too!
 								break;
 							}
 							else return nullptr;
@@ -953,6 +952,18 @@ Move* Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool
 	}
 	else move->captured = nullptr;
 
+	// check for end-rank promotion in white
+	if ((move->piece->info & WHITE_PAWN) == WHITE_PAWN && move->newY == 0)
+	{
+		move->isPromoting = true;
+	}
+	// check for end-rank promotion in white
+	else if ((move->piece->info & BLACK_PAWN) == BLACK_PAWN && move->newY == 7)
+	{
+		move->isPromoting = true;
+	}
+	else move->isPromoting = false;
+
 	// passed the gauntlet!
 	return move;
 }
@@ -964,8 +975,6 @@ void Game::makeMove(Move* move)
 {
 	int distMovedX = move->newX - move->oldX;
 	int distMovedY = move->newY - move->oldY;
-	// if pawn passes checks for two spaces
-	if ((move->piece->info & PAWN) == PAWN && abs(distMovedY) == 2) move->piece->enPassantable = true;
 	if (move->isCapture)
 	{
 		// use the combination of erase and remove to capture piece
@@ -974,42 +983,40 @@ void Game::makeMove(Move* move)
 	}
 
 	// reset all previously enPassantable pieces
-	for (Piece* piece : piecesOnBoard)
+	for (Piece* p : piecesOnBoard)
 	{
 		// if it is white's turn
-		if (turn % 2 == 0 && (piece->info & BLACK) == BLACK)
+		if (turn % 2 == 0 && (p->info & BLACK) == BLACK)
 		{
-			piece->enPassantable = false;
+			p->enPassantable = false;
 		}
 		// if it is black's turn
-		if (turn % 2 == 1 && (piece->info & WHITE) == WHITE)
+		if (turn % 2 == 1 && (p->info & WHITE) == WHITE)
 		{
-			piece->enPassantable = false;
+			p->enPassantable = false;
 		}
 	}
 
 	// make sure rooks/kings can't castle after movement
 	move->piece->canCastle = false;
+	
+	// if pawn passes checks for two spaces
+	if ((move->piece->info & PAWN) == PAWN && abs(distMovedY) == 2) move->piece->enPassantable = true;
 
 	// if pawn move or capture, reset halfmove counter
 	if (move->isCapture || (move->piece->info & PAWN) == PAWN) halfmoves = 0;
 	else halfmoves++;
 
-	// check for end-rank promotion in white
-	if ((move->piece->info & WHITE_PAWN) == WHITE_PAWN && move->newY == 0)
-	{
-		isPromoting = true;
-		promotingPiece = move->piece;
-	}
-	// check for end-rank promotion in white
-	else if ((move->piece->info & BLACK_PAWN) == BLACK_PAWN && move->newY == 7)
-	{
-		isPromoting = true;
-		promotingPiece = move->piece;
-	}
-
 	// if en passant, update board to reflect this
 	if (move->isEP) board[move->oldY][move->newX] = 0;
+
+	// if promotion
+	if (move->isPromoting)
+	{
+		// update board and piece info
+		move->piece->info = move->promoPiece;
+		board[move->oldY][move->oldX] = move->piece->info;
+	}
 
 	// update board and turn
 	board[move->newY][move->newX] = board[move->oldY][move->oldX];
@@ -1023,6 +1030,671 @@ void Game::makeMove(Move* move)
 	if (positions.find(pos) == positions.end()) positions[pos] = 1;
 	else positions[pos]++;
 	std::cout << "FEN: " << fen << "\n";
+}
+
+int Game::generateLegalMoves(std::vector<Move*> moves)
+{
+	if (turn % 2 == 0) // for white
+	{
+		for (Piece* p : piecesOnBoard)
+		{
+			Move* potentialMove;
+			if ((p->info & WHITE) == WHITE)
+			{
+				// go thru all pieces
+				/* PAWN MOVES */
+				if ((p->info & PAWN) == PAWN)
+				{
+					// one space up
+					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60)) * 60, ((p->rect->y / 60) - 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// two spaces up
+					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60)) * 60, ((p->rect->y / 60) - 2) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// capture left
+					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) - 1) * 60, ((p->rect->y / 60) - 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// capture right
+					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) + 1) * 60, ((p->rect->y / 60) - 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+				}
+
+				/* KNIGHT MOVES */
+				else if ((p->info & KNIGHT) == KNIGHT)
+				{
+					// up-left
+					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) - 1) * 60, ((p->rect->y / 60) - 2) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// up-right
+					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) + 1) * 60, ((p->rect->y / 60) - 2) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// down-left
+					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) - 1) * 60, ((p->rect->y / 60) + 2) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// down-right
+					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) + 1) * 60, ((p->rect->y / 60) + 2) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// left-up
+					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) - 2) * 60, ((p->rect->y / 60) - 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// left-down
+					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) - 2) * 60, ((p->rect->y / 60) + 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// right-up
+					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) + 2) * 60, ((p->rect->y / 60) - 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// right-down
+					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) + 2) * 60, ((p->rect->y / 60) + 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+				}
+
+				/* BISHOP MOVES */
+				else if ((p->info & BISHOP) == BISHOP)
+				{
+					int initX = p->rect->x / 60, initY = p->rect->y / 60;
+					int tmpX = initX, tmpY = initY;
+					// check up-left diagonal
+					while (tmpX >= 0 && tmpY >= 0)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpX--;
+						tmpY--;
+					}
+
+					tmpX = initX, tmpY = initY;
+					// check up-right diagonal
+					while (tmpX <= 7 && tmpY >= 0)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpX++;
+						tmpY--;
+					}
+
+					tmpX = initX, tmpY = initY;
+					// check down-left diagonal
+					while (tmpX >= 0 && tmpY <= 7)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpX--;
+						tmpY++;
+					}
+
+					tmpX = initX, tmpY = initY;
+					// check down-right diagonal
+					while (tmpX <= 7 && tmpY <= 7)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpX++;
+						tmpY++;
+					}
+				}
+
+				/* ROOK MOVES */
+				else if ((p->info & ROOK) == ROOK)
+				{
+					int initX = p->rect->x / 60, initY = p->rect->y / 60;
+					int tmpX = initX, tmpY = initY;
+					// check up
+					while (tmpY >= 0)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpY--;
+					}
+
+					tmpX = initX, tmpY = initY;
+					// check right
+					while (tmpX <= 7)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpX++;
+					}
+
+					tmpX = initX, tmpY = initY;
+					// check down
+					while (tmpY <= 7)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpY++;
+					}
+
+					tmpX = initX, tmpY = initY;
+					// check left
+					while (tmpX >= 0)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpX--;
+					}
+				}
+
+				/* QUEEN MOVES */
+				else if ((p->info & QUEEN) == QUEEN) // fix
+				{
+					// CHECK DIAGONALS
+
+					int initX = p->rect->x / 60, initY = p->rect->y / 60;
+					int tmpX = initX, tmpY = initY;
+					// check up-left diagonal
+					while (tmpX >= 0 && tmpY >= 0)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpX--;
+						tmpY--;
+					}
+
+					tmpX = initX, tmpY = initY;
+					// check up-right diagonal
+					while (tmpX <= 7 && tmpY >= 0)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpX++;
+						tmpY--;
+					}
+
+					tmpX = initX, tmpY = initY;
+					// check down-left diagonal
+					while (tmpX >= 0 && tmpY <= 7)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpX--;
+						tmpY++;
+					}
+
+					tmpX = initX, tmpY = initY;
+					// check down-right diagonal
+					while (tmpX <= 7 && tmpY <= 7)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpX++;
+						tmpY++;
+					}
+
+
+					// CHECK ADJACENCIES
+
+					tmpX = initX, tmpY = initY;
+					// check up
+					while (tmpY >= 0)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpY--;
+					}
+
+					tmpX = initX, tmpY = initY;
+					// check right
+					while (tmpX <= 7)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpX++;
+					}
+
+					tmpX = initX, tmpY = initY;
+					// check down
+					while (tmpY <= 7)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpY++;
+					}
+
+					tmpX = initX, tmpY = initY;
+					// check left
+					while (tmpX >= 0)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpX--;
+					}
+				}
+
+				/* KING MOVES */
+				else if ((p->info & KING) == KING)
+				{
+					int kingX = p->rect->x / 60, kingY = p->rect->y / 60;
+					// move up
+					if (potentialMove = validMove(p, kingX * 60, kingY * 60, kingX * 60, (kingY - 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// move up-left
+					if (potentialMove = validMove(p, kingX * 60, kingY * 60, (kingX - 1) * 60, (kingY - 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// move up-right
+					if (potentialMove = validMove(p, kingX * 60, kingY * 60, (kingX + 1) * 60, (kingY - 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// move down
+					if (potentialMove = validMove(p, kingX * 60, kingY * 60, kingX * 60, (kingY + 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// move down-left
+					if (potentialMove = validMove(p, kingX * 60, kingY * 60, (kingX - 1) * 60, (kingY + 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// move down-right
+					if (potentialMove = validMove(p, kingX * 60, kingY * 60, (kingX + 1) * 60, (kingY + 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// move left
+					if (potentialMove = validMove(p, kingX * 60, kingY * 60, (kingX - 1) * 60, kingY * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// move right
+					if (potentialMove = validMove(p, kingX * 60, kingY * 60, (kingX + 1) * 60, kingY * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+				}
+			}
+		}
+	}
+	else // for black
+	{
+		for (Piece* p : piecesOnBoard)
+		{
+			Move* potentialMove;
+			if ((p->info & BLACK) == BLACK)
+			{
+				// go thru all pieces
+				/* PAWN MOVES */
+				if ((p->info & PAWN) == PAWN)
+				{
+					// one space up
+					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60)) * 60, ((p->rect->y / 60) + 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// two spaces up
+					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60)) * 60, ((p->rect->y / 60) + 2) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// capture left
+					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) - 1) * 60, ((p->rect->y / 60) + 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// capture right
+					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) + 1) * 60, ((p->rect->y / 60) + 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+				}
+
+				/* KNIGHT MOVES */
+				else if ((p->info & KNIGHT) == KNIGHT)
+				{
+					// up-left
+					if (potentialMove =validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) - 1) * 60, ((p->rect->y / 60) - 2) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// up-right
+					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) + 1) * 60, ((p->rect->y / 60) - 2) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// down-left
+					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) - 1) * 60, ((p->rect->y / 60) + 2) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// down-right
+					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) + 1) * 60, ((p->rect->y / 60) + 2) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// left-up
+					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) - 2) * 60, ((p->rect->y / 60) - 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// left-down
+					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) - 2) * 60, ((p->rect->y / 60) + 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// right-up
+					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) + 2) * 60, ((p->rect->y / 60) - 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// right-down
+					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) + 2) * 60, ((p->rect->y / 60) + 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+				}
+
+				/* BISHOP MOVES */
+				else if ((p->info & BISHOP) == BISHOP)
+				{
+					int initX = p->rect->x / 60, initY = p->rect->y / 60;
+					int tmpX = initX, tmpY = initY;
+					// check up-left diagonal
+					while (tmpX >= 0 && tmpY >= 0)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpX--;
+						tmpY--;
+					}
+
+					tmpX = initX, tmpY = initY;
+					// check up-right diagonal
+					while (tmpX <= 7 && tmpY >= 0)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpX++;
+						tmpY--;
+					}
+
+					tmpX = initX, tmpY = initY;
+					// check down-left diagonal
+					while (tmpX >= 0 && tmpY <= 7)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpX--;
+						tmpY++;
+					}
+
+					tmpX = initX, tmpY = initY;
+					// check down-right diagonal
+					while (tmpX <= 7 && tmpY <= 7)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpX++;
+						tmpY++;
+					}
+				}
+
+				/* ROOK MOVES */
+				else if ((p->info & ROOK) == ROOK)
+				{
+					int initX = p->rect->x / 60, initY = p->rect->y / 60;
+					int tmpX = initX, tmpY = initY;
+					// check up
+					while (tmpY >= 0)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpY--;
+					}
+
+					tmpX = initX, tmpY = initY;
+					// check right
+					while (tmpX <= 7)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpX++;
+					}
+
+					tmpX = initX, tmpY = initY;
+					// check down
+					while (tmpY <= 7)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpY++;
+					}
+
+					tmpX = initX, tmpY = initY;
+					// check left
+					while (tmpX >= 0)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpX--;
+					}
+				}
+
+				/* QUEEN MOVES */
+				else if ((p->info & QUEEN) == QUEEN) // fix
+				{
+					// CHECK DIAGONALS
+
+					int initX = p->rect->x / 60, initY = p->rect->y / 60;
+					int tmpX = initX, tmpY = initY;
+					// check up-left diagonal
+					while (tmpX >= 0 && tmpY >= 0)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpX--;
+						tmpY--;
+					}
+
+					tmpX = initX, tmpY = initY;
+					// check up-right diagonal
+					while (tmpX <= 7 && tmpY >= 0)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpX++;
+						tmpY--;
+					}
+
+					tmpX = initX, tmpY = initY;
+					// check down-left diagonal
+					while (tmpX >= 0 && tmpY <= 7)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpX--;
+						tmpY++;
+					}
+
+					tmpX = initX, tmpY = initY;
+					// check down-right diagonal
+					while (tmpX <= 7 && tmpY <= 7)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpX++;
+						tmpY++;
+					}
+
+					// CHECK ADJACENCIES
+
+					tmpX = initX, tmpY = initY;
+					// check up
+					while (tmpY >= 0)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpY--;
+					}
+
+					tmpX = initX, tmpY = initY;
+					// check right
+					while (tmpX <= 7)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpX++;
+					}
+
+					tmpX = initX, tmpY = initY;
+					// check down
+					while (tmpY <= 7)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpY++;
+					}
+
+					tmpX = initX, tmpY = initY;
+					// check left
+					while (tmpX >= 0)
+					{
+						if (potentialMove = validMove(p, initX * 60, initY * 60, tmpX * 60, tmpY * 60, true))
+						{
+							moves.push_back(potentialMove);
+						}
+						tmpX--;
+					}
+				}
+
+				/* KING MOVES */
+				else if ((p->info & KING) == KING)
+				{
+					int kingX = p->rect->x / 60, kingY = p->rect->y / 60;
+					// move up
+					if (potentialMove = validMove(p, kingX * 60, kingY * 60, kingX * 60, (kingY - 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// move up-left
+					if (potentialMove = validMove(p, kingX * 60, kingY * 60, (kingX - 1) * 60, (kingY - 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// move up-right
+					if (potentialMove = validMove(p, kingX * 60, kingY * 60, (kingX + 1) * 60, (kingY - 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// move down
+					if (potentialMove = validMove(p, kingX * 60, kingY * 60, kingX * 60, (kingY + 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// move down-left
+					if (potentialMove = validMove(p, kingX * 60, kingY * 60, (kingX - 1) * 60, (kingY + 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// move down-right
+					if (potentialMove = validMove(p, kingX * 60, kingY * 60, (kingX + 1) * 60, (kingY + 1) * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// move left
+					if (potentialMove = validMove(p, kingX * 60, kingY * 60, (kingX - 1) * 60, kingY * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// move right
+					if (potentialMove = validMove(p, kingX * 60, kingY * 60, (kingX + 1) * 60, kingY * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+				}
+			}
+		}
+	}
+
+	return moves.size();
 }
 
 /*
@@ -2103,20 +2775,24 @@ std::string Game::getFEN()
 
 	// get en passant square
 	bool noPassant = true;
+	int passantCount = 0;
 	std::string passantStr = "";
 	for (Piece* p : piecesOnBoard)
 	{
 		if (p->enPassantable)
 		{
-			noPassant = false;
-			// get chess board coordinates
-			int xCoord = p->rect->x / 60, yCoord = 8 - (p->rect->y / 60);
-			// adjust yCoord for passant sqaure based on color
-			if ((p->info & WHITE) == WHITE) yCoord--;
-			else yCoord++;
-			char fileLetter = xCoord + 97;
-			passantStr = fileLetter + std::to_string(yCoord) + " ";
-			break;
+			if (noPassant)
+			{
+				noPassant = false;
+				// get chess board coordinates
+				int xCoord = p->rect->x / 60, yCoord = 8 - (p->rect->y / 60);
+				// adjust yCoord for passant sqaure based on color
+				if ((p->info & WHITE) == WHITE) yCoord--;
+				else yCoord++;
+				char fileLetter = xCoord + 97;
+				passantStr = fileLetter + std::to_string(yCoord) + " ";
+				break;
+			}
 		}
 	}
 	if (noPassant) passantStr = "- ";

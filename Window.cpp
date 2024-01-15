@@ -61,12 +61,19 @@ void Window::init()
     makePiece(5, 7, BLACK_BISHOP);
     makePiece(6, 7, BLACK_KNIGHT);
     makePiece(7, 7, BLACK_ROOK, 1);
+
+    // FEN and position initialization
     std::string fen = game.getFEN();
     game.fens.push_back(fen);
     std::string pos = fen.substr(0, fen.find(" "));
     if (game.positions.find(pos) == game.positions.end()) game.positions[pos] = 1;
     else game.positions[pos]++;
     std::cout << "FEN: " << fen << "\n";
+    // Move list initialization
+    //std::vector<Move*> moveList;
+    //std::cout << "Legal Moves: " << game.generateLegalMoves(moveList) << '\n';
+    // Print game to start
+    game.printBoard();
 
     SDL_UpdateWindowSurface(window);
 
@@ -357,16 +364,13 @@ int Window::dropPiece()
     Move* moveToMake = game.validMove(draggedPiece, initX, initY, newX, newY);
     if (moveToMake)
     {
-        // execute the move
-        game.makeMove(moveToMake);
-
         // set the x and y coordinates to be multiples of 60 (this makes the piece snap to the grid)
         draggedPiece->rect->x = newX;
         draggedPiece->rect->y = newY;
          
 
         // check for pawn promotion
-        if (game.isPromoting)
+        if (moveToMake->isPromoting)
         {
             // form graphic for promotion!
             // first, a white background
@@ -428,7 +432,7 @@ int Window::dropPiece()
                 // check if we clicked
                 if (SDL_PollEvent(&event) > 0 && event.type == SDL_MOUSEBUTTONUP)
                 {
-                    uint8_t infoChange = draggedPiece->info; // set the same for now, changes if we chose an option
+                    uint8_t infoChange; // changes if we chose an option
                     SDL_Point clickPoint; // mouse location
                     SDL_GetMouseState(&clickPoint.x, &clickPoint.y); // get mouse location
                     bool clicked = true;
@@ -450,19 +454,24 @@ int Window::dropPiece()
                         else if (SDL_PointInRect(&clickPoint, qRect)) infoChange = BLACK_QUEEN;
                         else clicked = false; // nothing selected
                     }
-                    draggedPiece->info = infoChange;
 
                     if (clicked) // we chose a piece!
                     {
+                        moveToMake->promoPiece = infoChange;
                         // update the game and board to reflect this
-                        game.board[newY / 60][newX / 60] = draggedPiece->info;
-                        game.isPromoting = false;
+                        //game.board[newY / 60][newX / 60] = draggedPiece->info;
                         loop = false;
                     }
                 }
             }
 
         }
+
+        // execute the move
+        game.makeMove(moveToMake);
+
+        //std::vector<Move*> moveList;
+        //std::cout << "Legal Moves: " << game.generateLegalMoves(moveList) << '\n';
         game.printBoard();
         draggedPiece = nullptr; // drop the bass- i mean piece
         return game.isCheckmate(game.turn); // check for checkmate!

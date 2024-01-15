@@ -9,6 +9,8 @@ class Move
 		Piece* captured; // the piece captured
 		bool isCapture;
 		bool isEP; // en passant capture
+		bool isPromoting;
+		uint8_t promoPiece;
 		int oldX;
 		int oldY;
 		int newX;

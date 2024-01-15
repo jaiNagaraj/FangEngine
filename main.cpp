@@ -1,5 +1,5 @@
-#include <iostream>
 #define SDL_MAIN_HANDLED
+#include <iostream>
 #include <SDL.h>
 #include <Windows.h>
 #include <string>
