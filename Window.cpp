@@ -41,8 +41,8 @@ void Window::init()
 
 
     // Make pawns
-    for (int i = 0; i < 8; i++) game.makePiece(i, 1, WHITE_PAWN);
-    for (int i = 0; i < 8; i++) game.makePiece(i, 6, BLACK_PAWN);
+    for (int i = 0; i < 8; i++) game.makePiece(i, 6, WHITE_PAWN);
+    for (int i = 0; i < 8; i++) game.makePiece(i, 1, BLACK_PAWN);
     // Make rest of white
     game.makePiece(0, 7, WHITE_ROOK, 0); // queenside rook
     game.makePiece(1, 7, WHITE_KNIGHT);
