@@ -5,6 +5,23 @@
 #include <string>
 typedef unsigned long long ull;
 
+Piece* Game::makePiece(int x, int y, uint8_t info, int side)
+{
+	// add to game board
+	board[7 - y][x] = info;
+	// set up graphic rect
+	SDL_Rect* dstRect = new SDL_Rect;
+	dstRect->x = x * 60;
+	dstRect->y = (7 - y) * 60;
+	dstRect->w = 60;
+	dstRect->h = 60;
+	std::cout << "Piece stats: " << dstRect->x << " " << dstRect->y << " " << dstRect->w << " " << dstRect->h << '\n';
+	// make piece, add it to board!
+	Piece* tmp = new Piece(dstRect, info, side);
+	piecesOnBoard.push_back(tmp);
+	return tmp;
+}
+
 bool Game::isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY)
 {
 	// White's turn, check white king
@@ -514,6 +531,7 @@ Move* Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool
 
 	bool isCapturing = false;
 	bool isEP = false;
+	bool isCastling = false;
 	Piece* passantPiece = nullptr;
 
 	// first, is the move on the board?
@@ -800,68 +818,7 @@ Move* Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool
 		// if king wants to castle
 		if (abs(distMovedX) == 2 && distMovedY == 0)
 		{
-			if (validCastle(piece, oldXCoord, oldYCoord, newXCoord, newYCoord))
-			{
-				// preemptively move rook to correct spot
-				if ((piece->info & WHITE) == WHITE) // for white
-				{
-					if (newXCoord < oldXCoord) // queenside castle
-					{
-						for (Piece* p : piecesOnBoard)
-						{
-							// if we found the left rook
-							if ((p->info & WHITE_ROOK) == WHITE_ROOK && p->rect->x == 0)
-							{
-								p->rect->x = (newXCoord + 1) * 60; // move to the right of the king
-								board[newYCoord][newXCoord + 1] = board[7][0];
-								board[7][0] = 0;
-							}
-						}
-					}
-					else // kingside castle
-					{
-						for (Piece* p : piecesOnBoard)
-						{
-							// if we found the right rook
-							if ((p->info & WHITE_ROOK) == WHITE_ROOK && p->rect->x == 420)
-							{
-								p->rect->x = (newXCoord - 1) * 60; // move to the left of the king
-								board[newYCoord][newXCoord - 1] = board[7][7];
-								board[7][7] = 0;
-							}
-						}
-					}
-				}
-				else // for black
-				{
-					if (newXCoord < oldXCoord) // queenside castle
-					{
-						for (Piece* p : piecesOnBoard)
-						{
-							// if we found the left rook
-							if ((p->info & BLACK_ROOK) == BLACK_ROOK && p->rect->x == 0)
-							{
-								p->rect->x = (newXCoord + 1) * 60; // move to the right of the king
-								board[newYCoord][newXCoord + 1] = board[0][0];
-								board[0][0] = 0;
-							}
-						}
-					}
-					else // kingside castle
-					{
-						for (Piece* p : piecesOnBoard)
-						{
-							// if we found the right rook
-							if ((p->info & BLACK_ROOK) == BLACK_ROOK && p->rect->x == 420)
-							{
-								p->rect->x = (newXCoord - 1) * 60; // move to the left of the king
-								board[newYCoord][newXCoord - 1] = board[0][7];
-								board[0][7] = 0;
-							}
-						}
-					}
-				}
-			}
+			if (validCastle(piece, oldXCoord, oldYCoord, newXCoord, newYCoord)) isCastling = true;
 			else return nullptr;
 		}
 		// if the king moves illegally (more than a square)
@@ -934,11 +891,32 @@ Move* Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool
 	Move* move = new Move;
 	move->isCapture = isCapturing;
 	move->isEP = isEP;
+	move->isCastle = isCastling;
 	move->piece = piece;
+
 	move->newX = newXCoord;
 	move->newY = newYCoord;
 	move->oldX = oldXCoord;
 	move->oldY = oldYCoord;
+
+	// check for loss of castle
+	if ((piece->info & ROOK) == ROOK || (piece->info & KING) == KING && !isCastling) move->lossOfCastle = true;
+	else move->lossOfCastle = false;
+
+	// check for loss of en passant
+	bool noLoss = true;
+	for (Piece* p : piecesOnBoard)
+	{
+		if (p->enPassantable)
+		{
+			move->lossOfEP = true;
+			noLoss = false;
+			break;
+		}
+	}
+	if (noLoss) move->lossOfEP = false;
+
+	// define capture state
 	if (move->isCapture)
 	{
 		if (move->isEP) move->captured = passantPiece;
@@ -957,7 +935,7 @@ Move* Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool
 	{
 		move->isPromoting = true;
 	}
-	// check for end-rank promotion in white
+	// check for end-rank promotion in black
 	else if ((move->piece->info & BLACK_PAWN) == BLACK_PAWN && move->newY == 7)
 	{
 		move->isPromoting = true;
@@ -980,6 +958,77 @@ void Game::makeMove(Move* move)
 		// use the combination of erase and remove to capture piece
 		piecesOnBoard.erase(std::remove(piecesOnBoard.begin(), piecesOnBoard.end(), move->captured), piecesOnBoard.end());
 		//std::cout << "Piece removed!\n";
+	}
+
+	if (move->isCastle)
+	{
+		// preemptively move rook to correct spot
+		if ((move->piece->info & WHITE) == WHITE) // for white
+		{
+			if (move->newX < move->oldX) // queenside castle
+			{
+				for (Piece* p : piecesOnBoard)
+				{
+					// if we found the left rook
+					if ((p->info & WHITE_ROOK) == WHITE_ROOK && p->rookSide == 0)
+					{
+						p->rect->x = (move->newX + 1) * 60; // move to the right of the king
+						board[move->newY][move->newX + 1] = board[7][0];
+						board[7][0] = 0;
+						p->canCastle = false; // revoke castling rights
+						break;
+					}
+				}
+			}
+			else // kingside castle
+			{
+				for (Piece* p : piecesOnBoard)
+				{
+					// if we found the right rook
+					if ((p->info & WHITE_ROOK) == WHITE_ROOK && p->rookSide == 1)
+					{
+						p->rect->x = (move->newX - 1) * 60; // move to the left of the king
+						board[move->newY][move->newX - 1] = board[7][7];
+						board[7][7] = 0;
+						p->canCastle = false; // revoke castling rights
+						break;
+					}
+				}
+			}
+		}
+		else // for black
+		{
+			if (move->newX < move->oldX) // queenside castle
+			{
+				for (Piece* p : piecesOnBoard)
+				{
+					// if we found the left rook
+					if ((p->info & BLACK_ROOK) == BLACK_ROOK && p->rookSide == 0)
+					{
+						p->rect->x = (move->newX + 1) * 60; // move to the right of the king
+						board[move->newY][move->newX + 1] = board[0][0];
+						board[0][0] = 0;
+						p->canCastle = false; // revoke castling rights
+						break;
+					}
+				}
+			}
+			else // kingside castle
+			{
+				for (Piece* p : piecesOnBoard)
+				{
+					// if we found the right rook
+					if ((p->info & BLACK_ROOK) == BLACK_ROOK && p->rookSide == 1)
+					{
+						p->rect->x = (move->newX - 1) * 60; // move to the left of the king
+						board[move->newY][move->newX - 1] = board[0][7];
+						board[0][7] = 0;
+						p->canCastle = false; // revoke castling rights
+						break;
+					}
+				}
+			}
+		}
 	}
 
 	// reset all previously enPassantable pieces
@@ -1030,6 +1079,11 @@ void Game::makeMove(Move* move)
 	if (positions.find(pos) == positions.end()) positions[pos] = 1;
 	else positions[pos]++;
 	std::cout << "FEN: " << fen << "\n";
+}
+
+void Game::unmakeMove(Move* move)
+{
+	;
 }
 
 int Game::generateLegalMoves(std::vector<Move*> moves)

@@ -7,10 +7,15 @@ class Move
 	public:
 		Piece* piece; // the piece that's moving
 		Piece* captured; // the piece captured
+		bool isPromoting;
 		bool isCapture;
 		bool isEP; // en passant capture
-		bool isPromoting;
-		uint8_t promoPiece;
+		bool isCastle;
+		bool lossOfEP;
+		bool lossOfCastle;
+		uint8_t promoPiece; // the piece being promoted to
+
+		// the old and new move coordinates
 		int oldX;
 		int oldY;
 		int newX;

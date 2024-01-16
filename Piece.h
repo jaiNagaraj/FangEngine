@@ -37,7 +37,7 @@ class Piece
 		uint8_t info;
 		bool enPassantable;
 		bool canCastle;
-		int rookSide = -1; // 0 for king, 1 for queen, -1 otherwise
+		int rookSide = -1; // 0 for queen, 1 for king, -1 otherwise
 		Piece();
 		Piece(SDL_Rect*, uint8_t, int);
 		~Piece();

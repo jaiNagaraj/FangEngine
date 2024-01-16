@@ -41,26 +41,26 @@ void Window::init()
 
 
     // Make pawns
-    for (int i = 0; i < 8; i++) makePiece(i, 1, WHITE_PAWN);
-    for (int i = 0; i < 8; i++) makePiece(i, 6, BLACK_PAWN);
+    for (int i = 0; i < 8; i++) game.makePiece(i, 1, WHITE_PAWN);
+    for (int i = 0; i < 8; i++) game.makePiece(i, 6, BLACK_PAWN);
     // Make rest of white
-    makePiece(0, 0, WHITE_ROOK, 0);
-    makePiece(1, 0, WHITE_KNIGHT);
-    makePiece(2, 0, WHITE_BISHOP);
-    makePiece(3, 0, WHITE_QUEEN);
-    makePiece(4, 0, WHITE_KING);
-    makePiece(5, 0, WHITE_BISHOP);
-    makePiece(6, 0, WHITE_KNIGHT);
-    makePiece(7, 0, WHITE_ROOK, 1);
+    game.makePiece(0, 0, WHITE_ROOK, 0); // queenside rook
+    game.makePiece(1, 0, WHITE_KNIGHT);
+    game.makePiece(2, 0, WHITE_BISHOP);
+    game.makePiece(3, 0, WHITE_QUEEN);
+    game.makePiece(4, 0, WHITE_KING);
+    game.makePiece(5, 0, WHITE_BISHOP);
+    game.makePiece(6, 0, WHITE_KNIGHT);
+    game.makePiece(7, 0, WHITE_ROOK, 1); // kingside rook
     // Make rest of black
-    makePiece(0, 7, BLACK_ROOK, 0);
-    makePiece(1, 7, BLACK_KNIGHT);
-    makePiece(2, 7, BLACK_BISHOP);
-    makePiece(3, 7, BLACK_QUEEN);
-    makePiece(4, 7, BLACK_KING);
-    makePiece(5, 7, BLACK_BISHOP);
-    makePiece(6, 7, BLACK_KNIGHT);
-    makePiece(7, 7, BLACK_ROOK, 1);
+    game.makePiece(0, 7, BLACK_ROOK, 0); // queenside rook
+    game.makePiece(1, 7, BLACK_KNIGHT);
+    game.makePiece(2, 7, BLACK_BISHOP);
+    game.makePiece(3, 7, BLACK_QUEEN);
+    game.makePiece(4, 7, BLACK_KING);
+    game.makePiece(5, 7, BLACK_BISHOP);
+    game.makePiece(6, 7, BLACK_KNIGHT);
+    game.makePiece(7, 7, BLACK_ROOK, 1); // kingside rook
 
     // FEN and position initialization
     std::string fen = game.getFEN();
@@ -312,23 +312,6 @@ void Window::refresh()
                 break;
         }
     }
-}
-
-Piece* Window::makePiece(int x, int y, uint8_t info, int side)
-{
-    // ad to game board
-    game.board[7-y][x] = info;
-    // set up graphic rect
-    SDL_Rect* dstRect = new SDL_Rect;
-    dstRect->x = x*60;
-    dstRect->y = (7-y)*60;
-    dstRect->w = PIECE_WIDTH;
-    dstRect->h = PIECE_HEIGHT;
-    std::cout << "Piece stats: " << dstRect->x << " " << dstRect->y << " " << dstRect->w << " " << dstRect->h << '\n';
-    // make piece, add it to board!
-    Piece* tmp = new Piece(dstRect, info, side);
-    game.piecesOnBoard.push_back(tmp);
-    return tmp;
 }
 
 void Window::dragPiece()
