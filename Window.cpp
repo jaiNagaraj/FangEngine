@@ -44,23 +44,23 @@ void Window::init()
     for (int i = 0; i < 8; i++) game.makePiece(i, 1, WHITE_PAWN);
     for (int i = 0; i < 8; i++) game.makePiece(i, 6, BLACK_PAWN);
     // Make rest of white
-    game.makePiece(0, 0, WHITE_ROOK, 0); // queenside rook
-    game.makePiece(1, 0, WHITE_KNIGHT);
-    game.makePiece(2, 0, WHITE_BISHOP);
-    game.makePiece(3, 0, WHITE_QUEEN);
-    game.makePiece(4, 0, WHITE_KING);
-    game.makePiece(5, 0, WHITE_BISHOP);
-    game.makePiece(6, 0, WHITE_KNIGHT);
-    game.makePiece(7, 0, WHITE_ROOK, 1); // kingside rook
+    game.makePiece(0, 7, WHITE_ROOK, 0); // queenside rook
+    game.makePiece(1, 7, WHITE_KNIGHT);
+    game.makePiece(2, 7, WHITE_BISHOP);
+    game.makePiece(3, 7, WHITE_QUEEN);
+    game.makePiece(4, 7, WHITE_KING);
+    game.makePiece(5, 7, WHITE_BISHOP);
+    game.makePiece(6, 7, WHITE_KNIGHT);
+    game.makePiece(7, 7, WHITE_ROOK, 1); // kingside rook
     // Make rest of black
-    game.makePiece(0, 7, BLACK_ROOK, 0); // queenside rook
-    game.makePiece(1, 7, BLACK_KNIGHT);
-    game.makePiece(2, 7, BLACK_BISHOP);
-    game.makePiece(3, 7, BLACK_QUEEN);
-    game.makePiece(4, 7, BLACK_KING);
-    game.makePiece(5, 7, BLACK_BISHOP);
-    game.makePiece(6, 7, BLACK_KNIGHT);
-    game.makePiece(7, 7, BLACK_ROOK, 1); // kingside rook
+    game.makePiece(0, 0, BLACK_ROOK, 0); // queenside rook
+    game.makePiece(1, 0, BLACK_KNIGHT);
+    game.makePiece(2, 0, BLACK_BISHOP);
+    game.makePiece(3, 0, BLACK_QUEEN);
+    game.makePiece(4, 0, BLACK_KING);
+    game.makePiece(5, 0, BLACK_BISHOP);
+    game.makePiece(6, 0, BLACK_KNIGHT);
+    game.makePiece(7, 0, BLACK_ROOK, 1); // kingside rook
 
     // FEN and position initialization
     std::string fen = game.getFEN();

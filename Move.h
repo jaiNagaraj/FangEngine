@@ -11,9 +11,11 @@ class Move
 		bool isCapture;
 		bool isEP; // en passant capture
 		bool isCastle;
-		bool lossOfEP;
 		bool lossOfCastle;
+		bool lossOfEP;
+		Piece* lostEP; // piece that lost en passant
 		uint8_t promoPiece; // the piece being promoted to
+		int oldHalfmoves;
 
 		// the old and new move coordinates
 		int oldX;

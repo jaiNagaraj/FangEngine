@@ -8,11 +8,11 @@ typedef unsigned long long ull;
 Piece* Game::makePiece(int x, int y, uint8_t info, int side)
 {
 	// add to game board
-	board[7 - y][x] = info;
+	board[y][x] = info;
 	// set up graphic rect
 	SDL_Rect* dstRect = new SDL_Rect;
 	dstRect->x = x * 60;
-	dstRect->y = (7 - y) * 60;
+	dstRect->y = y * 60;
 	dstRect->w = 60;
 	dstRect->h = 60;
 	std::cout << "Piece stats: " << dstRect->x << " " << dstRect->y << " " << dstRect->w << " " << dstRect->h << '\n';
@@ -652,8 +652,6 @@ Move* Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool
 			if (oldYCoord != 1) return nullptr;
 			// if something is blocking the pawn
 			else if (board[newYCoord][newXCoord] != 0b00000000 || board[newYCoord - 1][newXCoord] != 0b00000000) return nullptr;
-			// passes checks; make it vulnerable to en passant
-			else piece->enPassantable = true;
 		}
 	}
 
@@ -893,6 +891,7 @@ Move* Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool
 	move->isEP = isEP;
 	move->isCastle = isCastling;
 	move->piece = piece;
+	move->oldHalfmoves = halfmoves;
 
 	move->newX = newXCoord;
 	move->newY = newYCoord;
@@ -910,11 +909,16 @@ Move* Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool
 		if (p->enPassantable)
 		{
 			move->lossOfEP = true;
+			move->lostEP = p;
 			noLoss = false;
 			break;
 		}
 	}
-	if (noLoss) move->lossOfEP = false;
+	if (noLoss)
+	{
+		move->lossOfEP = false;
+		move->lostEP = nullptr;
+	}
 
 	// define capture state
 	if (move->isCapture)
@@ -956,7 +960,9 @@ void Game::makeMove(Move* move)
 	if (move->isCapture)
 	{
 		// use the combination of erase and remove to capture piece
-		piecesOnBoard.erase(std::remove(piecesOnBoard.begin(), piecesOnBoard.end(), move->captured), piecesOnBoard.end());
+		std::vector<Piece*>::iterator it = std::find(piecesOnBoard.begin(), piecesOnBoard.end(), move->captured);
+		if (it != piecesOnBoard.end()) piecesOnBoard.erase(it);
+		else std::cout << "Error: Could not capture piece!!!\n";
 		//std::cout << "Piece removed!\n";
 	}
 
@@ -1083,7 +1089,125 @@ void Game::makeMove(Move* move)
 
 void Game::unmakeMove(Move* move)
 {
-	;
+	int distMovedX = move->newX - move->oldX;
+	int distMovedY = move->newY - move->oldY;
+	if (move->isCapture)
+	{
+		// Add the captured piece back
+		piecesOnBoard.push_back(move->captured);
+	}
+
+	if (move->isCastle)
+	{
+		// preemptively move rook back
+		if ((move->piece->info & WHITE) == WHITE) // for white
+		{
+			if (move->newX < move->oldX) // queenside castle
+			{
+				for (Piece* p : piecesOnBoard)
+				{
+					// if we found the left rook
+					if ((p->info & WHITE_ROOK) == WHITE_ROOK && p->rookSide == 0)
+					{
+						p->rect->x = 0; // move back to the left-most square
+						board[7][0] = board[move->newY][move->newX + 1];
+						board[move->newY][move->newX + 1] = 0;
+						p->canCastle = true; // bestow castling rights back
+						break;
+					}
+				}
+			}
+			else // kingside castle
+			{
+				for (Piece* p : piecesOnBoard)
+				{
+					// if we found the right rook
+					if ((p->info & WHITE_ROOK) == WHITE_ROOK && p->rookSide == 1)
+					{
+						p->rect->x = 7 * 60; // move back to the right-most square
+						board[7][7] = board[move->newY][move->newX - 1];
+						board[move->newY][move->newX + 1] = 0;
+						p->canCastle = true; // bestow castling rights back
+						break;
+					}
+				}
+			}
+		}
+		else // for black
+		{
+			if (move->newX < move->oldX) // queenside castle
+			{
+				for (Piece* p : piecesOnBoard)
+				{
+					// if we found the left rook
+					if ((p->info & BLACK_ROOK) == BLACK_ROOK && p->rookSide == 0)
+					{
+						p->rect->x = 0; // move back to the left-most square
+						board[0][0] = board[move->newY][move->newX + 1];
+						board[move->newY][move->newX + 1] = 0;
+						p->canCastle = true; // bestow castling rights back
+						break;
+					}
+				}
+			}
+			else // kingside castle
+			{
+				for (Piece* p : piecesOnBoard)
+				{
+					// if we found the right rook
+					if ((p->info & BLACK_ROOK) == BLACK_ROOK && p->rookSide == 1)
+					{
+						p->rect->x = 7 * 60; // move back to the right-most square
+						board[0][7] = board[move->newY][move->newX - 1];
+						board[move->newY][move->newX - 1] = 0;
+						p->canCastle = true; // bestow castling rights back
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	// reset all previously enPassantable pieces
+	if (move->lossOfEP)
+	{
+		move->lostEP->enPassantable = true;
+	}
+
+	// bestow castling rights if applicable
+	if (move->lossOfCastle) move->piece->canCastle = true;
+
+	// if the piece was pawn that moved two spaces, un-passant it
+	if ((move->piece->info & PAWN) == PAWN && abs(distMovedY) == 2) move->piece->enPassantable = false;
+
+	// if pawn move or capture, reinstate halfmove counter
+	if (move->isCapture || (move->piece->info & PAWN) == PAWN) halfmoves = move->oldHalfmoves;
+	else halfmoves--;
+
+	// if en passant, put passanted pawn back on board
+	if (move->isEP) board[move->oldY][move->newX] = move->captured->info;
+
+	// if promotion, unpromote
+	if (move->isPromoting)
+	{
+		// update board and piece info
+		if ((turn - 1) % 2 == 0) move->piece->info = WHITE_PAWN;
+		else move->piece->info = BLACK_PAWN;
+		board[move->newY][move->newX] = move->piece->info;
+	}
+
+	// update board and turn
+	board[move->oldY][move->oldX] = board[move->newY][move->newX];
+	if (move->isCapture) board[move->newY][move->newX] = move->captured->info;
+	else board[move->newY][move->newX] = 0;
+	turn--;
+
+	// finaly, delete fen and position data
+	std::string fen = getFEN();
+	fens.pop_back(); // assuming we unmake right after we make...
+	std::string pos = fen.substr(0, fen.find(" "));
+	positions[pos]--; // the position should already exist, so just decrease counter
+	//std::cout << "FEN: " << fen << "\n";
 }
 
 int Game::generateLegalMoves(std::vector<Move*> moves)
