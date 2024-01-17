@@ -24,5 +24,7 @@ class Move
 		int newY;
 
 		Move();
-		Move(Piece* p, Piece* cap, bool isCap, bool ispassant, int oldx, int oldy, int newx, int newy);
+		Move(Piece* p, Piece* cap, bool isPromo, bool isCap, bool ispassant, bool isCas, bool lossCas,
+			bool lossPass, Piece* lostPass, uint8_t proPiece, int oldHalves, int oldx, int oldy, int newx, int newy);
+		Move* cloneMove();
 };

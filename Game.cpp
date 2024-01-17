@@ -1168,7 +1168,7 @@ void Game::unmakeMove(Move* move)
 		}
 	}
 
-	// reset all previously enPassantable pieces
+	// reset previously enPassantable piece
 	if (move->lossOfEP)
 	{
 		move->lostEP->enPassantable = true;
@@ -1180,9 +1180,8 @@ void Game::unmakeMove(Move* move)
 	// if the piece was pawn that moved two spaces, un-passant it
 	if ((move->piece->info & PAWN) == PAWN && abs(distMovedY) == 2) move->piece->enPassantable = false;
 
-	// if pawn move or capture, reinstate halfmove counter
-	if (move->isCapture || (move->piece->info & PAWN) == PAWN) halfmoves = move->oldHalfmoves;
-	else halfmoves--;
+	// reinstate halfmove counter
+	halfmoves = move->oldHalfmoves;
 
 	// if en passant, put passanted pawn back on board
 	if (move->isEP) board[move->oldY][move->newX] = move->captured->info;
@@ -1210,7 +1209,7 @@ void Game::unmakeMove(Move* move)
 	//std::cout << "FEN: " << fen << "\n";
 }
 
-int Game::generateLegalMoves(std::vector<Move*> moves)
+ull Game::generateLegalMoves(std::vector<Move*>& moves)
 {
 	if (turn % 2 == 0) // for white
 	{
@@ -1226,7 +1225,27 @@ int Game::generateLegalMoves(std::vector<Move*> moves)
 					// one space up
 					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60)) * 60, ((p->rect->y / 60) - 1) * 60, true))
 					{
-						moves.push_back(potentialMove);
+						// check promotion
+						if (potentialMove->isPromoting)
+						{
+							// make knight promotion
+							potentialMove = potentialMove->cloneMove();
+							potentialMove->promoPiece = WHITE_KNIGHT;
+							moves.push_back(potentialMove);
+							// make bishop promotion
+							potentialMove = potentialMove->cloneMove();
+							potentialMove->promoPiece = WHITE_BISHOP;
+							moves.push_back(potentialMove);
+							// make rook promotion
+							potentialMove = potentialMove->cloneMove();
+							potentialMove->promoPiece = WHITE_ROOK;
+							moves.push_back(potentialMove);
+							// make queen promotion
+							potentialMove = potentialMove->cloneMove();
+							potentialMove->promoPiece = WHITE_QUEEN;
+							moves.push_back(potentialMove);
+						}
+						else moves.push_back(potentialMove);
 					}
 					// two spaces up
 					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60)) * 60, ((p->rect->y / 60) - 2) * 60, true))
@@ -1236,12 +1255,52 @@ int Game::generateLegalMoves(std::vector<Move*> moves)
 					// capture left
 					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) - 1) * 60, ((p->rect->y / 60) - 1) * 60, true))
 					{
-						moves.push_back(potentialMove);
+						// check promotion
+						if (potentialMove->isPromoting)
+						{
+							// make knight promotion
+							potentialMove = potentialMove->cloneMove();
+							potentialMove->promoPiece = WHITE_KNIGHT;
+							moves.push_back(potentialMove);
+							// make bishop promotion
+							potentialMove = potentialMove->cloneMove();
+							potentialMove->promoPiece = WHITE_BISHOP;
+							moves.push_back(potentialMove);
+							// make rook promotion
+							potentialMove = potentialMove->cloneMove();
+							potentialMove->promoPiece = WHITE_ROOK;
+							moves.push_back(potentialMove);
+							// make queen promotion
+							potentialMove = potentialMove->cloneMove();
+							potentialMove->promoPiece = WHITE_QUEEN;
+							moves.push_back(potentialMove);
+						}
+						else moves.push_back(potentialMove);
 					}
 					// capture right
 					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) + 1) * 60, ((p->rect->y / 60) - 1) * 60, true))
 					{
-						moves.push_back(potentialMove);
+						// check promotion
+						if (potentialMove->isPromoting)
+						{
+							// make knight promotion
+							potentialMove = potentialMove->cloneMove();
+							potentialMove->promoPiece = WHITE_KNIGHT;
+							moves.push_back(potentialMove);
+							// make bishop promotion
+							potentialMove = potentialMove->cloneMove();
+							potentialMove->promoPiece = WHITE_BISHOP;
+							moves.push_back(potentialMove);
+							// make rook promotion
+							potentialMove = potentialMove->cloneMove();
+							potentialMove->promoPiece = WHITE_ROOK;
+							moves.push_back(potentialMove);
+							// make queen promotion
+							potentialMove = potentialMove->cloneMove();
+							potentialMove->promoPiece = WHITE_QUEEN;
+							moves.push_back(potentialMove);
+						}
+						else moves.push_back(potentialMove);
 					}
 				}
 
@@ -1538,6 +1597,16 @@ int Game::generateLegalMoves(std::vector<Move*> moves)
 					{
 						moves.push_back(potentialMove);
 					}
+					// castle kingside
+					if (potentialMove = validMove(p, kingX * 60, kingY * 60, (kingX + 2) * 60, kingY * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// castle queenside
+					if (potentialMove = validMove(p, kingX * 60, kingY * 60, (kingX - 2) * 60, kingY * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
 				}
 			}
 		}
@@ -1556,7 +1625,27 @@ int Game::generateLegalMoves(std::vector<Move*> moves)
 					// one space up
 					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60)) * 60, ((p->rect->y / 60) + 1) * 60, true))
 					{
-						moves.push_back(potentialMove);
+						// check promotion
+						if (potentialMove->isPromoting)
+						{
+							// make knight promotion
+							potentialMove = potentialMove->cloneMove();
+							potentialMove->promoPiece = BLACK_KNIGHT;
+							moves.push_back(potentialMove);
+							// make bishop promotion
+							potentialMove = potentialMove->cloneMove();
+							potentialMove->promoPiece = BLACK_BISHOP;
+							moves.push_back(potentialMove);
+							// make rook promotion
+							potentialMove = potentialMove->cloneMove();
+							potentialMove->promoPiece = BLACK_ROOK;
+							moves.push_back(potentialMove);
+							// make queen promotion
+							potentialMove = potentialMove->cloneMove();
+							potentialMove->promoPiece = BLACK_QUEEN;
+							moves.push_back(potentialMove);
+						}
+						else moves.push_back(potentialMove);
 					}
 					// two spaces up
 					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60)) * 60, ((p->rect->y / 60) + 2) * 60, true))
@@ -1566,12 +1655,52 @@ int Game::generateLegalMoves(std::vector<Move*> moves)
 					// capture left
 					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) - 1) * 60, ((p->rect->y / 60) + 1) * 60, true))
 					{
-						moves.push_back(potentialMove);
+						// check promotion
+						if (potentialMove->isPromoting)
+						{
+							// make knight promotion
+							potentialMove = potentialMove->cloneMove();
+							potentialMove->promoPiece = BLACK_KNIGHT;
+							moves.push_back(potentialMove);
+							// make bishop promotion
+							potentialMove = potentialMove->cloneMove();
+							potentialMove->promoPiece = BLACK_BISHOP;
+							moves.push_back(potentialMove);
+							// make rook promotion
+							potentialMove = potentialMove->cloneMove();
+							potentialMove->promoPiece = BLACK_ROOK;
+							moves.push_back(potentialMove);
+							// make queen promotion
+							potentialMove = potentialMove->cloneMove();
+							potentialMove->promoPiece = BLACK_QUEEN;
+							moves.push_back(potentialMove);
+						}
+						else moves.push_back(potentialMove);
 					}
 					// capture right
 					if (potentialMove = validMove(p, p->rect->x, p->rect->y, ((p->rect->x / 60) + 1) * 60, ((p->rect->y / 60) + 1) * 60, true))
 					{
-						moves.push_back(potentialMove);
+						// check promotion
+						if (potentialMove->isPromoting)
+						{
+							// make knight promotion
+							potentialMove = potentialMove->cloneMove();
+							potentialMove->promoPiece = BLACK_KNIGHT;
+							moves.push_back(potentialMove);
+							// make bishop promotion
+							potentialMove = potentialMove->cloneMove();
+							potentialMove->promoPiece = BLACK_BISHOP;
+							moves.push_back(potentialMove);
+							// make rook promotion
+							potentialMove = potentialMove->cloneMove();
+							potentialMove->promoPiece = BLACK_ROOK;
+							moves.push_back(potentialMove);
+							// make queen promotion
+							potentialMove = potentialMove->cloneMove();
+							potentialMove->promoPiece = BLACK_QUEEN;
+							moves.push_back(potentialMove);
+						}
+						else moves.push_back(potentialMove);
 					}
 				}
 
@@ -1867,12 +1996,22 @@ int Game::generateLegalMoves(std::vector<Move*> moves)
 					{
 						moves.push_back(potentialMove);
 					}
+					// castle kingside
+					if (potentialMove = validMove(p, kingX * 60, kingY * 60, (kingX + 2) * 60, kingY * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
+					// castle queenside
+					if (potentialMove = validMove(p, kingX * 60, kingY * 60, (kingX - 2) * 60, kingY * 60, true))
+					{
+						moves.push_back(potentialMove);
+					}
 				}
 			}
 		}
 	}
 
-	return moves.size();
+	return (ull) moves.size();
 }
 
 /*
@@ -2998,4 +3137,44 @@ void Game::printBoard()
 		std::cout << outStr;
 	}
 	std::cout << '\n'; // extra newline for readability
+}
+
+ull Game::perft(int depth /* assuming >= 1 */)
+{
+	std::vector<Move*> move_list;
+	ull n_moves, i;
+	ull nodes = 0;
+
+	n_moves = generateLegalMoves(move_list);
+
+	if (depth == 1)
+		return (ull) n_moves;
+
+	for (i = 0; i < n_moves; i++) {
+		makeMove(move_list[i]);
+		nodes += perft(depth - 1);
+		unmakeMove(move_list[i]);
+	}
+	return nodes;
+}
+
+ull Game::perftCaps(int depth, bool hasCapture /* assuming >= 1 */)
+{
+	if (depth == 0 && hasCapture)
+		return (ull) 1;
+
+	std::vector<Move*> move_list;
+	ull n_moves, i;
+	ull nodes = 0;
+
+	n_moves = generateLegalMoves(move_list);
+
+
+	for (i = 0; i < n_moves; i++) {
+		hasCapture = move_list[i]->isCapture || hasCapture;
+		makeMove(move_list[i]);
+		nodes += perftCaps(depth - 1, hasCapture);
+		unmakeMove(move_list[i]);
+	}
+	return nodes;
 }

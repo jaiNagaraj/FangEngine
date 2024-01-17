@@ -70,12 +70,23 @@ void Window::init()
     else game.positions[pos]++;
     std::cout << "FEN: " << fen << "\n";
     // Move list initialization
-    //std::vector<Move*> moveList;
-    //std::cout << "Legal Moves: " << game.generateLegalMoves(moveList) << '\n';
+    std::vector<Move*> moveList;
+    std::cout << "Legal Moves: " << game.generateLegalMoves(moveList) << '\n';
     // Print game to start
     game.printBoard();
 
     SDL_UpdateWindowSurface(window);
+
+    /* PERFORMANCE TESTING */
+    //for (int depth = 1; depth <= 3; depth++)
+    //{
+    //    std::cout << "Number of possible positions at depth = " << depth << ": " << game.perft(depth) << '\n';
+    //}
+    /* PERFORMANCE TESTING: CAPTURES */
+    for (int depth = 1; depth <= 2; depth++)
+    {
+        std::cout << "Number of possible captures at depth = " << depth << ": " << game.perftCaps(depth, false) << '\n';
+    }
 
     bool keep_window_open = true;
     bool endLock = false;
@@ -453,8 +464,8 @@ int Window::dropPiece()
         // execute the move
         game.makeMove(moveToMake);
 
-        //std::vector<Move*> moveList;
-        //std::cout << "Legal Moves: " << game.generateLegalMoves(moveList) << '\n';
+        std::vector<Move*> moveList;
+        std::cout << "Legal Moves: " << game.generateLegalMoves(moveList) << '\n';
         game.printBoard();
         draggedPiece = nullptr; // drop the bass- i mean piece
         return game.isCheckmate(game.turn); // check for checkmate!

@@ -4,6 +4,8 @@
 #include "Player.h"
 #include "Piece.h"
 #include "Move.h"
+typedef unsigned long long ull;
+
 class Game
 {
 	private:
@@ -23,9 +25,11 @@ class Game
 		bool validCastle(Piece* piece, int initX, int initY, int kingX, int kingY);
 		void makeMove(Move* move);
 		void unmakeMove(Move* move);
-		int generateLegalMoves(std::vector<Move*> moves);
+		ull generateLegalMoves(std::vector<Move*>& moves);
 		int isCheckmate(int turn);
 		bool insufficientMaterial();
 		std::string getFEN();
 		void printBoard();
+		ull perft(int depth /* assuming >= 1 */);
+		ull perftCaps(int depth, bool hasCapture);
 };
