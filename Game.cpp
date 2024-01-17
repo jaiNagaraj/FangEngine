@@ -15,7 +15,7 @@ Piece* Game::makePiece(int x, int y, uint8_t info, int side)
 	dstRect->y = y * 60;
 	dstRect->w = 60;
 	dstRect->h = 60;
-	std::cout << "Piece stats: " << dstRect->x << " " << dstRect->y << " " << dstRect->w << " " << dstRect->h << '\n';
+	//std::cout << "Piece stats: " << dstRect->x << " " << dstRect->y << " " << dstRect->w << " " << dstRect->h << '\n';
 	// make piece, add it to board!
 	Piece* tmp = new Piece(dstRect, info, side);
 	piecesOnBoard.push_back(tmp);
@@ -930,6 +930,7 @@ Move* Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool
 			{
 				if (p->rect->x == newX && p->rect->y == newY && p != piece) move->captured = p;
 			}
+			if (!(move->captured)) std::cout << "Unable to find captured piece in validMove!!!\n";
 		}
 	}
 	else move->captured = nullptr;
@@ -1078,13 +1079,17 @@ void Game::makeMove(Move* move)
 	board[move->oldY][move->oldX] = 0;
 	turn++;
 
+	// update piece graphic coordinates
+	move->piece->rect->x = move->newX * 60;
+	move->piece->rect->y = move->newY * 60;
+
 	// finaly, update fen and position data
 	std::string fen = getFEN();
 	fens.push_back(fen);
 	std::string pos = fen.substr(0, fen.find(" "));
 	if (positions.find(pos) == positions.end()) positions[pos] = 1;
 	else positions[pos]++;
-	std::cout << "FEN: " << fen << "\n";
+	//std::cout << "FEN: " << fen << "\n";
 }
 
 void Game::unmakeMove(Move* move)
@@ -1201,12 +1206,16 @@ void Game::unmakeMove(Move* move)
 	else board[move->newY][move->newX] = 0;
 	turn--;
 
+	// reset piece graphic coordinates
+	move->piece->rect->x = move->oldX * 60;
+	move->piece->rect->y = move->oldY * 60;
+
 	// finaly, delete fen and position data
 	std::string fen = getFEN();
 	fens.pop_back(); // assuming we unmake right after we make...
 	std::string pos = fen.substr(0, fen.find(" "));
-	positions[pos]--; // the position should already exist, so just decrease counter
-	//std::cout << "FEN: " << fen << "\n";
+	if (positions.find(pos) == positions.end()) std::cout << "Something is afoot!\n";
+	else positions[pos]--; // the position should already exist, so just decrease counter
 }
 
 ull Game::generateLegalMoves(std::vector<Move*>& moves)
@@ -3160,8 +3169,11 @@ ull Game::perft(int depth /* assuming >= 1 */)
 
 ull Game::perftCaps(int depth, bool hasCapture /* assuming >= 1 */)
 {
-	if (depth == 0 && hasCapture)
-		return (ull) 1;
+	if (depth == 0)
+	{
+		if (hasCapture) return (ull) 1;
+		else return (ull) 0;
+	}
 
 	std::vector<Move*> move_list;
 	ull n_moves, i;

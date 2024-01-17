@@ -82,11 +82,18 @@ void Window::init()
     //{
     //    std::cout << "Number of possible positions at depth = " << depth << ": " << game.perft(depth) << '\n';
     //}
+    // Debugging: Check position count
+    //for (auto i : game.positions)
+    //{
+    //    std::cout << "For position " << i.first << ": " << i.second << '\n';
+    //}
+    // Debugging: Check fen count
+    //std::cout << "Number of fens: " << game.fens.size() << '\n';
     /* PERFORMANCE TESTING: CAPTURES */
-    for (int depth = 1; depth <= 2; depth++)
-    {
-        std::cout << "Number of possible captures at depth = " << depth << ": " << game.perftCaps(depth, false) << '\n';
-    }
+    //for (int depth = 1; depth <= 3; depth++)
+    //{
+    //    std::cout << "Number of possible captures at depth = " << depth << ": " << game.perftCaps(depth, false) << '\n';
+    //}
 
     bool keep_window_open = true;
     bool endLock = false;
