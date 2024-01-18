@@ -980,7 +980,7 @@ Move* Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool
 					// iterate thru pieces to get piece on that square
 					for (Piece* p : piecesOnBoard)
 					{
-						if (p->rect->x == newX && p->rect->y == oldYCoord * 60)
+						if (p->rect->x == newXCoord * 60 && p->rect->y == oldYCoord * 60)
 						{
 							// if that piece was enPassantable
 							if (p->enPassantable)
@@ -1032,7 +1032,7 @@ Move* Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool
 					// iterate thru pieces to get piece on that square
 					for (Piece* p : piecesOnBoard)
 					{
-						if (p->rect->x == newX && p->rect->y == oldYCoord * 60)
+						if (p->rect->x == newXCoord * 60 && p->rect->y == oldYCoord * 60)
 						{
 							// if that piece was enPassantable
 							if (p->enPassantable)
@@ -1339,9 +1339,17 @@ Move* Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool
 		{
 			for (Piece* p : piecesOnBoard)
 			{
-				if (p->rect->x == newX && p->rect->y == newY && p != piece) move->captured = p;
+				if (p->rect->x == newXCoord * 60 && p->rect->y == newYCoord * 60 && p != piece) move->captured = p;
 			}
-			if (!(move->captured)) std::cout << "Unable to find captured piece in validMove!!!\n";
+			if (!(move->captured))
+			{
+				std::cout << "Unable to find captured piece in validMove!!!\n";
+				std::cout << "Board:\n";
+				printBoard();
+				std::cout << "Piece movement: (" << oldXCoord << ", " << oldYCoord << ") to (" << newXCoord << ", " << newYCoord << ")\n";
+				std::cout << "Turn: " << turn % 2 << '\n';
+				std::cout << "Current FEN: " << getFEN() << '\n';
+			}
 		}
 	}
 	else move->captured = nullptr;
@@ -1495,10 +1503,10 @@ void Game::makeMove(Move* move)
 	move->piece->rect->y = move->newY * 60;
 
 	// finaly, update fen and position data
-	std::string fen = getFEN();
-	fens.push_back(fen);
-	std::string pos = fen.substr(0, fen.find(" "));
-	if (positions.find(pos) == positions.end()) positions[pos] = 1;
+	move->fen = getFEN();
+	fens.push_back(move->fen);
+	std::string pos = move->fen.substr(0, move->fen.find(" "));
+	if (positions.count(pos) == 0) positions[pos] = 1;
 	else positions[pos]++;
 	//std::cout << "FEN: " << fen << "\n";
 }
@@ -1613,7 +1621,10 @@ void Game::unmakeMove(Move* move)
 
 	// update board and turn
 	board[move->oldY][move->oldX] = board[move->newY][move->newX];
-	if (move->isCapture) board[move->newY][move->newX] = move->captured->info;
+	if (move->isCapture && !(move->isEP))
+	{
+		board[move->newY][move->newX] = move->captured->info;
+	}
 	else board[move->newY][move->newX] = 0;
 	turn--;
 
@@ -1622,10 +1633,9 @@ void Game::unmakeMove(Move* move)
 	move->piece->rect->y = move->oldY * 60;
 
 	// finaly, delete fen and position data
-	std::string fen = getFEN();
 	fens.pop_back(); // assuming we unmake right after we make...
-	std::string pos = fen.substr(0, fen.find(" "));
-	if (positions.find(pos) == positions.end()) std::cout << "Something is afoot!\n";
+	std::string pos = move->fen.substr(0, move->fen.find(" "));
+	if (positions.count(pos) == 0) std::cout << "Something is afoot!\n";
 	else positions[pos]--; // the position should already exist, so just decrease counter
 }
 
@@ -3564,13 +3574,23 @@ ull Game::perft(int depth /* assuming >= 1 */)
 	std::vector<Move*> move_list;
 	ull n_moves, i;
 	ull nodes = 0;
+	//std::string startingFen = getFEN();
+	std::string currFen;
 
 	n_moves = generateLegalMoves(move_list);
 
 	if (depth == 1)
 		return (ull) n_moves;
 
-	for (i = 0; i < n_moves; i++) {
+	for (i = 0; i < n_moves; i++)
+	{
+		//currFen = getFEN();
+		//if (startingFen != currFen)
+		//{
+		//	std::cout << "Move was not undone correctly!\n";
+		//	std::cout << "Good FEN: " << startingFen << '\n';
+		//	std::cout << "Bad (current) FEN: " << currFen << '\n';
+		//}
 		makeMove(move_list[i]);
 		nodes += perft(depth - 1);
 		unmakeMove(move_list[i]);

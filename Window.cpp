@@ -78,7 +78,7 @@ void Window::init()
     SDL_UpdateWindowSurface(window);
 
     /* PERFORMANCE TESTING */
-    for (int depth = 1; depth <= 5; depth++)
+    for (int depth = 1; depth <= 6; depth++)
     {
         std::cout << "Number of possible positions at depth = " << depth << ": " << game.perft(depth) << '\n';
     }
