@@ -3,6 +3,7 @@
 #include "Move.h"
 #include <bitset>
 #include <string>
+#include <algorithm>
 typedef unsigned long long ull;
 
 Piece* Game::makePiece(int x, int y, uint8_t info, int side)
@@ -321,6 +322,421 @@ bool Game::isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY)
 
 		// passed the gauntlet
 		return false;
+	}
+}
+
+void Game::updateAttackBoard()
+{
+	// reset attack boards
+	std::fill(whiteAttack[0], whiteAttack[0] + 8 * 8, 0);
+	std::fill(blackAttack[0], blackAttack[0] + 8 * 8, 0);
+	// iterate thru board
+	for (int y = 0; y < 8; y++) // y
+	{
+		for (int x = 0; x < 8; x++) // x
+		{
+			switch (board[y][x])
+			{
+				case WHITE_PAWN:
+					if (x > 0) whiteAttack[y - 1][x - 1]++; // attack up-left
+					if (x < 7) whiteAttack[y - 1][x + 1]++; // attack up-right
+					break;
+				case BLACK_PAWN:
+					if (x > 0) blackAttack[y + 1][x - 1]++; // attack down-left
+					if (x < 7) blackAttack[y + 1][x + 1]++; // attack down-right
+					break;
+				case WHITE_KNIGHT:
+					// attack up2left1
+					if (y > 1 && x > 0) whiteAttack[y - 2][x - 1]++;
+					// attack up2right1
+					if (y > 1 && x < 7) whiteAttack[y - 2][x + 1]++;
+					// attack right2up1
+					if (y > 0 && x < 6) whiteAttack[y - 1][x + 2]++;
+					// attack right2down1
+					if (y < 7 && x < 6) whiteAttack[y + 1][x + 2]++;
+					// attack down2left1
+					if (y < 6 && x > 0) whiteAttack[y + 2][x - 1]++;
+					// attack down2right1
+					if (y < 6 && x < 7) whiteAttack[y + 2][x + 1]++;
+					// attack left2up1
+					if (y > 0 && x > 1) whiteAttack[y - 1][x - 2]++;
+					// attack left2down1
+					if (y < 7 && x > 1) whiteAttack[y + 1][x - 2]++;
+					break;
+				case BLACK_KNIGHT:
+					// attack up2left1
+					if (y > 1 && x > 0) blackAttack[y - 2][x - 1]++;
+					// attack up2right1
+					if (y > 1 && x < 7) blackAttack[y - 2][x + 1]++;
+					// attack right2up1
+					if (y > 0 && x < 6) blackAttack[y - 1][x + 2]++;
+					// attack right2down1
+					if (y < 7 && x < 6) blackAttack[y + 1][x + 2]++;
+					// attack down2left1
+					if (y < 6 && x > 0) blackAttack[y + 2][x - 1]++;
+					// attack down2right1
+					if (y < 6 && x < 7) blackAttack[y + 2][x + 1]++;
+					// attack left2up1
+					if (y > 0 && x > 1) blackAttack[y - 1][x - 2]++;
+					// attack left2down1
+					if (y < 7 && x > 1) blackAttack[y + 1][x - 2]++;
+					break;
+				case WHITE_BISHOP:
+					int tmpX, tmpY;
+					// check up-left
+					tmpX = x - 1, tmpY = y - 1;
+					while (tmpX >= 0 && tmpY >= 0)
+					{
+						whiteAttack[tmpY][tmpX]++;
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpX--; tmpY--;
+					}
+
+					// check up-right
+					tmpX = x + 1, tmpY = y - 1;
+					while (tmpX <= 7 && tmpY >= 0)
+					{
+						whiteAttack[tmpY][tmpX]++;
+						// if space isn't empty
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpX++; tmpY--;
+					}
+
+					// check down-right
+					tmpX = x + 1, tmpY = y + 1;
+					while (tmpX <= 7 && tmpY <= 7)
+					{
+						whiteAttack[tmpY][tmpX]++;
+						// if space isn't empty
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpX++; tmpY++;
+					}
+
+					// check down-left
+					tmpX = x - 1, tmpY = y + 1;
+					while (tmpX >= 0 && tmpY <= 7)
+					{
+						whiteAttack[tmpY][tmpX]++;
+						// if space isn't empty
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpX--; tmpY++;
+					}
+					break;
+				case BLACK_BISHOP:
+					int tmpX, tmpY;
+					// check up-left
+					tmpX = x - 1, tmpY = y - 1;
+					while (tmpX >= 0 && tmpY >= 0)
+					{
+						blackAttack[tmpY][tmpX]++;
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpX--; tmpY--;
+					}
+
+					// check up-right
+					tmpX = x + 1, tmpY = y - 1;
+					while (tmpX <= 7 && tmpY >= 0)
+					{
+						blackAttack[tmpY][tmpX]++;
+						// if space isn't empty
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpX++; tmpY--;
+					}
+
+					// check down-right
+					tmpX = x + 1, tmpY = y + 1;
+					while (tmpX <= 7 && tmpY <= 7)
+					{
+						blackAttack[tmpY][tmpX]++;
+						// if space isn't empty
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpX++; tmpY++;
+					}
+
+					// check down-left
+					tmpX = x - 1, tmpY = y + 1;
+					while (tmpX >= 0 && tmpY <= 7)
+					{
+						blackAttack[tmpY][tmpX]++;
+						// if space isn't empty
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpX--; tmpY++;
+					}
+					break;
+				case WHITE_ROOK:
+					int tmpX, tmpY;
+					// check up
+					tmpX = x, tmpY = y - 1;
+					while (tmpY >= 0)
+					{
+						whiteAttack[tmpY][tmpX]++;
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpY--;
+					}
+
+					// check right
+					tmpX = x + 1, tmpY = y;
+					while (tmpX <= 7)
+					{
+						whiteAttack[tmpY][tmpX]++;
+						// if space isn't empty
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpX++;
+					}
+
+					// check down
+					tmpX = x, tmpY = y + 1;
+					while (tmpY <= 7)
+					{
+						whiteAttack[tmpY][tmpX]++;
+						// if space isn't empty
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpY++;
+					}
+
+					// check left
+					tmpX = x - 1, tmpY = y;
+					while (tmpX >= 0)
+					{
+						whiteAttack[tmpY][tmpX]++;
+						// if space isn't empty
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpX--;
+					}
+					break;
+				case BLACK_ROOK:
+					int tmpX, tmpY;
+					// check up
+					tmpX = x, tmpY = y - 1;
+					while (tmpY >= 0)
+					{
+						blackAttack[tmpY][tmpX]++;
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpY--;
+					}
+
+					// check right
+					tmpX = x + 1, tmpY = y;
+					while (tmpX <= 7)
+					{
+						blackAttack[tmpY][tmpX]++;
+						// if space isn't empty
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpX++;
+					}
+
+					// check down
+					tmpX = x, tmpY = y + 1;
+					while (tmpY <= 7)
+					{
+						blackAttack[tmpY][tmpX]++;
+						// if space isn't empty
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpY++;
+					}
+
+					// check left
+					tmpX = x - 1, tmpY = y;
+					while (tmpX >= 0)
+					{
+						blackAttack[tmpY][tmpX]++;
+						// if space isn't empty
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpX--;
+					}
+					break;
+				case WHITE_QUEEN:
+					int tmpX, tmpY;
+
+					/* CHECK DIAGONALS*/
+
+					// check up-left
+					tmpX = x - 1, tmpY = y - 1;
+					while (tmpX >= 0 && tmpY >= 0)
+					{
+						whiteAttack[tmpY][tmpX]++;
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpX--; tmpY--;
+					}
+
+					// check up-right
+					tmpX = x + 1, tmpY = y - 1;
+					while (tmpX <= 7 && tmpY >= 0)
+					{
+						whiteAttack[tmpY][tmpX]++;
+						// if space isn't empty
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpX++; tmpY--;
+					}
+
+					// check down-right
+					tmpX = x + 1, tmpY = y + 1;
+					while (tmpX <= 7 && tmpY <= 7)
+					{
+						whiteAttack[tmpY][tmpX]++;
+						// if space isn't empty
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpX++; tmpY++;
+					}
+
+					// check down-left
+					tmpX = x - 1, tmpY = y + 1;
+					while (tmpX >= 0 && tmpY <= 7)
+					{
+						whiteAttack[tmpY][tmpX]++;
+						// if space isn't empty
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpX--; tmpY++;
+					}
+
+					/* CHECK ADJACENCIES */
+
+					// check up
+					tmpX = x, tmpY = y - 1;
+					while (tmpY >= 0)
+					{
+						whiteAttack[tmpY][tmpX]++;
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpY--;
+					}
+
+					// check right
+					tmpX = x + 1, tmpY = y;
+					while (tmpX <= 7)
+					{
+						whiteAttack[tmpY][tmpX]++;
+						// if space isn't empty
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpX++;
+					}
+
+					// check down
+					tmpX = x, tmpY = y + 1;
+					while (tmpY <= 7)
+					{
+						whiteAttack[tmpY][tmpX]++;
+						// if space isn't empty
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpY++;
+					}
+
+					// check left
+					tmpX = x - 1, tmpY = y;
+					while (tmpX >= 0)
+					{
+						whiteAttack[tmpY][tmpX]++;
+						// if space isn't empty
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpX--;
+					}
+
+					break;
+				case BLACK_QUEEN:
+					int tmpX, tmpY;
+
+					/* CHECK DIAGONALS*/
+
+					// check up-left
+					tmpX = x - 1, tmpY = y - 1;
+					while (tmpX >= 0 && tmpY >= 0)
+					{
+						blackAttack[tmpY][tmpX]++;
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpX--; tmpY--;
+					}
+
+					// check up-right
+					tmpX = x + 1, tmpY = y - 1;
+					while (tmpX <= 7 && tmpY >= 0)
+					{
+						blackAttack[tmpY][tmpX]++;
+						// if space isn't empty
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpX++; tmpY--;
+					}
+
+					// check down-right
+					tmpX = x + 1, tmpY = y + 1;
+					while (tmpX <= 7 && tmpY <= 7)
+					{
+						blackAttack[tmpY][tmpX]++;
+						// if space isn't empty
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpX++; tmpY++;
+					}
+
+					// check down-left
+					tmpX = x - 1, tmpY = y + 1;
+					while (tmpX >= 0 && tmpY <= 7)
+					{
+						blackAttack[tmpY][tmpX]++;
+						// if space isn't empty
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpX--; tmpY++;
+					}
+
+					/* CHECK ADJACENCIES */
+
+					// check up
+					tmpX = x, tmpY = y - 1;
+					while (tmpY >= 0)
+					{
+						blackAttack[tmpY][tmpX]++;
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpY--;
+					}
+
+					// check right
+					tmpX = x + 1, tmpY = y;
+					while (tmpX <= 7)
+					{
+						blackAttack[tmpY][tmpX]++;
+						// if space isn't empty
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpX++;
+					}
+
+					// check down
+					tmpX = x, tmpY = y + 1;
+					while (tmpY <= 7)
+					{
+						blackAttack[tmpY][tmpX]++;
+						// if space isn't empty
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpY++;
+					}
+
+					// check left
+					tmpX = x - 1, tmpY = y;
+					while (tmpX >= 0)
+					{
+						blackAttack[tmpY][tmpX]++;
+						// if space isn't empty
+						if (board[tmpY][tmpX]) break; // if space isn't empty
+						tmpX--;
+					}
+
+					break;
+				case WHITE_KING:
+					if (y > 0) whiteAttack[y - 1][x]++;
+					if (y > 0 && x < 7) whiteAttack[y - 1][x + 1]++;
+					if (x < 7) whiteAttack[y][x + 1]++;
+					if (y < 7 && x < 7) whiteAttack[y + 1][x + 1]++;
+					if (y < 7) whiteAttack[y + 1][x]++;
+					if (y < 7 && x > 0) whiteAttack[y + 1][x - 1]++;
+					if (x > 0) whiteAttack[y][x - 1]++;
+					if (y > 0 && x > 0) whiteAttack[y - 1][x - 1]++;
+				case BLACK_KING:
+					if (y > 0) blackAttack[y - 1][x]++;
+					if (y > 0 && x < 7) blackAttack[y - 1][x + 1]++;
+					if (x < 7) blackAttack[y][x + 1]++;
+					if (y < 7 && x < 7) blackAttack[y + 1][x + 1]++;
+					if (y < 7) blackAttack[y + 1][x]++;
+					if (y < 7 && x > 0) blackAttack[y + 1][x - 1]++;
+					if (x > 0) blackAttack[y][x - 1]++;
+					if (y > 0 && x > 0) blackAttack[y - 1][x - 1]++;
+			}
+		}
 	}
 }
 
