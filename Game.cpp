@@ -335,6 +335,7 @@ void Game::updateAttackBoard()
 	{
 		for (int x = 0; x < 8; x++) // x
 		{
+			int tmpX, tmpY;
 			switch (board[y][x])
 			{
 				case WHITE_PAWN:
@@ -382,7 +383,6 @@ void Game::updateAttackBoard()
 					if (y < 7 && x > 1) blackAttack[y + 1][x - 2]++;
 					break;
 				case WHITE_BISHOP:
-					int tmpX, tmpY;
 					// check up-left
 					tmpX = x - 1, tmpY = y - 1;
 					while (tmpX >= 0 && tmpY >= 0)
@@ -423,7 +423,6 @@ void Game::updateAttackBoard()
 					}
 					break;
 				case BLACK_BISHOP:
-					int tmpX, tmpY;
 					// check up-left
 					tmpX = x - 1, tmpY = y - 1;
 					while (tmpX >= 0 && tmpY >= 0)
@@ -464,7 +463,6 @@ void Game::updateAttackBoard()
 					}
 					break;
 				case WHITE_ROOK:
-					int tmpX, tmpY;
 					// check up
 					tmpX = x, tmpY = y - 1;
 					while (tmpY >= 0)
@@ -505,7 +503,6 @@ void Game::updateAttackBoard()
 					}
 					break;
 				case BLACK_ROOK:
-					int tmpX, tmpY;
 					// check up
 					tmpX = x, tmpY = y - 1;
 					while (tmpY >= 0)
@@ -546,8 +543,6 @@ void Game::updateAttackBoard()
 					}
 					break;
 				case WHITE_QUEEN:
-					int tmpX, tmpY;
-
 					/* CHECK DIAGONALS*/
 
 					// check up-left
@@ -632,8 +627,6 @@ void Game::updateAttackBoard()
 
 					break;
 				case BLACK_QUEEN:
-					int tmpX, tmpY;
-
 					/* CHECK DIAGONALS*/
 
 					// check up-left
@@ -726,6 +719,7 @@ void Game::updateAttackBoard()
 					if (y < 7 && x > 0) whiteAttack[y + 1][x - 1]++;
 					if (x > 0) whiteAttack[y][x - 1]++;
 					if (y > 0 && x > 0) whiteAttack[y - 1][x - 1]++;
+					break;
 				case BLACK_KING:
 					if (y > 0) blackAttack[y - 1][x]++;
 					if (y > 0 && x < 7) blackAttack[y - 1][x + 1]++;
@@ -735,6 +729,7 @@ void Game::updateAttackBoard()
 					if (y < 7 && x > 0) blackAttack[y + 1][x - 1]++;
 					if (x > 0) blackAttack[y][x - 1]++;
 					if (y > 0 && x > 0) blackAttack[y - 1][x - 1]++;
+					break;
 			}
 		}
 	}
