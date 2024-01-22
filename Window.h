@@ -12,6 +12,8 @@ class Window
 		SDL_Window* window;
 		SDL_Renderer* window_renderer;
 		Game game;
+		Player p1;
+		Player p2;
 
 		// dragged piece info
 		Piece* draggedPiece;
