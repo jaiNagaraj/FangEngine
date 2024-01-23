@@ -1,5 +1,6 @@
 #include "Window.h"
 #include "Piece.h"
+#include "RandomPlayer.h"
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -77,11 +78,14 @@ void Window::init()
 
     SDL_UpdateWindowSurface(window);
 
+    // initialize players
+    p2 = RandomPlayer();
+
     /* PERFORMANCE TESTING */
-    for (int depth = 1; depth <= 6; depth++)
-    {
-        std::cout << "Number of possible positions at depth = " << depth << ": " << game.perft(depth) << '\n';
-    }
+    //for (int depth = 1; depth <= 5; depth++)
+    //{
+    //    std::cout << "Number of possible positions at depth = " << depth << ": " << game.perft(depth) << '\n';
+    //}
     // Debugging: Check position count
     //for (auto i : game.positions)
     //{
@@ -231,7 +235,10 @@ void Window::init()
                         refresh();
                         SDL_BlitSurface(textSurface, NULL, window_surface, textRect);
                     }
-                    else refresh(); // nothing found
+                    else // nothing found, make computer move
+                    {
+                        refresh(); // nothing found
+                    }
                 }
             }
             SDL_UpdateWindowSurface(window);
