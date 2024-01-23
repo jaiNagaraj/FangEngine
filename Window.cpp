@@ -154,7 +154,7 @@ void Window::init()
 
             // make computer move
             Move* m = p2.search();
-            if (m)
+            if (m /* && game.turn % 2 == 1*/)
             {
                 game.makeMove(m);
                 endCode = game.isCheckmate(game.turn);

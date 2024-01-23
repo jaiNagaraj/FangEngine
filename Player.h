@@ -12,5 +12,6 @@ class Player
 		~Player();
 
 		Move* search();
+		int eval();
 };
 
