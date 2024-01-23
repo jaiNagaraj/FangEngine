@@ -3332,7 +3332,7 @@ bool Game::insufficientMaterial()
 		}
 	}
 	// check all possible knight/bishop mates
-	if (whiteKnights > 1 || (darkWhiteBishop && lightWhiteBishop)) return false;
+	if (whiteKnights > 1 || (darkWhiteBishop && lightWhiteBishop) || (whiteKnights == 1 && (darkWhiteBishop || lightWhiteBishop))) return false;
 
 	// check black
 	bool darkBlackBishop = false, lightBlackBishop = false;
@@ -3350,7 +3350,7 @@ bool Game::insufficientMaterial()
 		}
 	}
 	// check all possible knight/bishop mates
-	if (blackKnights > 1 || (darkBlackBishop && lightBlackBishop)) return false;
+	if (blackKnights > 1 || (darkBlackBishop && lightBlackBishop) || (blackKnights == 1 && (darkBlackBishop || lightBlackBishop))) return false;
 
 	// now, check for opposite colored bishops
 	if ((darkWhiteBishop && lightBlackBishop) || (darkBlackBishop && lightWhiteBishop)) return false;
@@ -3554,21 +3554,6 @@ std::string Game::getFEN()
 	return fenStr;
 }
 
-void Game::printBoard()
-{
-	for (int i = 0; i < 8; i++)
-	{
-		std::string outStr = "[ ";
-		for (int j = 0; j < 8; j++)
-		{
-			outStr += std::bitset< 8 >(board[i][j]).to_string() + " ";
-		}
-		outStr += "]\n";
-		std::cout << outStr;
-	}
-	std::cout << '\n'; // extra newline for readability
-}
-
 ull Game::perft(int depth /* assuming >= 1 */)
 {
 	std::vector<Move*> move_list;
@@ -3620,4 +3605,24 @@ ull Game::perftCaps(int depth, bool hasCapture /* assuming >= 1 */)
 		unmakeMove(move_list[i]);
 	}
 	return nodes;
+}
+
+void Game::printBoard()
+{
+	for (int i = 0; i < 8; i++)
+	{
+		std::string outStr = "[ ";
+		for (int j = 0; j < 8; j++)
+		{
+			outStr += std::bitset< 8 >(board[i][j]).to_string() + " ";
+		}
+		outStr += "]\n";
+		std::cout << outStr;
+	}
+	std::cout << '\n'; // extra newline for readability
+}
+
+Game::~Game()
+{
+	for (auto p : piecesOnBoard) delete p;
 }

@@ -4,6 +4,8 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <chrono>
+#include <thread>
 #include <SDL.h>
 #include <SDL_ttf.h>
 #include <Windows.h>
@@ -79,7 +81,7 @@ void Window::init()
     SDL_UpdateWindowSurface(window);
 
     // initialize players
-    p2 = RandomPlayer();
+    p2 = RandomPlayer(&game);
 
     /* PERFORMANCE TESTING */
     //for (int depth = 1; depth <= 5; depth++)
@@ -100,21 +102,21 @@ void Window::init()
     //}
 
     bool keep_window_open = true;
-    bool endLock = false;
-    int endCode = -1; // Used to make sure we don't use isCheckmate over and over
+    endLock = false;
+    endCode = -1; // Used to make sure we don't use isCheckmate over and over
     // Initialize SDL_ttf
     if (TTF_Init() == -1)
     {
         printf("SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError());
         // return -1;
     }
-    TTF_Font* font = TTF_OpenFont("Fonts/chess_font.ttf",30);
+    font = TTF_OpenFont("Fonts/chess_font.ttf",30);
     while (keep_window_open)
     {
         SDL_Event e;
         while (SDL_PollEvent(&e) > 0)
         {
-            ;
+            if (endLock && !(e.type == SDL_QUIT)) continue;
             switch (e.type)
             {
                 case SDL_QUIT:
@@ -134,114 +136,32 @@ void Window::init()
                     }
                     break;
                 case SDL_MOUSEBUTTONDOWN:
-                    if (endLock) break;
+                    if (endLock) continue;
                     if (e.button.button == SDL_BUTTON_LEFT) dragPiece();
                     break;
                 case SDL_MOUSEBUTTONUP:
-                    if (endLock) break;
+                    if (endLock) continue;
                     if (draggedPiece && e.button.button == SDL_BUTTON_LEFT) endCode = dropPiece();
                     break;
             }
-            // check for checkmate!
-            if (endCode == 1)
-            {
-                endLock = true;
-                std::string text;
-                SDL_Color color = { 0, 255, 0, 255 };
-
-                if (game.turn % 2 == 0) text = "Black wins!";
-                else text = "White wins!";
-                SDL_Surface* textSurface = TTF_RenderText_Solid(font, text.c_str(), color);
-                SDL_Rect* textRect = new SDL_Rect;
-                textRect->x = 60;
-                textRect->y = 60;
-                textRect->w = 60;
-                textRect->h = 60;
-                refresh();
-                SDL_BlitSurface(textSurface, NULL, window_surface, textRect);
-
-            }
-            else if (endCode == 0)
-            {
-                endLock = true;
-                std::string text = "Stalemate!";
-                SDL_Color color = { 255, 0, 0, 255 };
-                SDL_Surface* textSurface = TTF_RenderText_Solid(font, text.c_str(), color);
-                SDL_Rect* textRect = new SDL_Rect;
-                textRect->x = 60;
-                textRect->y = 60;
-                textRect->w = 60;
-                textRect->h = 60;
-                refresh();
-                SDL_BlitSurface(textSurface, NULL, window_surface, textRect);
-            }
-            else // check for other types for draws
-            {
-                // check repetition
-                bool rep = false;
-                bool fifty = false;
-                for (auto str : game.positions)
-                {
-                    if (str.second == 3)
-                    {
-                        rep = true;
-                        endLock = true;
-                        std::string text = "Draw by repetition!";
-                        SDL_Color color = { 255, 0, 0, 255 };
-                        SDL_Surface* textSurface = TTF_RenderText_Solid(font, text.c_str(), color);
-                        SDL_Rect* textRect = new SDL_Rect;
-                        textRect->x = 60;
-                        textRect->y = 60;
-                        textRect->w = 60;
-                        textRect->h = 60;
-                        refresh();
-                        SDL_BlitSurface(textSurface, NULL, window_surface, textRect);
-                        break;
-                    }
-                }
-                if (!rep)
-                {
-                    // check for 50 move rule
-                    if (game.halfmoves == 100)
-                    {
-                        fifty = true;
-                        endLock = true;
-                        std::string text = "Draw by 50 move rule!";
-                        SDL_Color color = { 255, 0, 0, 255 };
-                        SDL_Surface* textSurface = TTF_RenderText_Solid(font, text.c_str(), color);
-                        SDL_Rect* textRect = new SDL_Rect;
-                        textRect->x = 60;
-                        textRect->y = 60;
-                        textRect->w = 60;
-                        textRect->h = 60;
-                        refresh();
-                        SDL_BlitSurface(textSurface, NULL, window_surface, textRect);
-                    }
-                }
-                if (!(rep || fifty))
-                {
-                    // check for insufficient material
-                    if (game.insufficientMaterial())
-                    {
-                        endLock = true;
-                        std::string text = "Draw by insufficient material!";
-                        SDL_Color color = { 255, 0, 0, 255 };
-                        SDL_Surface* textSurface = TTF_RenderText_Solid(font, text.c_str(), color);
-                        SDL_Rect* textRect = new SDL_Rect;
-                        textRect->x = 60;
-                        textRect->y = 60;
-                        textRect->w = 60;
-                        textRect->h = 60;
-                        refresh();
-                        SDL_BlitSurface(textSurface, NULL, window_surface, textRect);
-                    }
-                    else // nothing found, make computer move
-                    {
-                        refresh(); // nothing found
-                    }
-                }
-            }
+            
+            endCodeCheck();
             SDL_UpdateWindowSurface(window);
+
+            // 1 second delay before computer move
+            //std::this_thread::sleep_for(std::chrono::nanoseconds(10));
+            //std::this_thread::sleep_until(std::chrono::system_clock::now() + std::chrono::milliseconds(50));
+
+            // make computer move
+            Move* m = p2.search();
+            if (m)
+            {
+                game.makeMove(m);
+                endCode = game.isCheckmate(game.turn);
+                endCodeCheck();
+                SDL_UpdateWindowSurface(window);
+            }
+
         }
     }
 }
@@ -490,5 +410,109 @@ int Window::dropPiece()
         draggedPiece->rect->y = initY;
         draggedPiece = nullptr; // drop the bass- i mean piece
         return -1;
+    }
+}
+
+void Window::endCodeCheck()
+{
+    // check for checkmate!
+    if (endCode == 1)
+    {
+        endLock = true;
+        std::string text;
+        SDL_Color color = { 0, 255, 0, 255 };
+
+        if (game.turn % 2 == 0) text = "Black wins!";
+        else text = "White wins!";
+        std::cout << text << '\n';
+        SDL_Surface* textSurface = TTF_RenderText_Solid(font, text.c_str(), color);
+        SDL_Rect* textRect = new SDL_Rect;
+        textRect->x = 60;
+        textRect->y = 60;
+        textRect->w = 60;
+        textRect->h = 60;
+        refresh();
+        SDL_BlitSurface(textSurface, NULL, window_surface, textRect);
+
+    }
+    else if (endCode == 0)
+    {
+        endLock = true;
+        std::string text = "Stalemate!";
+        SDL_Color color = { 255, 0, 0, 255 };
+        SDL_Surface* textSurface = TTF_RenderText_Solid(font, text.c_str(), color);
+        SDL_Rect* textRect = new SDL_Rect;
+        textRect->x = 60;
+        textRect->y = 60;
+        textRect->w = 60;
+        textRect->h = 60;
+        refresh();
+        SDL_BlitSurface(textSurface, NULL, window_surface, textRect);
+    }
+    else // check for other types for draws
+    {
+        // check repetition
+        bool rep = false;
+        bool fifty = false;
+        for (auto str : game.positions)
+        {
+            if (str.second == 3)
+            {
+                rep = true;
+                endLock = true;
+                std::string text = "Draw by repetition!";
+                SDL_Color color = { 255, 0, 0, 255 };
+                SDL_Surface* textSurface = TTF_RenderText_Solid(font, text.c_str(), color);
+                SDL_Rect* textRect = new SDL_Rect;
+                textRect->x = 60;
+                textRect->y = 60;
+                textRect->w = 60;
+                textRect->h = 60;
+                refresh();
+                SDL_BlitSurface(textSurface, NULL, window_surface, textRect);
+                break;
+            }
+        }
+        if (!rep)
+        {
+            // check for 50 move rule
+            if (game.halfmoves == 100)
+            {
+                fifty = true;
+                endLock = true;
+                std::string text = "Draw by 50 move rule!";
+                SDL_Color color = { 255, 0, 0, 255 };
+                SDL_Surface* textSurface = TTF_RenderText_Solid(font, text.c_str(), color);
+                SDL_Rect* textRect = new SDL_Rect;
+                textRect->x = 60;
+                textRect->y = 60;
+                textRect->w = 60;
+                textRect->h = 60;
+                refresh();
+                SDL_BlitSurface(textSurface, NULL, window_surface, textRect);
+            }
+        }
+        if (!(rep || fifty))
+        {
+            // check for insufficient material
+            if (game.insufficientMaterial())
+            {
+                endLock = true;
+                std::string text = "Draw by insufficient material!";
+                SDL_Color color = { 255, 0, 0, 255 };
+                SDL_Surface* textSurface = TTF_RenderText_Solid(font, text.c_str(), color);
+                SDL_Rect* textRect = new SDL_Rect;
+                textRect->x = 60;
+                textRect->y = 60;
+                textRect->w = 60;
+                textRect->h = 60;
+                refresh();
+                SDL_BlitSurface(textSurface, NULL, window_surface, textRect);
+            }
+            else // nothing found, make computer move
+            {
+                refresh(); // nothing found
+            }
+        }
     }
 }

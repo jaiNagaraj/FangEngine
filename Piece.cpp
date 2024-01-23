@@ -14,4 +14,7 @@ Piece::Piece(SDL_Rect* rectIn, uint8_t infoIn, int side = -1)
 	canCastle = true;
 	rookSide = side;
 }
-Piece::~Piece() {}
+Piece::~Piece()
+{
+	delete rect;
+}

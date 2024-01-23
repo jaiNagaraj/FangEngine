@@ -5,6 +5,7 @@ class RandomPlayer :
 {
     public:
         RandomPlayer();
+        RandomPlayer(Game* g);
         ~RandomPlayer();
 };
 
