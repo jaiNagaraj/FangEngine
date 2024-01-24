@@ -1,6 +1,8 @@
 #pragma once
 #include <SDL.h>
+#include <SDL_ttf.h>
 #include "Game.h"
+#include "Player.h"
 class Window
 {
 	public:
@@ -8,12 +10,16 @@ class Window
 		void refresh();
 		void dragPiece();
 		int dropPiece();
+		void endCodeCheck();
 	private:
 		SDL_Window* window;
 		SDL_Renderer* window_renderer;
 		Game game;
 		Player p1;
 		Player p2;
+		int endCode;
+		bool endLock;
+		TTF_Font* font;
 
 		// dragged piece info
 		Piece* draggedPiece;

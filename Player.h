@@ -1,5 +1,6 @@
 #pragma once
 #include "Game.h"
+#include "Move.h"
 class Player
 {
 	public:
@@ -11,5 +12,6 @@ class Player
 		~Player();
 
 		Move* search();
+		int eval();
 };
 

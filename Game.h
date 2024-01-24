@@ -1,7 +1,6 @@
 #pragma once
 #include <vector>
 #include <unordered_map>
-#include "Player.h"
 #include "Piece.h"
 #include "Move.h"
 typedef unsigned long long ull;
@@ -12,7 +11,7 @@ class Game
 		;
 	public:
 		std::vector<Piece*> piecesOnBoard;
-		Player player1, player2;
+		//Player player1, player2;
 		uint8_t board[8][8] = {0};
 		int whiteAttack[8][8] = { 0 }; // the squares white controls
 		int blackAttack[8][8] = { 0 }; // the squares black controls
@@ -35,4 +34,6 @@ class Game
 		void printBoard();
 		ull perft(int depth /* assuming >= 1 */);
 		ull perftCaps(int depth, bool hasCapture);
+
+		~Game();
 };
