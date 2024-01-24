@@ -1,6 +1,5 @@
 #include "Window.h"
 #include "Piece.h"
-#include "RandomPlayer.h"
 #include <iostream>
 #include <string>
 #include <fstream>

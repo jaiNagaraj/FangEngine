@@ -3,7 +3,12 @@
 class FangEngine :
     public Player
 {
-    FangEngine();
-    ~FangEngine();
+    public:
+        FangEngine();
+        FangEngine(Game* g);
+        ~FangEngine();
+
+        Move* search();
+        int eval();
 };
 

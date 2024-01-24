@@ -2,7 +2,8 @@
 #include <SDL.h>
 #include <SDL_ttf.h>
 #include "Game.h"
-#include "Player.h"
+#include "RandomPlayer.h"
+#include "FangEngine.h"
 class Window
 {
 	public:
@@ -15,8 +16,8 @@ class Window
 		SDL_Window* window;
 		SDL_Renderer* window_renderer;
 		Game game;
-		Player p1;
-		Player p2;
+		RandomPlayer p1;
+		RandomPlayer p2;
 		int endCode;
 		bool endLock;
 		TTF_Font* font;

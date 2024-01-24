@@ -7,5 +7,6 @@ class RandomPlayer :
         RandomPlayer();
         RandomPlayer(Game* g);
         ~RandomPlayer();
+        Move* search();
 };
 
