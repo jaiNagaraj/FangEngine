@@ -17,7 +17,7 @@ RandomPlayer::~RandomPlayer()
 	//delete game;
 }
 
-Move* RandomPlayer::search()
+Move* RandomPlayer::search(int depth)
 {
 	for (auto p : moves)
 	{

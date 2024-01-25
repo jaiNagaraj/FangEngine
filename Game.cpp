@@ -2454,6 +2454,88 @@ int Game::isCheckmate(int turn)
 {
 	int kingX, kingY;
 	Piece* king = nullptr;
+	if (turn % 2 == 0) // for white
+	{
+		// get king pointer
+		for (Piece* p : piecesOnBoard)
+		{
+			if ((p->info & WHITE_KING) == WHITE_KING)
+			{
+				king = p;
+				break;
+			}
+		}
+		if (!king)
+		{
+			std::cout << "Couldn't find white king in isCheckmate!! Oh no!!\n";
+			return 0;
+		}
+		// get king coordinates
+		for (int i = 0; i < 8; i++)
+		{
+			bool breakout = false;
+			for (int j = 0; j < 8; j++)
+			{
+				if ((board[i][j] & WHITE_KING) == WHITE_KING)
+				{
+					kingX = j;
+					kingY = i;
+					breakout = true;
+					break;
+				}
+			}
+			if (breakout) break;
+		}
+	}
+	else
+	{
+		// get king pointer
+		for (Piece* p : piecesOnBoard)
+		{
+			if ((p->info & BLACK_KING) == BLACK_KING)
+			{
+				king = p;
+				break;
+			}
+		}
+		if (!king)
+		{
+			std::cout << "Couldn't find black king in isCheckmate!! Oh no!!\n";
+			return 0;
+		}
+		// get king coordinates
+		for (int i = 0; i < 8; i++)
+		{
+			bool breakout = false;
+			for (int j = 0; j < 8; j++)
+			{
+				if ((board[i][j] & BLACK_KING) == BLACK_KING)
+				{
+					kingX = j;
+					kingY = i;
+					breakout = true;
+					break;
+				}
+			}
+			if (breakout) break;
+		}
+	}
+	std::vector<Move*> moves;
+	generateLegalMoves(moves);
+	if (moves.size() == 0)
+	{
+		// now the king is trapped. is it stalemate though?
+		if (isInCheck(board, turn % 2, kingX, kingY)) return 1; // checkmate, liberals
+		else return 0; // stalemate, liberals
+	}
+	else return -1;
+}
+
+int Game::oldIsCheckmate(int turn)
+{
+	int kingX, kingY;
+	Piece* king = nullptr;
+
 	// for white
 	if (turn % 2 == 0)
 	{

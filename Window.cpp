@@ -152,7 +152,7 @@ void Window::init()
             //std::this_thread::sleep_until(std::chrono::system_clock::now() + std::chrono::milliseconds(50));
 
             // make computer move
-            Move* m = p2.search();
+            Move* m = p2.search(0);
             if (m /* && game.turn % 2 == 1*/)
             {
                 game.makeMove(m);

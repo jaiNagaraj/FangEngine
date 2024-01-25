@@ -11,7 +11,7 @@ class Player
 		Player();
 		~Player();
 
-		Move* search();
+		Move* search(int depth);
 		int eval();
 };
 

@@ -29,6 +29,7 @@ class Game
 		void unmakeMove(Move* move);
 		ull generateLegalMoves(std::vector<Move*>& moves);
 		int isCheckmate(int turn);
+		int oldIsCheckmate(int turn);
 		bool insufficientMaterial();
 		std::string getFEN();
 		void printBoard();

@@ -8,7 +8,8 @@ class FangEngine :
         FangEngine(Game* g);
         ~FangEngine();
 
-        Move* search();
+        Move* search(int depth);
+        int minimax(int depth, bool maxer, int alpha, int beta);
         int eval();
 };
 

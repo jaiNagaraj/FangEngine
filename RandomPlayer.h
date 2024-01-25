@@ -7,6 +7,6 @@ class RandomPlayer :
         RandomPlayer();
         RandomPlayer(Game* g);
         ~RandomPlayer();
-        Move* search();
+        Move* search(int depth);
 };
 
