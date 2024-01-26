@@ -775,17 +775,38 @@ bool Game::validCastle(Piece* piece, int initX, int initY, int kingX, int kingY)
 
 				// make sure king won't be in check throughout!
 				// open up parallel universe where king is moving thru castle
-				uint8_t altBoard[8][8];
-				std::copy(&board[0][0], &board[0][0] + 8 * 8, &altBoard[0][0]);
-				if (isInCheck(altBoard, 0, 4, 7)) return false;
+				/*uint8_t altBoard[8][8];
+				std::copy(&board[0][0], &board[0][0] + 8 * 8, &altBoard[0][0]);*/
+				if (isInCheck(board, 0, 4, 7)) return false;
 
-				altBoard[7][3] = altBoard[7][4];
-				altBoard[7][4] = 0;
-				if (isInCheck(altBoard, 0, 3, 7)) return false;
+				uint8_t tmp;
+				tmp = board[7][3];
+				board[7][3] = board[7][4];
+				board[7][4] = 0;
+				if (isInCheck(board, 0, 3, 7))
+				{
+					// reset
+					board[7][4] = board[7][3];
+					board[7][3] = tmp;
+					return false;
+				}
+				// reset
+				board[7][4] = board[7][3];
+				board[7][3] = tmp;
 
-				altBoard[7][2] = altBoard[7][3];
-				altBoard[7][3] = 0;
-				if (isInCheck(altBoard, 0, 2, 7)) return false;
+				tmp = board[7][2];
+				board[7][2] = board[7][3];
+				board[7][3] = 0;
+				if (isInCheck(board, 0, 2, 7))
+				{
+					// reset
+					board[7][3] = board[7][2];
+					board[7][2] = tmp;
+					return false;
+				}
+				// reset
+				board[7][3] = board[7][2];
+				board[7][2] = tmp;
 
 				// looks good!
 				return true;
@@ -820,17 +841,40 @@ bool Game::validCastle(Piece* piece, int initX, int initY, int kingX, int kingY)
 
 				// make sure king won't be in check throughout!
 				// open up parallel universe where king is moving thru castle
-				uint8_t altBoard[8][8];
-				std::copy(&board[0][0], &board[0][0] + 8 * 8, &altBoard[0][0]);
-				if (isInCheck(altBoard, 0, 4, 7)) return false;
+				/*uint8_t altBoard[8][8];
+				std::copy(&board[0][0], &board[0][0] + 8 * 8, &altBoard[0][0]);*/
 
-				altBoard[7][5] = altBoard[7][4];
-				altBoard[7][4] = 0;
-				if (isInCheck(altBoard, 0, 5, 7)) return false;
+				if (isInCheck(board, 0, 4, 7)) return false;
 
-				altBoard[7][6] = altBoard[7][5];
-				altBoard[7][5] = 0;
-				if (isInCheck(altBoard, 0, 6, 7)) return false;
+				uint8_t tmp;
+
+				tmp = board[7][5];
+				board[7][5] = board[7][4];
+				board[7][4] = 0;
+				if (isInCheck(board, 0, 5, 7))
+				{
+					// reset
+					board[7][4] = board[7][5];
+					board[7][5] = tmp;
+					return false;
+				}
+				// reset
+				board[7][4] = board[7][5];
+				board[7][5] = tmp;
+
+				tmp = board[7][6];
+				board[7][6] = board[7][5];
+				board[7][5] = 0;
+				if (isInCheck(board, 0, 6, 7))
+				{
+					// reset
+					board[7][5] = board[7][6];
+					board[7][6] = tmp;
+					return false;
+				}
+				// reset
+				board[7][5] = board[7][6];
+				board[7][6] = tmp;
 
 
 				// looks good!
@@ -870,15 +914,40 @@ bool Game::validCastle(Piece* piece, int initX, int initY, int kingX, int kingY)
 
 				// make sure king won't be in check throughout!
 				// open up parallel universe where king is moving thru castle
-				uint8_t altBoard[8][8];
-				std::copy(&board[0][0], &board[0][0] + 8 * 8, &altBoard[0][0]);
-				if (isInCheck(altBoard, 1, 4, 0)) return false;
-				altBoard[0][3] = altBoard[0][4];
-				altBoard[0][4] = 0;
-				if (isInCheck(altBoard, 1, 3, 0)) return false;
-				altBoard[0][2] = altBoard[0][3];
-				altBoard[0][3] = 0;
-				if (isInCheck(altBoard, 1, 2, 0)) return false;
+				/*uint8_t altBoard[8][8];
+				std::copy(&board[0][0], &board[0][0] + 8 * 8, &altBoard[0][0]);*/
+
+				if (isInCheck(board, 1, 4, 0)) return false;
+
+				uint8_t tmp;
+
+				tmp = board[0][3];
+				board[0][3] = board[0][4];
+				board[0][4] = 0;
+				if (isInCheck(board, 1, 3, 0))
+				{
+					// reset
+					board[0][4] = board[0][3];
+					board[0][3] = tmp;
+					return false;
+				}
+				// reset
+				board[0][4] = board[0][3];
+				board[0][3] = tmp;
+
+				tmp = board[0][2];
+				board[0][2] = board[0][3];
+				board[0][3] = 0;
+				if (isInCheck(board, 1, 2, 0))
+				{
+					// reset
+					board[0][3] = board[0][2];
+					board[0][2] = tmp;
+					return false;
+				}
+				// reset
+				board[0][3] = board[0][2];
+				board[0][2] = tmp;
 
 				// looks good!
 				return true;
@@ -913,15 +982,40 @@ bool Game::validCastle(Piece* piece, int initX, int initY, int kingX, int kingY)
 
 				// make sure king won't be in check throughout!
 				// open up parallel universe where king is moving thru castle
-				uint8_t altBoard[8][8];
-				std::copy(&board[0][0], &board[0][0] + 8 * 8, &altBoard[0][0]);
-				if (isInCheck(altBoard, 1, 4, 0)) return false;
-				altBoard[0][5] = altBoard[0][4];
-				altBoard[0][4] = 0;
-				if (isInCheck(altBoard, 1, 5, 0)) return false;
-				altBoard[0][6] = altBoard[0][5];
-				altBoard[0][5] = 0;
-				if (isInCheck(altBoard, 1, 6, 0)) return false;
+				/*uint8_t altBoard[8][8];
+				std::copy(&board[0][0], &board[0][0] + 8 * 8, &altBoard[0][0]);*/
+
+				if (isInCheck(board, 1, 4, 0)) return false;
+
+				uint8_t tmp;
+
+				tmp = board[0][5];
+				board[0][5] = board[0][4];
+				board[0][4] = 0;
+				if (isInCheck(board, 1, 5, 0))
+				{
+					// reset
+					board[0][4] = board[0][5];
+					board[0][5] = tmp;
+					return false;
+				}
+				// reset
+				board[0][4] = board[0][5];
+				board[0][5] = tmp;
+
+				tmp = board[0][6];
+				board[0][6] = board[0][5];
+				board[0][5] = 0;
+				if (isInCheck(board, 1, 6, 0))
+				{
+					// reset
+					board[0][5] = board[0][6];
+					board[0][6] = tmp;
+					return false;
+				}
+				// reset
+				board[0][5] = board[0][6];
+				board[0][6] = tmp;
 
 				// looks good!
 				return true;
@@ -1247,52 +1341,75 @@ Move* Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool
 	/*
 		******MAKE SURE THE KING WON'T BE IN CHECK AFTER THE MOVE******
 	*/
-	// open up parallel universe where move has been made
-	uint8_t altBoard[8][8];
-	std::copy(&board[0][0], &board[0][0] + 8 * 8, &altBoard[0][0]);
-	altBoard[newYCoord][newXCoord] = altBoard[oldYCoord][oldXCoord];
-	altBoard[oldYCoord][oldXCoord] = 0;
+	if (!isCastling) // valiCastle already looks for check
+	{
+		// open up parallel universe where move has been made
+		/*uint8_t altBoard[8][8];
+		std::copy(&board[0][0], &board[0][0] + 8 * 8, &altBoard[0][0]);
+		altBoard[newYCoord][newXCoord] = altBoard[oldYCoord][oldXCoord];
+		altBoard[oldYCoord][oldXCoord] = 0;*/
 
-	int kingX, kingY;
-	// for white
-	if (turn % 2 == 0)
-	{
-		for (int i = 0; i < 8; i++)
+		uint8_t tmp = board[newYCoord][newXCoord];
+		board[newYCoord][newXCoord] = board[oldYCoord][oldXCoord];
+		board[oldYCoord][oldXCoord] = 0;
+
+		int kingX, kingY;
+		// for white
+		if (turn % 2 == 0)
 		{
-			bool breakout = false;
-			for (int j = 0; j < 8; j++)
+			for (int i = 0; i < 8; i++)
 			{
-				if ((altBoard[i][j] & WHITE_KING) == WHITE_KING)
+				bool breakout = false;
+				for (int j = 0; j < 8; j++)
 				{
-					kingX = j;
-					kingY = i;
-					breakout = true;
-					break;
+					if ((board[i][j] & WHITE_KING) == WHITE_KING)
+					{
+						kingX = j;
+						kingY = i;
+						breakout = true;
+						break;
+					}
 				}
+				if (breakout) break;
 			}
-			if (breakout) break;
+			if (isInCheck(board, 0, kingX, kingY))
+			{
+				// reset board state
+				board[oldYCoord][oldXCoord] = board[newYCoord][newXCoord];
+				board[newYCoord][newXCoord] = tmp;
+				return nullptr;
+			}
 		}
-		if (isInCheck(altBoard, 0, kingX, kingY)) return nullptr;
-	}
-	// for black
-	else
-	{
-		for (int i = 0; i < 8; i++)
+		// for black
+		else
 		{
-			bool breakout = false;
-			for (int j = 0; j < 8; j++)
+			for (int i = 0; i < 8; i++)
 			{
-				if ((altBoard[i][j] & BLACK_KING) == BLACK_KING)
+				bool breakout = false;
+				for (int j = 0; j < 8; j++)
 				{
-					kingX = j;
-					kingY = i;
-					breakout = true;
-					break;
+					if ((board[i][j] & BLACK_KING) == BLACK_KING)
+					{
+						kingX = j;
+						kingY = i;
+						breakout = true;
+						break;
+					}
 				}
+				if (breakout) break;
 			}
-			if (breakout) break;
+			if (isInCheck(board, 1, kingX, kingY))
+			{
+				// reset board state
+				board[oldYCoord][oldXCoord] = board[newYCoord][newXCoord];
+				board[newYCoord][newXCoord] = tmp;
+				return nullptr;
+			}
 		}
-		if (isInCheck(altBoard, 1, kingX, kingY)) return nullptr;
+
+		// reset board state
+		board[oldYCoord][oldXCoord] = board[newYCoord][newXCoord];
+		board[newYCoord][newXCoord] = tmp;
 	}
 
 
