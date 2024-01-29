@@ -1,7 +1,7 @@
 #include "Move.h"
 
 Move::Move() {}
-Move::Move(Piece* p, Piece* cap, bool isPromo, bool isCap, bool ispassant, bool isCas, bool lossCas,
+Move::Move(Piece* p, Piece* cap, bool isPromo, bool isCap, bool ispassant, bool isCas, uint8_t oldCas,
 	bool lossPass, Piece* lostPass, uint8_t proPiece, int oldHalves, int oldx, int oldy, int newx, int newy, std::string FEN)
 {
 	piece = p;
@@ -10,7 +10,7 @@ Move::Move(Piece* p, Piece* cap, bool isPromo, bool isCap, bool ispassant, bool 
 	isCapture = isCap;
 	isEP = ispassant;
 	isCastle = isCas;
-	lossOfCastle = lossCas;
+	oldCastlingRights = oldCas;
 	lossOfEP = lossPass;
 	lostEP = lostPass;
 	promoPiece = proPiece;
@@ -28,7 +28,7 @@ Move::~Move()
 Move* Move::cloneMove()
 {
 	Move* newMove = new Move(piece, captured, isPromoting, isCapture, isEP, 
-		isCastle, lossOfCastle, lossOfEP, lostEP, promoPiece, oldHalfmoves,
+		isCastle, oldCastlingRights, lossOfEP, lostEP, promoPiece, oldHalfmoves,
 		oldX, oldY, newX, newY, fen);
 	return newMove;
 }

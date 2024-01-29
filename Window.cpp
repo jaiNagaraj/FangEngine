@@ -155,7 +155,7 @@ void Window::init()
             //if (game.turn % 2 == 0)
             //{
             //    Move* m = p1.search(3);
-            //    if (m)
+            //    if (m && m->piece)
             //    {
             //        game.makeMove(m);
             //        endCode = game.isCheckmate(game.turn);
@@ -165,10 +165,11 @@ void Window::init()
             //}
             if (game.turn % 2 == 1)
             {
-                Move* m = p2.search(4);
-                if (m)
+                Move* m = p2.search(3);
+                if (m && m->piece)
                 {
                     game.makeMove(m);
+                    std::cout << "FEN: " << m->fen << "\n";
                     endCode = game.isCheckmate(game.turn);
                     endCodeCheck();
                     SDL_UpdateWindowSurface(window);

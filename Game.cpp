@@ -3,6 +3,7 @@
 #include "Move.h"
 #include <bitset>
 #include <string>
+#include <sstream>
 #include <algorithm>
 typedef unsigned long long ull;
 
@@ -737,289 +738,281 @@ void Game::updateAttackBoard()
 
 bool Game::validCastle(Piece* piece, int initX, int initY, int kingX, int kingY)
 {
-	// if king can't castle
-	if (!(piece->canCastle)) return false;
-
 	// if king isn't on back rank
 	if (((piece->info & WHITE) == WHITE && initY != 7) || ((piece->info & BLACK) == BLACK && initY != 0)) return false;
 
 	// remaining checks for white
 	if ((piece->info & WHITE) == WHITE)
 	{
+		// if king can't castle
+		if (!whiteKingCanCastle) return false;
+
 		// check queenside castle
 		if (initX > kingX)
 		{
 			// if the rook isn't there and/or there are pieces blocking
 			if (!((board[7][0] & WHITE_ROOK) == WHITE_ROOK && board[7][1] == 0 && board[7][2] == 0 && board[7][3] == 0)) return false;
-			else
+
+			// if we've moved the rook
+			if (!whiteQueensideRookCanCastle) return false;
+
+			//bool valid = false; // for checking if the rook is all good (safety precaution)
+			//for (Piece* p : piecesOnBoard)
+			//{
+			//	// found left white rook at (0,420)
+			//	if (p->rect->x == 0 && p->rect->y == 420)
+			//	{
+			//		if (!(p->canCastle)) return false;
+			//		else
+			//		{
+			//			valid = true;
+			//			break;
+			//		}
+			//	}
+			//}
+			//if (!valid)
+			//{
+			//	std::cout << "Uh oh spaghetti O's";
+			//	return false; // for some reason rook isn't there; problem!!
+			//}
+
+			// make sure king won't be in check throughout!
+			if (isInCheck(board, 0, 4, 7)) return false;
+
+			uint8_t tmp;
+			tmp = board[7][3];
+			board[7][3] = board[7][4];
+			board[7][4] = 0;
+			if (isInCheck(board, 0, 3, 7))
 			{
-				bool valid = false; // for checking if the rook is all good (safety precaution)
-				for (Piece* p : piecesOnBoard)
-				{
-					// found left white rook at (0,420)
-					if (p->rect->x == 0 && p->rect->y == 420)
-					{
-						if (!(p->canCastle)) return false;
-						else
-						{
-							valid = true;
-							break;
-						}
-					}
-				}
-				if (!valid)
-				{
-					std::cout << "Uh oh spaghetti O's";
-					return false; // for some reason rook isn't there; problem!!
-				}
-
-				// make sure king won't be in check throughout!
-				// open up parallel universe where king is moving thru castle
-				/*uint8_t altBoard[8][8];
-				std::copy(&board[0][0], &board[0][0] + 8 * 8, &altBoard[0][0]);*/
-				if (isInCheck(board, 0, 4, 7)) return false;
-
-				uint8_t tmp;
-				tmp = board[7][3];
-				board[7][3] = board[7][4];
-				board[7][4] = 0;
-				if (isInCheck(board, 0, 3, 7))
-				{
-					// reset
-					board[7][4] = board[7][3];
-					board[7][3] = tmp;
-					return false;
-				}
 				// reset
 				board[7][4] = board[7][3];
 				board[7][3] = tmp;
+				return false;
+			}
+			// reset
+			board[7][4] = board[7][3];
+			board[7][3] = tmp;
 
-				tmp = board[7][2];
-				board[7][2] = board[7][3];
-				board[7][3] = 0;
-				if (isInCheck(board, 0, 2, 7))
-				{
-					// reset
-					board[7][3] = board[7][2];
-					board[7][2] = tmp;
-					return false;
-				}
+			tmp = board[7][2];
+			board[7][2] = board[7][3];
+			board[7][3] = 0;
+			if (isInCheck(board, 0, 2, 7))
+			{
 				// reset
 				board[7][3] = board[7][2];
 				board[7][2] = tmp;
-
-				// looks good!
-				return true;
+				return false;
 			}
+			// reset
+			board[7][3] = board[7][2];
+			board[7][2] = tmp;
+
+			// looks good!
+			return true;
 		}
 		// check kingside castle
 		else
 		{
 			// if the rook isn't there and/or there are pieces blocking
 			if (!((board[7][7] & WHITE_ROOK) == WHITE_ROOK && board[7][6] == 0 && board[7][5] == 0)) return false;
-			else
+
+			// if we've moved the rook
+			if (!whiteKingsideRookCanCastle) return false;
+
+			//bool valid = false; // for checking if the rook is all good (safety precaution)
+			//for (Piece* p : piecesOnBoard)
+			//{
+			//	// found right white rook at (0,420)
+			//	if (p->rect->x == 420 && p->rect->y == 420)
+			//	{
+			//		if (!(p->canCastle)) return false;
+			//		else
+			//		{
+			//			valid = true;
+			//			break;
+			//		}
+			//	}
+			//}
+			//if (!valid)
+			//{
+			//	std::cout << "Uh oh spaghetti O's";
+			//	return false; // for some reason rook isn't there; problem!!
+			//}
+
+			// make sure king won't be in check throughout!
+			if (isInCheck(board, 0, 4, 7)) return false;
+
+			uint8_t tmp;
+
+			tmp = board[7][5];
+			board[7][5] = board[7][4];
+			board[7][4] = 0;
+			if (isInCheck(board, 0, 5, 7))
 			{
-				bool valid = false; // for checking if the rook is all good (safety precaution)
-				for (Piece* p : piecesOnBoard)
-				{
-					// found right white rook at (0,420)
-					if (p->rect->x == 420 && p->rect->y == 420)
-					{
-						if (!(p->canCastle)) return false;
-						else
-						{
-							valid = true;
-							break;
-						}
-					}
-				}
-				if (!valid)
-				{
-					std::cout << "Uh oh spaghetti O's";
-					return false; // for some reason rook isn't there; problem!!
-				}
-
-				// make sure king won't be in check throughout!
-				// open up parallel universe where king is moving thru castle
-				/*uint8_t altBoard[8][8];
-				std::copy(&board[0][0], &board[0][0] + 8 * 8, &altBoard[0][0]);*/
-
-				if (isInCheck(board, 0, 4, 7)) return false;
-
-				uint8_t tmp;
-
-				tmp = board[7][5];
-				board[7][5] = board[7][4];
-				board[7][4] = 0;
-				if (isInCheck(board, 0, 5, 7))
-				{
-					// reset
-					board[7][4] = board[7][5];
-					board[7][5] = tmp;
-					return false;
-				}
 				// reset
 				board[7][4] = board[7][5];
 				board[7][5] = tmp;
+				return false;
+			}
+			// reset
+			board[7][4] = board[7][5];
+			board[7][5] = tmp;
 
-				tmp = board[7][6];
-				board[7][6] = board[7][5];
-				board[7][5] = 0;
-				if (isInCheck(board, 0, 6, 7))
-				{
-					// reset
-					board[7][5] = board[7][6];
-					board[7][6] = tmp;
-					return false;
-				}
+			tmp = board[7][6];
+			board[7][6] = board[7][5];
+			board[7][5] = 0;
+			if (isInCheck(board, 0, 6, 7))
+			{
 				// reset
 				board[7][5] = board[7][6];
 				board[7][6] = tmp;
-
-
-				// looks good!
-				return true;
+				return false;
 			}
+			// reset
+			board[7][5] = board[7][6];
+			board[7][6] = tmp;
+
+
+			// looks good!
+			return true;
 		}
 	}
 	// remaining checks for black
 	else
 	{
+		// if the king has moved
+		if (!blackKingCanCastle) return false;
+
 		// check queenside castle
 		if (initX > kingX)
 		{
 			// if the rook isn't there and/or there are pieces blocking
 			if (!((board[0][0] & BLACK_ROOK) == BLACK_ROOK && board[0][1] == 0 && board[0][2] == 0 && board[0][3] == 0)) return false;
-			else
+
+			// if we've moved the rook before
+			if (!blackQueensideRookCanCastle) return false;
+
+			//bool valid = false; // for checking if the rook is all good (safety precaution)
+			//for (Piece* p : piecesOnBoard)
+			//{
+			//	// found left black rook at (0,0)
+			//	if (p->rect->x == 0 && p->rect->y == 0)
+			//	{
+			//		if (!(p->canCastle)) return false;
+			//		else
+			//		{
+			//			valid = true;
+			//			break;
+			//		}
+			//	}
+			//}
+			//if (!valid)
+			//{
+			//	std::cout << "Uh oh spaghetti O's";
+			//	return false; // for some reason rook isn't there; problem!!
+			//}
+
+			// make sure king won't be in check throughout!
+			if (isInCheck(board, 1, 4, 0)) return false;
+
+			uint8_t tmp;
+
+			tmp = board[0][3];
+			board[0][3] = board[0][4];
+			board[0][4] = 0;
+			if (isInCheck(board, 1, 3, 0))
 			{
-				bool valid = false; // for checking if the rook is all good (safety precaution)
-				for (Piece* p : piecesOnBoard)
-				{
-					// found left black rook at (0,0)
-					if (p->rect->x == 0 && p->rect->y == 0)
-					{
-						if (!(p->canCastle)) return false;
-						else
-						{
-							valid = true;
-							break;
-						}
-					}
-				}
-				if (!valid)
-				{
-					std::cout << "Uh oh spaghetti O's";
-					return false; // for some reason rook isn't there; problem!!
-				}
-
-				// make sure king won't be in check throughout!
-				// open up parallel universe where king is moving thru castle
-				/*uint8_t altBoard[8][8];
-				std::copy(&board[0][0], &board[0][0] + 8 * 8, &altBoard[0][0]);*/
-
-				if (isInCheck(board, 1, 4, 0)) return false;
-
-				uint8_t tmp;
-
-				tmp = board[0][3];
-				board[0][3] = board[0][4];
-				board[0][4] = 0;
-				if (isInCheck(board, 1, 3, 0))
-				{
-					// reset
-					board[0][4] = board[0][3];
-					board[0][3] = tmp;
-					return false;
-				}
 				// reset
 				board[0][4] = board[0][3];
 				board[0][3] = tmp;
+				return false;
+			}
+			// reset
+			board[0][4] = board[0][3];
+			board[0][3] = tmp;
 
-				tmp = board[0][2];
-				board[0][2] = board[0][3];
-				board[0][3] = 0;
-				if (isInCheck(board, 1, 2, 0))
-				{
-					// reset
-					board[0][3] = board[0][2];
-					board[0][2] = tmp;
-					return false;
-				}
+			tmp = board[0][2];
+			board[0][2] = board[0][3];
+			board[0][3] = 0;
+			if (isInCheck(board, 1, 2, 0))
+			{
 				// reset
 				board[0][3] = board[0][2];
 				board[0][2] = tmp;
-
-				// looks good!
-				return true;
+				return false;
 			}
+			// reset
+			board[0][3] = board[0][2];
+			board[0][2] = tmp;
+
+			// looks good!
+			return true;
 		}
 		// check kingside castle
 		else
 		{
 			// if the rook isn't there and/or there are pieces blocking
 			if (!((board[0][7] & BLACK_ROOK) == BLACK_ROOK && board[0][6] == 0 && board[0][5] == 0)) return false;
-			else
+
+			// if we've moved the rook
+			if (!blackKingsideRookCanCastle) return false;
+
+			//bool valid = false; // for checking if the rook is all good (safety precaution)
+			//for (Piece* p : piecesOnBoard)
+			//{
+			//	// found right black rook at (420,0)
+			//	if (p->rect->x == 420 && p->rect->y == 0)
+			//	{
+			//		if (!(p->canCastle)) return false;
+			//		else
+			//		{
+			//			valid = true;
+			//			break;
+			//		}
+			//	}
+			//}
+			//if (!valid)
+			//{
+			//	std::cout << "Uh oh spaghetti O's";
+			//	return false; // for some reason rook isn't there; problem!!
+			//}
+
+			// make sure king won't be in check throughout!
+			if (isInCheck(board, 1, 4, 0)) return false;
+
+			uint8_t tmp;
+
+			tmp = board[0][5];
+			board[0][5] = board[0][4];
+			board[0][4] = 0;
+			if (isInCheck(board, 1, 5, 0))
 			{
-				bool valid = false; // for checking if the rook is all good (safety precaution)
-				for (Piece* p : piecesOnBoard)
-				{
-					// found right black rook at (420,0)
-					if (p->rect->x == 420 && p->rect->y == 0)
-					{
-						if (!(p->canCastle)) return false;
-						else
-						{
-							valid = true;
-							break;
-						}
-					}
-				}
-				if (!valid)
-				{
-					std::cout << "Uh oh spaghetti O's";
-					return false; // for some reason rook isn't there; problem!!
-				}
-
-				// make sure king won't be in check throughout!
-				// open up parallel universe where king is moving thru castle
-				/*uint8_t altBoard[8][8];
-				std::copy(&board[0][0], &board[0][0] + 8 * 8, &altBoard[0][0]);*/
-
-				if (isInCheck(board, 1, 4, 0)) return false;
-
-				uint8_t tmp;
-
-				tmp = board[0][5];
-				board[0][5] = board[0][4];
-				board[0][4] = 0;
-				if (isInCheck(board, 1, 5, 0))
-				{
-					// reset
-					board[0][4] = board[0][5];
-					board[0][5] = tmp;
-					return false;
-				}
 				// reset
 				board[0][4] = board[0][5];
 				board[0][5] = tmp;
+				return false;
+			}
+			// reset
+			board[0][4] = board[0][5];
+			board[0][5] = tmp;
 
-				tmp = board[0][6];
-				board[0][6] = board[0][5];
-				board[0][5] = 0;
-				if (isInCheck(board, 1, 6, 0))
-				{
-					// reset
-					board[0][5] = board[0][6];
-					board[0][6] = tmp;
-					return false;
-				}
+			tmp = board[0][6];
+			board[0][6] = board[0][5];
+			board[0][5] = 0;
+			if (isInCheck(board, 1, 6, 0))
+			{
 				// reset
 				board[0][5] = board[0][6];
 				board[0][6] = tmp;
-
-				// looks good!
-				return true;
+				return false;
 			}
+			// reset
+			board[0][5] = board[0][6];
+			board[0][6] = tmp;
+
+			// looks good!
+			return true;
 		}
 	}
 }
@@ -1341,14 +1334,8 @@ Move* Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool
 	/*
 		******MAKE SURE THE KING WON'T BE IN CHECK AFTER THE MOVE******
 	*/
-	if (!isCastling) // valiCastle already looks for check
+	if (!isCastling) // validCastle already looks for check
 	{
-		// open up parallel universe where move has been made
-		/*uint8_t altBoard[8][8];
-		std::copy(&board[0][0], &board[0][0] + 8 * 8, &altBoard[0][0]);
-		altBoard[newYCoord][newXCoord] = altBoard[oldYCoord][oldXCoord];
-		altBoard[oldYCoord][oldXCoord] = 0;*/
-
 		uint8_t tmp = board[newYCoord][newXCoord];
 		board[newYCoord][newXCoord] = board[oldYCoord][oldXCoord];
 		board[oldYCoord][oldXCoord] = 0;
@@ -1426,9 +1413,15 @@ Move* Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool
 	move->oldX = oldXCoord;
 	move->oldY = oldYCoord;
 
-	// check for loss of castle
-	if ((piece->info & ROOK) == ROOK || (piece->info & KING) == KING && !isCastling) move->lossOfCastle = true;
-	else move->lossOfCastle = false;
+	// record old castling rights
+	uint8_t castlingRights = 0;
+	if (whiteKingCanCastle) castlingRights |= WK_CASTLE;
+	if (whiteQueensideRookCanCastle) castlingRights |= WQR_CASTLE;
+	if (whiteKingsideRookCanCastle) castlingRights |= WKR_CASTLE;
+	if (blackKingCanCastle) castlingRights |= BK_CASTLE;
+	if (blackQueensideRookCanCastle) castlingRights |= BQR_CASTLE;
+	if (blackKingsideRookCanCastle) castlingRights |= BKR_CASTLE;
+	move->oldCastlingRights = castlingRights;
 
 	// check for loss of en passant
 	bool noLoss = true;
@@ -1508,17 +1501,18 @@ void Game::makeMove(Move* move)
 		// preemptively move rook to correct spot
 		if ((move->piece->info & WHITE) == WHITE) // for white
 		{
+			whiteKingCanCastle = false; // revoke king castling rights
 			if (move->newX < move->oldX) // queenside castle
 			{
 				for (Piece* p : piecesOnBoard)
 				{
 					// if we found the left rook
-					if ((p->info & WHITE_ROOK) == WHITE_ROOK && p->rookSide == 0)
+					if ((p->info & WHITE_ROOK) == WHITE_ROOK && p->rect->x == 0)
 					{
 						p->rect->x = (move->newX + 1) * 60; // move to the right of the king
 						board[move->newY][move->newX + 1] = board[7][0];
 						board[7][0] = 0;
-						p->canCastle = false; // revoke castling rights
+						whiteQueensideRookCanCastle = false; // remove queenside castling
 						break;
 					}
 				}
@@ -1528,12 +1522,12 @@ void Game::makeMove(Move* move)
 				for (Piece* p : piecesOnBoard)
 				{
 					// if we found the right rook
-					if ((p->info & WHITE_ROOK) == WHITE_ROOK && p->rookSide == 1)
+					if ((p->info & WHITE_ROOK) == WHITE_ROOK && p->rect->x == 420)
 					{
 						p->rect->x = (move->newX - 1) * 60; // move to the left of the king
 						board[move->newY][move->newX - 1] = board[7][7];
 						board[7][7] = 0;
-						p->canCastle = false; // revoke castling rights
+						whiteKingsideRookCanCastle = false; // remove kingside castling
 						break;
 					}
 				}
@@ -1541,17 +1535,18 @@ void Game::makeMove(Move* move)
 		}
 		else // for black
 		{
+			blackKingCanCastle = false;
 			if (move->newX < move->oldX) // queenside castle
 			{
 				for (Piece* p : piecesOnBoard)
 				{
 					// if we found the left rook
-					if ((p->info & BLACK_ROOK) == BLACK_ROOK && p->rookSide == 0)
+					if ((p->info & BLACK_ROOK) == BLACK_ROOK && p->rect->x == 0)
 					{
 						p->rect->x = (move->newX + 1) * 60; // move to the right of the king
 						board[move->newY][move->newX + 1] = board[0][0];
 						board[0][0] = 0;
-						p->canCastle = false; // revoke castling rights
+						blackQueensideRookCanCastle = false; // revoke queenside castling
 						break;
 					}
 				}
@@ -1561,16 +1556,38 @@ void Game::makeMove(Move* move)
 				for (Piece* p : piecesOnBoard)
 				{
 					// if we found the right rook
-					if ((p->info & BLACK_ROOK) == BLACK_ROOK && p->rookSide == 1)
+					if ((p->info & BLACK_ROOK) == BLACK_ROOK && p->rect->x == 420)
 					{
 						p->rect->x = (move->newX - 1) * 60; // move to the left of the king
 						board[move->newY][move->newX - 1] = board[0][7];
 						board[0][7] = 0;
-						p->canCastle = false; // revoke castling rights
+						blackKingsideRookCanCastle = false; // revoke kingside castling
 						break;
 					}
 				}
 			}
+		}
+	}
+	else
+	{
+		// determine castling rights based on piece moved
+		switch (move->piece->info)
+		{
+			case WHITE_KING:
+				whiteKingCanCastle = false;
+				break;
+			case BLACK_KING:
+				blackKingCanCastle = false;
+				break;
+			// NOTE: for rooks, it suffices to check their origin square rather than their side identity
+			case WHITE_ROOK:
+				if (move->oldX == 0) whiteQueensideRookCanCastle = false;
+				else if (move->oldX == 420) whiteKingsideRookCanCastle = false;
+				break;
+			case BLACK_ROOK:
+				if (move->oldX == 0) blackQueensideRookCanCastle = false;
+				else if (move->oldX == 420) blackKingsideRookCanCastle = false;
+				break;
 		}
 	}
 
@@ -1588,9 +1605,6 @@ void Game::makeMove(Move* move)
 			p->enPassantable = false;
 		}
 	}
-
-	// make sure rooks/kings can't castle after movement
-	move->piece->canCastle = false;
 	
 	// if pawn passes checks for two spaces
 	if ((move->piece->info & PAWN) == PAWN && abs(distMovedY) == 2) move->piece->enPassantable = true;
@@ -1625,7 +1639,7 @@ void Game::makeMove(Move* move)
 	std::string pos = move->fen.substr(0, move->fen.find(" "));
 	if (positions.count(pos) == 0) positions[pos] = 1;
 	else positions[pos]++;
-	//std::cout << "FEN: " << fen << "\n";
+	//std::cout << "FEN: " << move->fen << "\n";
 }
 
 void Game::unmakeMove(Move* move)
@@ -1653,7 +1667,6 @@ void Game::unmakeMove(Move* move)
 						p->rect->x = 0; // move back to the left-most square
 						board[7][0] = board[move->newY][move->newX + 1];
 						board[move->newY][move->newX + 1] = 0;
-						p->canCastle = true; // bestow castling rights back
 						break;
 					}
 				}
@@ -1668,7 +1681,6 @@ void Game::unmakeMove(Move* move)
 						p->rect->x = 7 * 60; // move back to the right-most square
 						board[7][7] = board[move->newY][move->newX - 1];
 						board[move->newY][move->newX + 1] = 0;
-						p->canCastle = true; // bestow castling rights back
 						break;
 					}
 				}
@@ -1686,7 +1698,6 @@ void Game::unmakeMove(Move* move)
 						p->rect->x = 0; // move back to the left-most square
 						board[0][0] = board[move->newY][move->newX + 1];
 						board[move->newY][move->newX + 1] = 0;
-						p->canCastle = true; // bestow castling rights back
 						break;
 					}
 				}
@@ -1701,7 +1712,6 @@ void Game::unmakeMove(Move* move)
 						p->rect->x = 7 * 60; // move back to the right-most square
 						board[0][7] = board[move->newY][move->newX - 1];
 						board[move->newY][move->newX - 1] = 0;
-						p->canCastle = true; // bestow castling rights back
 						break;
 					}
 				}
@@ -1715,8 +1725,13 @@ void Game::unmakeMove(Move* move)
 		move->lostEP->enPassantable = true;
 	}
 
-	// bestow castling rights if applicable
-	if (move->lossOfCastle) move->piece->canCastle = true;
+	// reset castling rights
+	if (move->oldCastlingRights & WK_CASTLE) whiteKingCanCastle = true;
+	if (move->oldCastlingRights & WQR_CASTLE) whiteQueensideRookCanCastle = true;
+	if (move->oldCastlingRights & WKR_CASTLE) whiteKingsideRookCanCastle = true;
+	if (move->oldCastlingRights & BK_CASTLE) blackKingCanCastle = true;
+	if (move->oldCastlingRights & BQR_CASTLE) blackQueensideRookCanCastle = true;
+	if (move->oldCastlingRights & BKR_CASTLE) blackKingsideRookCanCastle = true;
 
 	// if the piece was pawn that moved two spaces, un-passant it
 	if ((move->piece->info & PAWN) == PAWN && abs(distMovedY) == 2) move->piece->enPassantable = false;
@@ -3713,13 +3728,13 @@ std::string Game::getFEN()
 		}
 	}
 	// check white kingside castle
-	if (kingRookWhite && kingRookWhite->canCastle && kingWhite->canCastle) castlingStr += "K";
+	if (whiteKingCanCastle && whiteKingsideRookCanCastle) castlingStr += "K";
 	// check white queenside castle
-	if (queenRookWhite && queenRookWhite->canCastle && kingWhite->canCastle) castlingStr += "Q";
+	if (whiteKingCanCastle && whiteQueensideRookCanCastle) castlingStr += "Q";
 	// check black kingside castle
-	if (kingRookBlack && kingRookBlack->canCastle && kingBlack->canCastle) castlingStr += "k";
+	if (blackKingCanCastle && blackKingsideRookCanCastle) castlingStr += "k";
 	// check black queenside castle
-	if (queenRookBlack && queenRookBlack->canCastle && kingBlack->canCastle) castlingStr += "q";
+	if (blackKingCanCastle && blackQueensideRookCanCastle) castlingStr += "q";
 	// if neither side can castle
 	if (castlingStr == "") castlingStr = "-";
 	castlingStr += " ";
@@ -3757,6 +3772,30 @@ std::string Game::getFEN()
 	fenStr += " " + std::to_string(turn / 2 + 1);
 
 	return fenStr;
+}
+
+void Game::buildFromFEN(std::string fen)
+{
+	std::stringstream ss(fen);
+	std::string layout;
+	ss >> layout;
+	layout += "/";
+	int pos = 0;
+	for (int i = 0; i < 8; i++)
+	{
+		std::string line = layout.substr(pos, layout.find("/", pos));
+		int x = 0;
+		for (int j = 0; j < line.length(); j++)
+		{
+			switch (line[j])
+			{
+				case 'r':
+					makePiece(x, i, BLACK_ROOK, (x == 0) ? 0 : 1);
+					x++;
+					break;
+			}
+		}
+	}
 }
 
 ull Game::perft(int depth /* assuming >= 1 */)

@@ -42,8 +42,8 @@ double FangEngine::minimax(int depth, bool trueDepth, bool maxer, double alpha, 
 		else if (end == 0) return 0;
 		else
 		{
-			if (maxer) return 10000; // white checkmate
-			else return -10000; // black checkmate
+			if (maxer) return -10000; // white is checkmated
+			else return 10000; // black is checkmated
 		}
 	}
 	if (maxer) // white maximizes
