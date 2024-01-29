@@ -27,5 +27,6 @@ class Move
 		Move();
 		Move(Piece* p, Piece* cap, bool isPromo, bool isCap, bool ispassant, bool isCas, bool lossCas,
 			bool lossPass, Piece* lostPass, uint8_t proPiece, int oldHalves, int oldx, int oldy, int newx, int newy, std::string FEN);
+		~Move();
 		Move* cloneMove();
 };

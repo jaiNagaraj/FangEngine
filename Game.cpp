@@ -1754,6 +1754,7 @@ void Game::unmakeMove(Move* move)
 	std::string pos = move->fen.substr(0, move->fen.find(" "));
 	if (positions.count(pos) == 0) std::cout << "Something is afoot!\n";
 	else positions[pos]--; // the position should already exist, so just decrease counter
+	if (positions[pos] == 0) positions.erase(pos); // prevent unnecessarily large map
 }
 
 ull Game::generateLegalMoves(std::vector<Move*>& moves)
@@ -2645,7 +2646,12 @@ int Game::isCheckmate(int turn)
 		if (isInCheck(board, turn % 2, kingX, kingY)) return 1; // checkmate, liberals
 		else return 0; // stalemate, liberals
 	}
-	else return -1;
+	else
+	{
+		// delete moves
+		for (auto p : moves) delete p;
+		return -1;
+	}
 }
 
 int Game::oldIsCheckmate(int turn)
@@ -3764,7 +3770,10 @@ ull Game::perft(int depth /* assuming >= 1 */)
 	n_moves = generateLegalMoves(move_list);
 
 	if (depth == 1)
+	{
+		for (auto p : move_list) delete p;
 		return (ull) n_moves;
+	}
 
 	for (i = 0; i < n_moves; i++)
 	{
@@ -3779,6 +3788,7 @@ ull Game::perft(int depth /* assuming >= 1 */)
 		nodes += perft(depth - 1);
 		unmakeMove(move_list[i]);
 	}
+	for (auto p : move_list) delete p;
 	return nodes;
 }
 

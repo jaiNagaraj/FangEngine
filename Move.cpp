@@ -21,6 +21,10 @@ Move::Move(Piece* p, Piece* cap, bool isPromo, bool isCap, bool ispassant, bool 
 	newY = newy;
 	fen = FEN;
 }
+Move::~Move()
+{
+	;
+}
 Move* Move::cloneMove()
 {
 	Move* newMove = new Move(piece, captured, isPromoting, isCapture, isEP, 

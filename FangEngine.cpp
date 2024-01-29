@@ -12,57 +12,161 @@ FangEngine::FangEngine(Game* g)
 	game = g;
 }
 
+FangEngine::~FangEngine()
+{
+	;
+}
+
 // calls Minimax algorithm
 Move* FangEngine::search(int depth)
 {
-	int evaluation = minimax(depth, (game->turn % 2 == 0), -INF, INF);
-	std::vector<Move*> moves;
-	game->generateLegalMoves(moves);
-	return nullptr;
+	Move* move = new Move;
+	double evaluation = minimax(depth, true, (game->turn % 2 == 0), -INF, INF, &move);
+	std::cout << "Evaluation: " << evaluation << '\n';
+	return move;
 }
 
 // uses alpha-beta pruning
-int FangEngine::minimax(int depth, bool maxer, int alpha, int beta)
+double FangEngine::minimax(int depth, bool trueDepth, bool maxer, double alpha, double beta, Move** move)
 {
 	std::vector<Move*> moves;
 	game->generateLegalMoves(moves);
 	if (depth == 0 || moves.size() == 0)
 	{
-		return eval();
+		for (auto p : moves)
+		{
+			if (p != *move) delete p;
+		}
+		int end = game->isCheckmate(game->turn);
+		if (end == -1) return eval();
+		else if (end == 0) return 0;
+		else
+		{
+			if (maxer) return 10000; // white checkmate
+			else return -10000; // black checkmate
+		}
 	}
 	if (maxer) // white maximizes
 	{
-		int maxEval, eval;
+		double maxEval, eval;
 		maxEval = -INF; // worst possible eval for white
-		for (auto move : moves)
+		for (auto m : moves)
 		{
-			game->makeMove(move);
-			eval = minimax(depth - 1, false, alpha, beta);
-			maxEval = max(maxEval, eval);
+			game->makeMove(m);
+			eval = minimax(depth - 1, false, false, alpha, beta, move);
+			if (eval > maxEval)
+			{
+				maxEval = eval;
+				if (trueDepth) *move = m;
+			}
 			alpha = max(alpha, eval); // change lower bound if necessary
-			game->unmakeMove(move);
+			game->unmakeMove(m);
 			if (beta <= alpha) break; // black will never go down this branch; has better option
+		}
+		for (auto p : moves)
+		{
+			if (p != *move) delete p;
 		}
 		return maxEval;
 	}
 	else // black minimizes
 	{
-		int minEval, eval;
+		double minEval, eval;
 		minEval = INF; // worst possible eval for black
-		for (auto move : moves)
+		for (auto m : moves)
 		{
-			game->makeMove(move);
-			eval = minimax(depth - 1, true, alpha, beta);
-			minEval = min(minEval, eval);
+			game->makeMove(m);
+			eval = minimax(depth - 1, false, true, alpha, beta, move);
+			if (eval < minEval)
+			{
+				minEval = eval;
+				if (trueDepth) *move = m;
+			}
 			beta = min(beta, eval); // change upper bound if necessary
-			game->unmakeMove(move);
+			game->unmakeMove(m);
 			if (beta <= alpha) break; // black will never go down this branch; has better option
+		}
+		for (auto p : moves)
+		{
+			if (p != *move) delete p;
 		}
 		return minEval;
 	}
 }
 
-int FangEngine::eval()
+double FangEngine::eval()
 {
-	return 0;
+	int whiteKingX, whiteKingY, blackKingX, blackKingY;
+	bool whiteHasQueen = false, blackHasQueen = false;
+	int whiteMinors = 0, blackMinors = 0;
+	double eval = 0; // evaluation in centipawns
+	for (int y = 0; y < 8; y++)
+	{
+		for (int x = 0; x < 8; x++)
+		{
+			switch (game->board[y][x])
+			{
+				case WHITE_PAWN:
+					eval += PAWN_VALUE + whitePawnPlacement[y][x];
+					break;
+				case BLACK_PAWN:
+					eval += -PAWN_VALUE + blackPawnPlacement[y][x];
+					break;
+				case WHITE_KNIGHT:
+					eval += KNIGHT_VALUE + whiteKnightPlacement[y][x];
+					whiteMinors += KNIGHT_VALUE;
+					break;
+				case BLACK_KNIGHT:
+					eval += -KNIGHT_VALUE + blackKnightPlacement[y][x];
+					blackMinors += KNIGHT_VALUE;
+					break;
+				case WHITE_BISHOP:
+					eval += BISHOP_VALUE + whiteBishopPlacement[y][x];
+					whiteMinors += BISHOP_VALUE;
+					break;
+				case BLACK_BISHOP:
+					eval += -BISHOP_VALUE + blackBishopPlacement[y][x];
+					blackMinors += BISHOP_VALUE;
+					break;
+				case WHITE_ROOK:
+					eval += ROOK_VALUE + whiteRookPlacement[y][x];
+					break;
+				case BLACK_ROOK:
+					eval += -ROOK_VALUE + blackRookPlacement[y][x];
+					break;
+				case WHITE_QUEEN:
+					whiteHasQueen = true;
+					eval += QUEEN_VALUE + whiteQueenPlacement[y][x];
+					break;
+				case BLACK_QUEEN:
+					blackHasQueen = true;
+					eval += -QUEEN_VALUE + blackQueenPlacement[y][x];
+					break;
+				case WHITE_KING:
+					whiteKingX = x; whiteKingY = y;
+					break;
+				case BLACK_KING:
+					blackKingX = x; blackKingY = y;
+					break;
+			}
+		}
+	}
+
+	// check for endgame
+	if (!(whiteHasQueen || blackHasQueen) || 
+		(whiteHasQueen && !blackHasQueen && whiteMinors < 400) || 
+		(blackHasQueen && !whiteHasQueen && blackMinors < 400) ||
+		(whiteHasQueen && blackHasQueen && whiteMinors < 400 && blackMinors < 400))
+	{
+		eval += KING_VALUE + whiteKingPlacementE[whiteKingY][whiteKingX];
+		eval += -KING_VALUE + blackKingPlacementE[blackKingY][blackKingX];
+	}
+	// kings are in middlegame
+	else
+	{
+		eval += KING_VALUE + whiteKingPlacementM[whiteKingY][whiteKingX];
+		eval += -KING_VALUE + blackKingPlacementM[blackKingY][blackKingX];
+	}
+
+	return eval / 100.0; // return eval in pawns
 }

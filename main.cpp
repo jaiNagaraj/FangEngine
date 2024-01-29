@@ -4,7 +4,6 @@
 #include <Windows.h>
 #include <string>
 #include "Window.h"
-#include "Game.h"
 
 int main()
 {

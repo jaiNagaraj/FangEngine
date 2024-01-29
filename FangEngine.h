@@ -1,5 +1,13 @@
 #pragma once
 #include "Player.h"
+#define PAWN_VALUE 100
+#define KNIGHT_VALUE 320
+#define BISHOP_VALUE 330
+#define ROOK_VALUE 500
+#define QUEEN_VALUE 900
+#define KING_VALUE 20000
+
+
 class FangEngine :
     public Player
 {
@@ -150,7 +158,7 @@ class FangEngine :
         ~FangEngine();
 
         Move* search(int depth);
-        int minimax(int depth, bool maxer, int alpha, int beta);
-        int eval();
+        double minimax(int depth, bool trueDepth, bool maxer, double alpha, double beta, Move** move);
+        double eval();
 };
 

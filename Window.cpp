@@ -1,5 +1,4 @@
 #include "Window.h"
-#include "Piece.h"
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -80,7 +79,8 @@ void Window::init()
     SDL_UpdateWindowSurface(window);
 
     // initialize players
-    p2 = RandomPlayer(&game);
+    p1 = RandomPlayer(&game);
+    p2 = FangEngine(&game);
 
     /* PERFORMANCE TESTING */
     //for (int depth = 1; depth <= 5; depth++)
@@ -88,10 +88,10 @@ void Window::init()
     //    std::cout << "Number of possible positions at depth = " << depth << ": " << game.perft(depth) << '\n';
     //}
     // Debugging: Check position count
-    //for (auto i : game.positions)
-    //{
-    //    std::cout << "For position " << i.first << ": " << i.second << '\n';
-    //}
+    for (auto i : game.positions)
+    {
+        std::cout << "For position " << i.first << ": " << i.second << '\n';
+    }
     // Debugging: Check fen count
     //std::cout << "Number of fens: " << game.fens.size() << '\n';
     /* PERFORMANCE TESTING: CAPTURES */
@@ -152,15 +152,28 @@ void Window::init()
             //std::this_thread::sleep_until(std::chrono::system_clock::now() + std::chrono::milliseconds(50));
 
             // make computer move
-            Move* m = p2.search(0);
-            if (m /* && game.turn % 2 == 1*/)
+            //if (game.turn % 2 == 0)
+            //{
+            //    Move* m = p1.search(3);
+            //    if (m)
+            //    {
+            //        game.makeMove(m);
+            //        endCode = game.isCheckmate(game.turn);
+            //        endCodeCheck();
+            //        SDL_UpdateWindowSurface(window);
+            //    }
+            //}
+            if (game.turn % 2 == 1)
             {
-                game.makeMove(m);
-                endCode = game.isCheckmate(game.turn);
-                endCodeCheck();
-                SDL_UpdateWindowSurface(window);
+                Move* m = p2.search(4);
+                if (m)
+                {
+                    game.makeMove(m);
+                    endCode = game.isCheckmate(game.turn);
+                    endCodeCheck();
+                    SDL_UpdateWindowSurface(window);
+                }
             }
-
         }
     }
 }

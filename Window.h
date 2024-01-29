@@ -2,6 +2,7 @@
 #include <SDL.h>
 #include <SDL_ttf.h>
 #include "Game.h"
+#include "Piece.h"
 #include "RandomPlayer.h"
 #include "FangEngine.h"
 class Window
@@ -17,7 +18,7 @@ class Window
 		SDL_Renderer* window_renderer;
 		Game game;
 		RandomPlayer p1;
-		RandomPlayer p2;
+		FangEngine p2;
 		int endCode;
 		bool endLock;
 		TTF_Font* font;
