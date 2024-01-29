@@ -1,4 +1,4 @@
-# A Chess Engine by Jai Nagaraj
+# FangEngine: A Chess Engine by Jai Nagaraj
 
 ## Purpose
 Back in late 2022, I wanted to challenge my programming skills by building a chess game, complete with rules, graphics, and fun! In fall of 2023, however, I conducted an independent study in the field of game theory, and decided to apply my knowledge to this project. It now serves not only as a functional chess board, but also a homemade chess engine which aspires to become the next Stockfish... although I'd call it a success if it can beat its creator.
