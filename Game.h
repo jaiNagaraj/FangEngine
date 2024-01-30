@@ -33,7 +33,7 @@ class Game
 		bool blackQueensideRookCanCastle = true;
 		bool blackKingCanCastle = true;
 
-		Piece* makePiece(int x, int y, uint8_t info, int side = -1);
+		Piece* makePiece(int x, int y, uint8_t info);
 		bool isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY);
 		void updateAttackBoard();
 		Move* validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool test = false);

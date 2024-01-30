@@ -13,6 +13,7 @@ class Window
 		void dragPiece();
 		int dropPiece();
 		void endCodeCheck();
+		ull perft(int depth /* assuming >= 1 */);
 	private:
 		SDL_Window* window;
 		SDL_Renderer* window_renderer;

@@ -7,7 +7,7 @@
 #include <algorithm>
 typedef unsigned long long ull;
 
-Piece* Game::makePiece(int x, int y, uint8_t info, int side)
+Piece* Game::makePiece(int x, int y, uint8_t info)
 {
 	// add to game board
 	board[y][x] = info;
@@ -19,7 +19,7 @@ Piece* Game::makePiece(int x, int y, uint8_t info, int side)
 	dstRect->h = 60;
 	//std::cout << "Piece stats: " << dstRect->x << " " << dstRect->y << " " << dstRect->w << " " << dstRect->h << '\n';
 	// make piece, add it to board!
-	Piece* tmp = new Piece(dstRect, info, side);
+	Piece* tmp = new Piece(dstRect, info);
 	piecesOnBoard.push_back(tmp);
 	return tmp;
 }
@@ -1668,7 +1668,7 @@ void Game::unmakeMove(Move* move)
 				for (Piece* p : piecesOnBoard)
 				{
 					// if we found the left rook
-					if ((p->info & WHITE_ROOK) == WHITE_ROOK && p->rookSide == 0)
+					if ((p->info & WHITE_ROOK) == WHITE_ROOK && p->rect->x == (move->newX + 1) * 60)
 					{
 						p->rect->x = 0; // move back to the left-most square
 						board[7][0] = board[move->newY][move->newX + 1];
@@ -1682,7 +1682,7 @@ void Game::unmakeMove(Move* move)
 				for (Piece* p : piecesOnBoard)
 				{
 					// if we found the right rook
-					if ((p->info & WHITE_ROOK) == WHITE_ROOK && p->rookSide == 1)
+					if ((p->info & WHITE_ROOK) == WHITE_ROOK && p->rect->x == (move->newX - 1) * 60)
 					{
 						p->rect->x = 7 * 60; // move back to the right-most square
 						board[7][7] = board[move->newY][move->newX - 1];
@@ -1699,7 +1699,7 @@ void Game::unmakeMove(Move* move)
 				for (Piece* p : piecesOnBoard)
 				{
 					// if we found the left rook
-					if ((p->info & BLACK_ROOK) == BLACK_ROOK && p->rookSide == 0)
+					if ((p->info & BLACK_ROOK) == BLACK_ROOK && p->rect->x == (move->newX + 1) * 60)
 					{
 						p->rect->x = 0; // move back to the left-most square
 						board[0][0] = board[move->newY][move->newX + 1];
@@ -1713,7 +1713,7 @@ void Game::unmakeMove(Move* move)
 				for (Piece* p : piecesOnBoard)
 				{
 					// if we found the right rook
-					if ((p->info & BLACK_ROOK) == BLACK_ROOK && p->rookSide == 1)
+					if ((p->info & BLACK_ROOK) == BLACK_ROOK && p->rect->x == (move->newX - 1) * 60)
 					{
 						p->rect->x = 7 * 60; // move back to the right-most square
 						board[0][7] = board[move->newY][move->newX - 1];
@@ -3706,33 +3706,7 @@ std::string Game::getFEN()
 
 	// determine castling rights
 	std::string castlingStr = "";
-	Piece* queenRookWhite = nullptr;
-	Piece* kingRookWhite = nullptr;
-	Piece* kingWhite = nullptr;
-	Piece* queenRookBlack = nullptr;
-	Piece* kingRookBlack = nullptr;
-	Piece* kingBlack = nullptr;
-	// get pieces
-	for (Piece* p : piecesOnBoard)
-	{
-		switch (p->info)
-		{
-			case WHITE_KING:
-				kingWhite = p;
-				break;
-			case BLACK_KING:
-				kingBlack = p;
-				break;
-			case WHITE_ROOK:
-				if (p->rookSide == 0) queenRookWhite = p;
-				else kingRookWhite = p;
-				break;
-			case BLACK_ROOK:
-				if (p->rookSide == 0) queenRookBlack = p;
-				else kingRookBlack = p;
-				break;
-		}
-	}
+	
 	// check white kingside castle
 	if (whiteKingCanCastle && whiteKingsideRookCanCastle) castlingStr += "K";
 	// check white queenside castle
@@ -3780,16 +3754,27 @@ std::string Game::getFEN()
 	return fenStr;
 }
 
+// Builds position from FEN string, ex: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 void Game::buildFromFEN(std::string fen)
 {
 	std::stringstream ss(fen);
 	std::string layout;
-	ss >> layout;
-	layout += "/";
+	std::string turn;
+	std::string castling;
+	std::string enPassant;
+	std::string halfs;
+	std::string moves;
+	ss >> layout >> turn >> castling >> enPassant >> halfs >> moves;
+
+	// build layout of board
+	layout += "/"; // for formatting purposes
 	int pos = 0;
 	for (int i = 0; i < 8; i++)
 	{
-		std::string line = layout.substr(pos, layout.find("/", pos));
+		int end = layout.find("/", pos);
+		std::string line = layout.substr(pos, end - pos);
+		pos = end;
+		pos++; // already set up for next line
 		int x = 0;
 		for (int j = 0; j < line.length(); j++)
 		{
@@ -3799,9 +3784,125 @@ void Game::buildFromFEN(std::string fen)
 					makePiece(x, i, BLACK_ROOK);
 					x++;
 					break;
+				case 'b':
+					makePiece(x, i, BLACK_BISHOP);
+					x++;
+					break;
+				case 'n':
+					makePiece(x, i, BLACK_KNIGHT);
+					x++;
+					break;
+				case 'q':
+					makePiece(x, i, BLACK_QUEEN);
+					x++;
+					break;
+				case 'k':
+					makePiece(x, i, BLACK_KING);
+					x++;
+					break;
+				case 'p':
+					makePiece(x, i, BLACK_PAWN);
+					x++;
+					break;
+				case 'R':
+					makePiece(x, i, WHITE_ROOK);
+					x++;
+					break;
+				case 'B':
+					makePiece(x, i, WHITE_BISHOP);
+					x++;
+					break;
+				case 'N':
+					makePiece(x, i, WHITE_KNIGHT);
+					x++;
+					break;
+				case 'Q':
+					makePiece(x, i, WHITE_QUEEN);
+					x++;
+					break;
+				case 'K':
+					makePiece(x, i, WHITE_KING);
+					x++;
+					break;
+				case 'P':
+					makePiece(x, i, WHITE_PAWN);
+					x++;
+					break;
+				default:
+					if (line[j] == '/') // grave mistake
+					{
+						std::cout << "Your position readings are incorrect!\n";
+					}
+					// add number of blank spaces
+					x += line[j] - 48; // convert char to int
 			}
 		}
 	}
+
+	// determine castling rights
+
+	// initially set all to false
+	whiteKingCanCastle = false;
+	whiteKingsideRookCanCastle = false;
+	whiteQueensideRookCanCastle = false;
+	blackKingCanCastle = false;
+	blackKingsideRookCanCastle = false;
+	blackQueensideRookCanCastle = false;
+	for (int i = 0; i < castling.length(); i++)
+	{
+		switch (castling[i])
+		{
+			case '-':
+				// no castling allowed!
+				break;
+			case 'K':
+				whiteKingCanCastle = true;
+				whiteKingsideRookCanCastle = true;
+			case 'Q':
+				whiteKingCanCastle = true;
+				whiteQueensideRookCanCastle = true;
+			case 'k':
+				blackKingCanCastle = true;
+				blackKingsideRookCanCastle = true;
+			case 'q':
+				blackKingCanCastle = true;
+				blackQueensideRookCanCastle = true;
+		}
+	}
+
+	// determine en passant piece
+	if (enPassant != "-")
+	{
+		// get coordinates from rank-file notation
+		int x = enPassant[0] - 97; // from file
+		int y = 7 - (enPassant[1] - 49); // from rank
+
+		// note: FEN stores the SQUARE that can be attacked, NOT the PIECE
+		if (turn == "w") y++;
+		else y--;
+
+		for (Piece* p : piecesOnBoard)
+		{
+			if (p->rect->x == x * 60 && p->rect->y == y * 60)
+			{
+				p->enPassantable = true;
+				break;
+			}
+		}
+	}
+
+	// set halfmoves
+	halfmoves = std::stoi(halfs);
+
+	// set turn based on white/black to move
+	turn = std::stoi(moves) * 2 + ((turn == "w") ? 0 : 1);
+
+	// FEN and position initialization
+	fens.push_back(fen);
+	std::string currPos = fen.substr(0, fen.find(" "));
+	if (positions.find(currPos) == positions.end()) positions[currPos] = 1;
+	else positions[currPos]++;
+	std::cout << "FEN: " << fen << "\n";
 }
 
 ull Game::perft(int depth /* assuming >= 1 */)
