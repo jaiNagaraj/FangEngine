@@ -746,15 +746,18 @@ bool Game::validCastle(Piece* piece, int initX, int initY, int kingX, int kingY)
 	{
 		// if king can't castle
 		if (!whiteKingCanCastle) return false;
+		//std::cout << "White king ok to castle\n";
 
 		// check queenside castle
 		if (initX > kingX)
 		{
 			// if the rook isn't there and/or there are pieces blocking
 			if (!((board[7][0] & WHITE_ROOK) == WHITE_ROOK && board[7][1] == 0 && board[7][2] == 0 && board[7][3] == 0)) return false;
+			//std::cout << "Nothing blocking white\n";
 
 			// if we've moved the rook
 			if (!whiteQueensideRookCanCastle) return false;
+			//std::cout << "White queen rook ok to castle\n";
 
 			//bool valid = false; // for checking if the rook is all good (safety precaution)
 			//for (Piece* p : piecesOnBoard)
@@ -817,8 +820,11 @@ bool Game::validCastle(Piece* piece, int initX, int initY, int kingX, int kingY)
 			// if the rook isn't there and/or there are pieces blocking
 			if (!((board[7][7] & WHITE_ROOK) == WHITE_ROOK && board[7][6] == 0 && board[7][5] == 0)) return false;
 
+			//std::cout << "Nothing blocking white\n";
+
 			// if we've moved the rook
 			if (!whiteKingsideRookCanCastle) return false;
+			//std::cout << "White king rook ok to castle\n";
 
 			//bool valid = false; // for checking if the rook is all good (safety precaution)
 			//for (Piece* p : piecesOnBoard)
@@ -1680,7 +1686,7 @@ void Game::unmakeMove(Move* move)
 					{
 						p->rect->x = 7 * 60; // move back to the right-most square
 						board[7][7] = board[move->newY][move->newX - 1];
-						board[move->newY][move->newX + 1] = 0;
+						board[move->newY][move->newX - 1] = 0;
 						break;
 					}
 				}
@@ -3790,7 +3796,7 @@ void Game::buildFromFEN(std::string fen)
 			switch (line[j])
 			{
 				case 'r':
-					makePiece(x, i, BLACK_ROOK, (x == 0) ? 0 : 1);
+					makePiece(x, i, BLACK_ROOK);
 					x++;
 					break;
 			}
