@@ -1343,8 +1343,14 @@ Move* Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool
 	if (!isCastling) // validCastle already looks for check
 	{
 		uint8_t tmp = board[newYCoord][newXCoord];
+		uint8_t tmpEP;
 		board[newYCoord][newXCoord] = board[oldYCoord][oldXCoord];
 		board[oldYCoord][oldXCoord] = 0;
+		if (isEP)
+		{
+			tmpEP = board[oldYCoord][newXCoord];
+			board[oldYCoord][newXCoord] = 0;
+		}
 
 		int kingX, kingY;
 		// for white
@@ -1370,6 +1376,7 @@ Move* Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool
 				// reset board state
 				board[oldYCoord][oldXCoord] = board[newYCoord][newXCoord];
 				board[newYCoord][newXCoord] = tmp;
+				if (isEP) board[oldYCoord][newXCoord] = tmpEP;
 				return nullptr;
 			}
 		}
@@ -1396,6 +1403,7 @@ Move* Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool
 				// reset board state
 				board[oldYCoord][oldXCoord] = board[newYCoord][newXCoord];
 				board[newYCoord][newXCoord] = tmp;
+				if (isEP) board[oldYCoord][newXCoord] = tmpEP;
 				return nullptr;
 			}
 		}
@@ -1403,6 +1411,7 @@ Move* Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool
 		// reset board state
 		board[oldYCoord][oldXCoord] = board[newYCoord][newXCoord];
 		board[newYCoord][newXCoord] = tmp;
+		if (isEP) board[oldYCoord][newXCoord] = tmpEP;
 	}
 
 
@@ -1469,6 +1478,11 @@ Move* Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool
 		}
 	}
 	else move->captured = nullptr;
+
+	if (move->captured && (move->captured->info & KING) == KING)
+	{
+		std::cout << "ALERT!! Capturing a king!\n";
+	}
 
 	// check for end-rank promotion in white
 	if ((move->piece->info & WHITE_PAWN) == WHITE_PAWN && move->newY == 0)
