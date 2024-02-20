@@ -10,6 +10,20 @@
 #define BK_CASTLE 0b00000100
 #define BQR_CASTLE 0b00000010
 #define BKR_CASTLE 0b00000001
+
+#define WP_INDEX 0
+#define WK_INDEX 1
+#define WB_INDEX 2
+#define WR_INDEX 3
+#define WQ_INDEX 4
+#define WK_INDEX 5
+#define BP_INDEX 6
+#define BK_INDEX 7
+#define BB_INDEX 8
+#define BR_INDEX 9
+#define BQ_INDEX 10
+#define BK_INDEX 11
+
 typedef unsigned long long ull;
 
 class Game
@@ -18,19 +32,14 @@ class Game
 		;
 	public:
 		std::vector<Piece*> piecesOnBoard;
+
 		uint8_t board[8][8] = {0};
-		uint8_t whitePawns;
-		uint8_t whiteKnights;
-		uint8_t whiteBishops;
-		uint8_t whiteRooks;
-		uint8_t whiteQueens;
-		uint8_t whiteKing;
-		uint8_t blackPawns;
-		uint8_t blackKnights;
-		uint8_t blackBishops;
-		uint8_t blackRooks;
-		uint8_t blackQueens;
-		uint8_t blackKing;
+
+		/*
+		* Array of piece bitboards. Indices defined by macros above.
+		*/
+		uint64_t pieceBoards[12];
+
 		int whiteAttack[8][8] = { 0 }; // the squares white controls
 		int blackAttack[8][8] = { 0 }; // the squares black controls
 		std::unordered_map<std::string,int> positions;
@@ -44,6 +53,7 @@ class Game
 		bool blackQueensideRookCanCastle = true;
 		bool blackKingCanCastle = true;
 
+		int bitToIndex(uint64_t);
 		Piece* makePiece(int x, int y, uint8_t info);
 		bool isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY);
 		void updateAttackBoard();
@@ -51,6 +61,7 @@ class Game
 		bool validCastle(Piece* piece, int initX, int initY, int kingX, int kingY);
 		void makeMove(Move* move);
 		void unmakeMove(Move* move);
+		std::vector<Move*> bitsToMoves(uint64_t bitboard);
 		ull generateLegalMoves(std::vector<Move*>& moves);
 		int isCheckmate(int turn);
 		int oldIsCheckmate(int turn);

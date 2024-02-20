@@ -6,6 +6,11 @@
 #include <algorithm>
 typedef unsigned long long ull;
 
+int Game::bitToIndex(uint64_t num)
+{
+	return (int) std::log2(num);
+}
+
 Piece* Game::makePiece(int x, int y, uint8_t info)
 {
 	// add to game board
@@ -16,7 +21,6 @@ Piece* Game::makePiece(int x, int y, uint8_t info)
 	dstRect->y = y * 60;
 	dstRect->w = 60;
 	dstRect->h = 60;
-	//std::cout << "Piece stats: " << dstRect->x << " " << dstRect->y << " " << dstRect->w << " " << dstRect->h << '\n';
 	// make piece, add it to board!
 	Piece* tmp = new Piece(dstRect, info);
 	piecesOnBoard.push_back(tmp);
@@ -1791,10 +1795,43 @@ void Game::unmakeMove(Move* move)
 	if (positions[pos] == 0) positions.erase(pos); // prevent unnecessarily large map
 }
 
+std::vector<Move*> Game::bitsToMoves(uint64_t bitboard)
+{
+	std::vector<Move*> moves;
+	return moves;
+}
+
 ull Game::generateLegalMoves(std::vector<Move*>& moves)
 {
+	//uint64_t bitmoves = 0;
 	if (turn % 2 == 0) // for white
 	{
+		//uint64_t enemyOrEmpty = 0;
+		//if (turn == 0)
+		//{
+		//	enemyOrEmpty |= pieceBoards[BP_INDEX] | pieceBoards[BK_INDEX] | pieceBoards[BB_INDEX] | pieceBoards[BR_INDEX] | pieceBoards[BQ_INDEX] | pieceBoards[BK_INDEX];
+		//	// for white pawns
+		//	; // something
+		//
+		//	// for white knights
+		//	bitmoves = 0;
+		//	uint64_t tmp = pieceBoards[WK_INDEX];
+		//	while (tmp)
+		//	{
+		//		unsigned long index;
+		//		unsigned char code = _BitScanForward64(&index, tmp);
+		//		if (code)
+		//		{
+		//			bitmoves = knightMoves[index] & enemyOrEmpty;
+		//		}
+		//		else std::cout << "PROBLEM!!!!\n";
+		//
+		//		// clear board of that bit
+		//		tmp = (tmp >> index) << index;
+		//	}
+		//}
+
+
 		for (Piece* p : piecesOnBoard)
 		{
 			Move* potentialMove;
