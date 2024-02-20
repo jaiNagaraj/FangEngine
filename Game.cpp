@@ -1,6 +1,5 @@
 #include "Game.h"
-#include "Piece.h"
-#include "Move.h"
+#include "Tables.h"
 #include <bitset>
 #include <string>
 #include <sstream>

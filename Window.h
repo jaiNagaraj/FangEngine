@@ -1,8 +1,6 @@
 #pragma once
 #include <SDL.h>
 #include <SDL_ttf.h>
-#include "Game.h"
-#include "Piece.h"
 #include "RandomPlayer.h"
 #include "FangEngine.h"
 class Window

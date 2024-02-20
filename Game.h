@@ -1,9 +1,8 @@
 #pragma once
 #include <vector>
 #include <unordered_map>
-#include "Piece.h"
 #include "Move.h"
-#include "Tables.h"
+//#include "Tables.h"
 
 #define WK_CASTLE 0b10000000
 #define WQR_CASTLE 0b01000000
@@ -20,6 +19,18 @@ class Game
 	public:
 		std::vector<Piece*> piecesOnBoard;
 		uint8_t board[8][8] = {0};
+		uint8_t whitePawns;
+		uint8_t whiteKnights;
+		uint8_t whiteBishops;
+		uint8_t whiteRooks;
+		uint8_t whiteQueens;
+		uint8_t whiteKing;
+		uint8_t blackPawns;
+		uint8_t blackKnights;
+		uint8_t blackBishops;
+		uint8_t blackRooks;
+		uint8_t blackQueens;
+		uint8_t blackKing;
 		int whiteAttack[8][8] = { 0 }; // the squares white controls
 		int blackAttack[8][8] = { 0 }; // the squares black controls
 		std::unordered_map<std::string,int> positions;
