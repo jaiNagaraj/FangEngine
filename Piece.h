@@ -21,7 +21,7 @@
 #define KING         0b00100000
 #define BLACK        0b01000000
 #define WHITE        0b10000000
-using namespace std;
+
 class Piece
 {
 	private:

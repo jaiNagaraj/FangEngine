@@ -61,7 +61,7 @@ class Game
 		bool validCastle(Piece* piece, int initX, int initY, int kingX, int kingY);
 		void makeMove(Move* move);
 		void unmakeMove(Move* move);
-		std::vector<Move*> bitsToMoves(uint64_t bitboard);
+		std::vector<Move*> bitsToMoves(uint64_t bitboard, unsigned long startSquare, uint8_t pieceType);
 		ull generateLegalMoves(std::vector<Move*>& moves);
 		int isCheckmate(int turn);
 		int oldIsCheckmate(int turn);

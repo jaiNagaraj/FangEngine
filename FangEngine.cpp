@@ -59,7 +59,7 @@ double FangEngine::minimax(int depth, bool trueDepth, bool maxer, double alpha, 
 				maxEval = eval;
 				if (trueDepth) *move = m;
 			}
-			alpha = max(alpha, eval); // change lower bound if necessary
+			alpha = std::max(alpha, eval); // change lower bound if necessary
 			game->unmakeMove(m);
 			if (beta <= alpha) break; // black will never go down this branch; has better option
 		}
@@ -82,7 +82,7 @@ double FangEngine::minimax(int depth, bool trueDepth, bool maxer, double alpha, 
 				minEval = eval;
 				if (trueDepth) *move = m;
 			}
-			beta = min(beta, eval); // change upper bound if necessary
+			beta = std::min(beta, eval); // change upper bound if necessary
 			game->unmakeMove(m);
 			if (beta <= alpha) break; // black will never go down this branch; has better option
 		}

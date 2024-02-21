@@ -1795,9 +1795,37 @@ void Game::unmakeMove(Move* move)
 	if (positions[pos] == 0) positions.erase(pos); // prevent unnecessarily large map
 }
 
-std::vector<Move*> Game::bitsToMoves(uint64_t bitboard)
+std::vector<Move*> Game::bitsToMoves(uint64_t bitboard, unsigned long startSquare, uint8_t pieceType)
 {
 	std::vector<Move*> moves;
+	Piece* startPiece = nullptr;
+	// first, search for piece on the origin square
+	int startX = startSquare % 8;
+	int startY = startSquare / 8;
+	for (Piece* p : piecesOnBoard)
+	{
+		if (p->rect->x / 60 == startX && p->rect->y / 60 == startY) startPiece = p;
+	}
+	// loop through moves in bitboard
+	while (bitboard)
+	{
+		// prepare Move materials
+		Move* move = new Move;
+		unsigned long index;
+		char code = _BitScanForward64(&index, bitboard);
+		if (code)
+		{
+			// set move coordinates
+			move->newX = index % 8;
+			move->newY = index/ 8;
+			move->oldX = startX;
+			move->oldY = startY;
+		}
+		else std::cout << "PROBLEM!!\n";
+
+		// remove move from bitboard
+		bitboard = (bitboard >> (index + 1)) << (index + 1);
+	}
 	return moves;
 }
 
