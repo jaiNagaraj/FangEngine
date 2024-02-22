@@ -1820,6 +1820,31 @@ std::vector<Move*> Game::bitsToMoves(uint64_t bitboard, unsigned long startSquar
 			move->newY = index/ 8;
 			move->oldX = startX;
 			move->oldY = startY;
+
+			// miscellaneous
+			move->oldHalfmoves = halfmoves;
+			// record old castling rights
+			uint8_t castlingRights = 0;
+			if (whiteKingCanCastle) castlingRights |= WK_CASTLE;
+			if (whiteQueensideRookCanCastle) castlingRights |= WQR_CASTLE;
+			if (whiteKingsideRookCanCastle) castlingRights |= WKR_CASTLE;
+			if (blackKingCanCastle) castlingRights |= BK_CASTLE;
+			if (blackQueensideRookCanCastle) castlingRights |= BQR_CASTLE;
+			if (blackKingsideRookCanCastle) castlingRights |= BKR_CASTLE;
+			move->oldCastlingRights = castlingRights;
+
+			// check for capture
+			move->captured = nullptr;
+			move->isCapture = false;
+			for (Piece* p : piecesOnBoard)
+			{
+				if (p->rect->x == move->newX && p->rect->y == move->newY)
+				{
+					move->captured = p;
+					move->isCapture = true;
+					break;
+				}
+			}
 		}
 		else std::cout << "PROBLEM!!\n";
 
