@@ -1859,13 +1859,264 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 	uint64_t bitmoves = 0;
 	uint64_t whitePieces = 0;
 	uint64_t blackPieces = 0;
+	uint64_t whiteNoKing = 0;
+	uint64_t blackNoKing = 0;
 	whitePieces |= pieceBoards[WP_INDEX] | pieceBoards[WK_INDEX] | pieceBoards[WB_INDEX] | pieceBoards[WR_INDEX] | pieceBoards[WQ_INDEX] | pieceBoards[WK_INDEX];
 	blackPieces |= pieceBoards[BP_INDEX] | pieceBoards[BK_INDEX] | pieceBoards[BB_INDEX] | pieceBoards[BR_INDEX] | pieceBoards[BQ_INDEX] | pieceBoards[BK_INDEX];
+	whiteNoKing = whitePieces & ~pieceBoards[WK_INDEX];
+	blackNoKing = blackPieces & ~pieceBoards[BK_INDEX];
 	if (turn % 2 == 0) // for white
 	{
 		bool usingBits = false;
 		if (usingBits)
 		{
+			// first, look for checks
+			// get the king position
+			unsigned long kingPos;
+			if (!_BitScanForward64(&kingPos, pieceBoards[WK_INDEX])) std::cout << "WHITE KING NOT FOUND!!\n";
+			// then, look for pieces in the king's POV
+			int attackers = 0;
+			// black pawn
+			uint64_t blackAttackingPawns = 0;
+			blackAttackingPawns |= whitePawnAttacks[kingPos];
+			// count number of pawns
+			attackers += std::bitset<64>(blackAttackingPawns).count();
+
+			// black knight
+			uint64_t blackAttackingKnights= 0;
+			blackAttackingKnights |= knightMoves[kingPos];
+			attackers += std::bitset<64>(blackAttackingKnights).count();
+
+			// diagonal rays (black bishop/queen)
+			uint64_t blockers = whiteNoKing | blackPieces;
+			uint64_t diagonalAttacks = 0;
+			// iterate over all rays
+			for (int i = 0; i < 8; i++)
+			{
+				if (i % 2 == 0) continue; // only diagonal rays allowed
+				uint64_t maskedBlockers = rays[i][kingPos] & blockers;
+				unsigned long i2;
+				unsigned char c;
+				if (i < 7 && i > 2) c = _BitScanReverse64(&i2, maskedBlockers); // for negative rays
+				else c = _BitScanForward64(&i2, maskedBlockers);
+
+				if (c)
+				{
+					bitmoves = rays[i][kingPos] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
+				}
+				else bitmoves = rays[i][kingPos]; // no blockers
+
+				diagonalAttacks |= bitmoves;
+			}
+			diagonalAttacks &= (pieceBoards[BB_INDEX] | pieceBoards[BQ_INDEX]);
+			attackers += std::bitset<64>(diagonalAttacks).count();
+
+			// adjacent rays (black rook/queen)
+			uint64_t blockers = whiteNoKing | blackPieces;
+			uint64_t adjAttacks = 0;
+			// iterate over all rays
+			for (int i = 0; i < 8; i++)
+			{
+				if (i % 2 != 0) continue; // only adjacent rays allowed
+				uint64_t maskedBlockers = rays[i][kingPos] & blockers;
+				unsigned long i2;
+				unsigned char c;
+				if (i < 7 && i > 2) c = _BitScanReverse64(&i2, maskedBlockers); // for negative rays
+				else c = _BitScanForward64(&i2, maskedBlockers);
+
+				if (c)
+				{
+					bitmoves = rays[i][kingPos] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
+				}
+				else bitmoves = rays[i][kingPos]; // no blockers
+
+				adjAttacks |= bitmoves;
+			}
+			adjAttacks &= (pieceBoards[BR_INDEX] | pieceBoards[BQ_INDEX]);
+			attackers += std::bitset<64>(adjAttacks).count();
+
+			// Next, check for number of attackers (0, 1, 2)
+			;
+			
+			// Next, calculate danger squares
+			// this is done by calculating all possible moves for black w/o king on the board for black pawns
+			
+			bitmoves = 0;
+			uint64_t blackAttack = 0;
+			uint64_t tmp = pieceBoards[BP_INDEX];
+			if (!tmp) std::cout << "No black pawns detected!\n";
+			// loop over each pawn
+			while (tmp)
+			{
+				unsigned long index;
+				unsigned char code = _BitScanForward64(&index, tmp);
+				if (code)
+				{
+					bitmoves = (blackPawnPushes[index] | blackPawnAttacks[index]) & whiteNoKing;
+					blackAttack |= bitmoves;
+				}
+				else std::cout << "PROBLEM WITH BLACK PAWNS!\n";
+
+				// clear board of that bit
+				tmp = (tmp >> (index + 1)) << (index + 1);
+			}
+
+			// for black knights
+			bitmoves = 0;
+			tmp = pieceBoards[BK_INDEX];
+			if (!tmp) std::cout << "No black knights detected!\n";
+			// loop over each knight
+			while (tmp)
+			{
+				unsigned long index;
+				unsigned char code = _BitScanForward64(&index, tmp);
+				if (code)
+				{
+					bitmoves = knightMoves[index] & whiteNoKing;
+					blackAttack |= bitmoves;
+				}
+				else std::cout << "PROBLEM WITH BLACK KNIGHTS!\n";
+
+				// clear board of that bit
+				tmp = (tmp >> (index + 1)) << (index + 1);
+			}
+
+			// for black bishops
+			bitmoves = 0;
+			tmp = pieceBoards[BB_INDEX];
+			if (!tmp) std::cout << "No black bishops detected!\n";
+			// loop over each bishop
+			while (tmp)
+			{
+				unsigned long index;
+				unsigned char code = _BitScanForward64(&index, tmp);
+				if (code)
+				{
+					uint64_t blockers = whiteNoKing | blackPieces;
+					// iterate over all rays
+					for (int i = 0; i < 8; i++)
+					{
+						if (i % 2 == 0) continue; // only diagonal rays allowed
+						uint64_t maskedBlockers = rays[i][index] & blockers;
+						unsigned long i2;
+						unsigned char c;
+						if (i < 7 && i > 2) c = _BitScanReverse64(&i2, maskedBlockers); // for negative rays
+						else c = _BitScanForward64(&i2, maskedBlockers);
+
+						if (c)
+						{
+							bitmoves = rays[i][index] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
+							bitmoves &= ~blackPieces; // ensure that we aren't capturing a black blocker
+						}
+						else bitmoves = rays[i][index]; // no blockers
+
+						blackAttack |= bitmoves;
+					}
+				}
+				else std::cout << "PROBLEM WITH BLACK BISHOPS!\n";
+
+				// clear board of that bit
+				tmp = (tmp >> (index + 1)) << (index + 1);
+			}
+
+			// for black rooks
+			bitmoves = 0;
+			tmp = pieceBoards[BR_INDEX];
+			if (!tmp) std::cout << "No black rooks detected!\n";
+			// loop over each rook
+			while (tmp)
+			{
+				unsigned long index;
+				unsigned char code = _BitScanForward64(&index, tmp);
+				if (code)
+				{
+					uint64_t blockers = whiteNoKing | blackPieces;
+					// iterate over all rays
+					for (int i = 0; i < 8; i++)
+					{
+						if (i % 2 == 1) continue; // only adjacent rays allowed
+						uint64_t maskedBlockers = rays[i][index] & blockers;
+						unsigned long i2;
+						unsigned char c;
+						if (i < 7 && i > 2) c = _BitScanReverse64(&i2, maskedBlockers); // for negative rays
+						else c = _BitScanForward64(&i2, maskedBlockers);
+
+						if (c)
+						{
+							bitmoves = rays[i][index] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
+							bitmoves &= ~blackPieces; // ensure that we aren't capturing a black blocker
+						}
+						else bitmoves = rays[i][index]; // no blockers
+
+						blackAttack |= bitmoves;
+					}
+				}
+				else std::cout << "PROBLEM WITH BLACK ROOKS!\n";
+
+				// clear board of that bit
+				tmp = (tmp >> (index + 1)) << (index + 1);
+			}
+
+			// for black queens
+			bitmoves = 0;
+			tmp = pieceBoards[WQ_INDEX];
+			if (!tmp) std::cout << "No black queens detected!\n";
+			// loop over each queen
+			while (tmp)
+			{
+				unsigned long index;
+				unsigned char code = _BitScanForward64(&index, tmp);
+				if (code)
+				{
+					uint64_t blockers = whiteNoKing | blackPieces;
+					// iterate over all rays
+					for (int i = 0; i < 8; i++)
+					{
+						uint64_t maskedBlockers = rays[i][index] & blockers;
+						unsigned long i2;
+						unsigned char c;
+						if (i < 7 && i > 2) c = _BitScanReverse64(&i2, maskedBlockers); // for negative rays
+						else c = _BitScanForward64(&i2, maskedBlockers);
+
+						if (c)
+						{
+							bitmoves = rays[i][index] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
+							bitmoves &= ~blackPieces; // ensure that we aren't capturing a black blocker
+						}
+						else bitmoves = rays[i][index]; // no blockers
+
+						blackAttack |= bitmoves;
+					}
+				}
+				else std::cout << "PROBLEM WITH BLACK QUEENS!\n";
+
+				// clear board of that bit
+				tmp = (tmp >> (index + 1)) << (index + 1);
+			}
+
+			// for black king
+			bitmoves = 0;
+			tmp = pieceBoards[WK_INDEX];
+			if (!tmp) std::cout << "ERROR! Black king not detected!\n";
+			while (tmp)
+			{
+				unsigned long index;
+				unsigned char code = _BitScanForward64(&index, tmp);
+				if (code)
+				{
+					bitmoves = kingMoves[index] & whiteNoKing;
+					blackAttack |= bitmoves;
+				}
+				else std::cout << "PROBLEM WITH BLACK KING!\n";
+
+				// clear board of that bit
+				tmp = (tmp >> (index + 1)) << (index + 1);
+			}
+
+			
+
+
+
 			// for white pawns
 			bitmoves = 0;
 			uint64_t tmp = pieceBoards[WP_INDEX];
@@ -1924,12 +2175,16 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 						if (i % 2 == 0) continue; // only diagonal rays allowed
 						uint64_t maskedBlockers = rays[i][index] & blockers;
 						unsigned long i2;
-						if (_BitScanForward64(&i2, maskedBlockers))
+						unsigned char c;
+						if (i < 7 && i > 2) c = _BitScanReverse64(&i2, maskedBlockers); // for negative rays
+						else c = _BitScanForward64(&i2, maskedBlockers);
+
+						if (c)
 						{
 							bitmoves = rays[i][index] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
 							bitmoves &= ~whitePieces; // ensure that we aren't capturing a white blocker
 						}
-						else bitmoves = rays[i][index];
+						else bitmoves = rays[i][index]; // no blockers
 
 						// insert bits-to-moves function here
 					}
@@ -1958,12 +2213,16 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 						if (i % 2 == 1) continue; // only adjacent rays allowed
 						uint64_t maskedBlockers = rays[i][index] & blockers;
 						unsigned long i2;
-						if (_BitScanForward64(&i2, maskedBlockers))
+						unsigned char c;
+						if (i < 7 && i > 2) c = _BitScanReverse64(&i2, maskedBlockers); // for negative rays
+						else c = _BitScanForward64(&i2, maskedBlockers);
+
+						if (c)
 						{
 							bitmoves = rays[i][index] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
 							bitmoves &= ~whitePieces; // ensure that we aren't capturing a white blocker
 						}
-						else bitmoves = rays[i][index];
+						else bitmoves = rays[i][index]; // no blockers
 
 						// insert bits-to-moves function here
 					}
@@ -1991,12 +2250,16 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 					{
 						uint64_t maskedBlockers = rays[i][index] & blockers;
 						unsigned long i2;
-						if (_BitScanForward64(&i2, maskedBlockers))
+						unsigned char c;
+						if (i < 7 && i > 2) c = _BitScanReverse64(&i2, maskedBlockers); // for negative rays
+						else c = _BitScanForward64(&i2, maskedBlockers);
+
+						if (c)
 						{
 							bitmoves = rays[i][index] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
 							bitmoves &= ~whitePieces; // ensure that we aren't capturing a white blocker
 						}
-						else bitmoves = rays[i][index];
+						else bitmoves = rays[i][index]; // no blockers
 
 						// insert bits-to-moves function here
 					}
@@ -2490,12 +2753,16 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 						if (i % 2 == 0) continue; // only diagonal rays allowed
 						uint64_t maskedBlockers = rays[i][index] & blockers;
 						unsigned long i2;
-						if (_BitScanForward64(&i2, maskedBlockers))
+						unsigned char c;
+						if (i < 7 && i > 2) c = _BitScanReverse64(&i2, maskedBlockers); // for negative rays
+						else c = _BitScanForward64(&i2, maskedBlockers);
+
+						if (c)
 						{
 							bitmoves = rays[i][index] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
 							bitmoves &= ~blackPieces; // ensure that we aren't capturing a black blocker
 						}
-						else bitmoves = rays[i][index];
+						else bitmoves = rays[i][index]; // no blockers
 
 						// insert bits-to-moves function here
 					}
@@ -2524,12 +2791,16 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 						if (i % 2 == 1) continue; // only adjacent rays allowed
 						uint64_t maskedBlockers = rays[i][index] & blockers;
 						unsigned long i2;
-						if (_BitScanForward64(&i2, maskedBlockers))
+						unsigned char c;
+						if (i < 7 && i > 2) c = _BitScanReverse64(&i2, maskedBlockers); // for negative rays
+						else c = _BitScanForward64(&i2, maskedBlockers);
+
+						if (c)
 						{
 							bitmoves = rays[i][index] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
 							bitmoves &= ~blackPieces; // ensure that we aren't capturing a black blocker
 						}
-						else bitmoves = rays[i][index];
+						else bitmoves = rays[i][index]; // no blockers
 
 						// insert bits-to-moves function here
 					}
@@ -2557,12 +2828,16 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 					{
 						uint64_t maskedBlockers = rays[i][index] & blockers;
 						unsigned long i2;
-						if (_BitScanForward64(&i2, maskedBlockers))
+						unsigned char c;
+						if (i < 7 && i > 2) c = _BitScanReverse64(&i2, maskedBlockers); // for negative rays
+						else c = _BitScanForward64(&i2, maskedBlockers);
+
+						if (c)
 						{
 							bitmoves = rays[i][index] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
 							bitmoves &= ~blackPieces; // ensure that we aren't capturing a black blocker
 						}
-						else bitmoves = rays[i][index];
+						else bitmoves = rays[i][index]; // no blockers
 
 						// insert bits-to-moves function here
 					}
