@@ -1878,13 +1878,13 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 			int attackers = 0;
 			// black pawn
 			uint64_t blackAttackingPawns = 0;
-			blackAttackingPawns |= whitePawnAttacks[kingPos];
+			blackAttackingPawns |= whitePawnAttacks[kingPos] & pieceBoards[BP_INDEX];
 			// count number of pawns
 			attackers += std::bitset<64>(blackAttackingPawns).count();
 
 			// black knight
 			uint64_t blackAttackingKnights= 0;
-			blackAttackingKnights |= knightMoves[kingPos];
+			blackAttackingKnights |= knightMoves[kingPos] & pieceBoards[BK_INDEX];
 			attackers += std::bitset<64>(blackAttackingKnights).count();
 
 			// diagonal rays (black bishop/queen)
@@ -1938,11 +1938,11 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 			// Next, check for pins
 			uint64_t pinMask = 0;
 			// first, calculate all sliding piece moves from king square
-			uint64_t kingSlides = 0;
 			blockers = whiteNoKing | blackPieces;
 			// iterate over all rays
 			for (int i = 0; i < 8; i++)
 			{
+				uint64_t kingSlides = 0;
 				uint64_t maskedBlockers = rays[i][kingPos] & blockers;
 				uint64_t rayMoves = 0;
 				unsigned long i2;
@@ -1957,123 +1957,124 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				else rayMoves = rays[i][kingPos]; // no blockers
 
 				kingSlides |= rayMoves;
-			}
+			
 
-			// next, check for all enemy sliding piece moves
-			uint64_t enemySlidingAttacks = 0;
-			// for black bishops
-			bitmoves = 0;
-			uint64_t holder = pieceBoards[BB_INDEX];
-			if (!holder) std::cout << "No black bishops detected!\n";
-			// loop over each bishop
-			while (holder)
-			{
-				unsigned long index;
-				unsigned char code = _BitScanForward64(&index, holder);
-				if (code)
+				// next, check for all enemy sliding piece moves
+				uint64_t enemySlidingAttacks = 0;
+				// for black bishops
+				bitmoves = 0;
+				uint64_t holder = pieceBoards[BB_INDEX];
+				if (!holder) std::cout << "No black bishops detected!\n";
+				// loop over each bishop
+				while (holder)
 				{
-					uint64_t blockers = whiteNoKing | blackPieces;
-					// iterate over all rays
-					for (int i = 0; i < 8; i++)
+					unsigned long index;
+					unsigned char code = _BitScanForward64(&index, holder);
+					if (code)
 					{
-						if (i % 2 == 0) continue; // only diagonal rays allowed
-						uint64_t maskedBlockers = rays[i][index] & blockers;
-						unsigned long i2;
-						unsigned char c;
-						if (i < 7 && i > 2) c = _BitScanReverse64(&i2, maskedBlockers); // for negative rays
-						else c = _BitScanForward64(&i2, maskedBlockers);
-
-						if (c)
+						uint64_t blockers = whitePieces | blackPieces;
+						// iterate over all rays
+						for (int i = 0; i < 8; i++)
 						{
-							bitmoves = rays[i][index] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
+							if (i % 2 == 0) continue; // only diagonal rays allowed
+							uint64_t maskedBlockers = rays[i][index] & blockers;
+							unsigned long i2;
+							unsigned char c;
+							if (i < 7 && i > 2) c = _BitScanReverse64(&i2, maskedBlockers); // for negative rays
+							else c = _BitScanForward64(&i2, maskedBlockers);
+
+							if (c)
+							{
+								bitmoves = rays[i][index] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
+							}
+							else bitmoves = rays[i][index]; // no blockers
+
+							enemySlidingAttacks |= bitmoves;
 						}
-						else bitmoves = rays[i][index]; // no blockers
-
-						enemySlidingAttacks |= bitmoves;
 					}
+					else std::cout << "PROBLEM WITH BLACK BISHOPS!\n";
+
+					// clear board of that bit
+					holder = (holder >> (index + 1)) << (index + 1);
 				}
-				else std::cout << "PROBLEM WITH BLACK BISHOPS!\n";
 
-				// clear board of that bit
-				holder = (holder >> (index + 1)) << (index + 1);
-			}
-
-			// for black rooks
-			bitmoves = 0;
-			holder = pieceBoards[BR_INDEX];
-			if (!holder) std::cout << "No black rooks detected!\n";
-			// loop over each rook
-			while (holder)
-			{
-				unsigned long index;
-				unsigned char code = _BitScanForward64(&index, holder);
-				if (code)
+				// for black rooks
+				bitmoves = 0;
+				holder = pieceBoards[BR_INDEX];
+				if (!holder) std::cout << "No black rooks detected!\n";
+				// loop over each rook
+				while (holder)
 				{
-					uint64_t blockers = whiteNoKing | blackPieces;
-					// iterate over all rays
-					for (int i = 0; i < 8; i++)
+					unsigned long index;
+					unsigned char code = _BitScanForward64(&index, holder);
+					if (code)
 					{
-						if (i % 2 == 1) continue; // only adjacent rays allowed
-						uint64_t maskedBlockers = rays[i][index] & blockers;
-						unsigned long i2;
-						unsigned char c;
-						if (i < 7 && i > 2) c = _BitScanReverse64(&i2, maskedBlockers); // for negative rays
-						else c = _BitScanForward64(&i2, maskedBlockers);
-
-						if (c)
+						uint64_t blockers = whitePieces | blackPieces;
+						// iterate over all rays
+						for (int i = 0; i < 8; i++)
 						{
-							bitmoves = rays[i][index] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
+							if (i % 2 == 1) continue; // only adjacent rays allowed
+							uint64_t maskedBlockers = rays[i][index] & blockers;
+							unsigned long i2;
+							unsigned char c;
+							if (i < 7 && i > 2) c = _BitScanReverse64(&i2, maskedBlockers); // for negative rays
+							else c = _BitScanForward64(&i2, maskedBlockers);
+
+							if (c)
+							{
+								bitmoves = rays[i][index] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
+							}
+							else bitmoves = rays[i][index]; // no blockers
+
+							enemySlidingAttacks |= bitmoves;
 						}
-						else bitmoves = rays[i][index]; // no blockers
-
-						enemySlidingAttacks |= bitmoves;
 					}
+					else std::cout << "PROBLEM WITH BLACK ROOKS!\n";
+
+					// clear board of that bit
+					holder = (holder >> (index + 1)) << (index + 1);
 				}
-				else std::cout << "PROBLEM WITH BLACK ROOKS!\n";
 
-				// clear board of that bit
-				holder = (holder >> (index + 1)) << (index + 1);
-			}
-
-			// for black queens
-			bitmoves = 0;
-			holder = pieceBoards[WQ_INDEX];
-			if (!holder) std::cout << "No black queens detected!\n";
-			// loop over each queen
-			while (holder)
-			{
-				unsigned long index;
-				unsigned char code = _BitScanForward64(&index, holder);
-				if (code)
+				// for black queens
+				bitmoves = 0;
+				holder = pieceBoards[WQ_INDEX];
+				if (!holder) std::cout << "No black queens detected!\n";
+				// loop over each queen
+				while (holder)
 				{
-					uint64_t blockers = whiteNoKing | blackPieces;
-					// iterate over all rays
-					for (int i = 0; i < 8; i++)
+					unsigned long index;
+					unsigned char code = _BitScanForward64(&index, holder);
+					if (code)
 					{
-						uint64_t maskedBlockers = rays[i][index] & blockers;
-						unsigned long i2;
-						unsigned char c;
-						if (i < 7 && i > 2) c = _BitScanReverse64(&i2, maskedBlockers); // for negative rays
-						else c = _BitScanForward64(&i2, maskedBlockers);
-
-						if (c)
+						uint64_t blockers = whitePieces | blackPieces;
+						// iterate over all rays
+						for (int i = 0; i < 8; i++)
 						{
-							bitmoves = rays[i][index] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
+							uint64_t maskedBlockers = rays[i][index] & blockers;
+							unsigned long i2;
+							unsigned char c;
+							if (i < 7 && i > 2) c = _BitScanReverse64(&i2, maskedBlockers); // for negative rays
+							else c = _BitScanForward64(&i2, maskedBlockers);
+
+							if (c)
+							{
+								bitmoves = rays[i][index] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
+							}
+							else bitmoves = rays[i][index]; // no blockers
+
+							enemySlidingAttacks |= bitmoves;
 						}
-						else bitmoves = rays[i][index]; // no blockers
-
-						enemySlidingAttacks |= bitmoves;
 					}
+					else std::cout << "PROBLEM WITH BLACK QUEENS!\n";
+
+					// clear board of that bit
+					holder = (holder >> (index + 1)) << (index + 1);
 				}
-				else std::cout << "PROBLEM WITH BLACK QUEENS!\n";
 
-				// clear board of that bit
-				holder = (holder >> (index + 1)) << (index + 1);
+				// get the overlap of king attack rays, enemy moves, and the white pieces
+				// This will create a mask of all pinned white pieces
+				pinMask = enemySlidingAttacks & kingSlides & whitePieces; // fix!
 			}
-
-			// get the overlap of king attack rays, enemy moves, and the white pieces
-			// This will create a mask of all pinned white pieces
-			pinMask = enemySlidingAttacks & kingSlides & whitePieces;
 
 			// Now, calculate the pseudo-legal move rays for the pinned pieces
 			uint64_t pinnedPieceMoves[64];
