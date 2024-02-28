@@ -1973,24 +1973,21 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 					if (code)
 					{
 						uint64_t blockers = whitePieces | blackPieces;
-						// iterate over all rays
-						for (int i = 0; i < 8; i++)
+						int oppIndex = (i + 4) % 8;
+						if (oppIndex % 2 == 0) continue; // only diagonal rays allowed
+						uint64_t maskedBlockers = rays[oppIndex][index] & blockers;
+						unsigned long i2;
+						unsigned char c;
+						if (oppIndex < 7 && oppIndex > 2) c = _BitScanReverse64(&i2, maskedBlockers); // for negative rays
+						else c = _BitScanForward64(&i2, maskedBlockers);
+
+						if (c)
 						{
-							if (i % 2 == 0) continue; // only diagonal rays allowed
-							uint64_t maskedBlockers = rays[i][index] & blockers;
-							unsigned long i2;
-							unsigned char c;
-							if (i < 7 && i > 2) c = _BitScanReverse64(&i2, maskedBlockers); // for negative rays
-							else c = _BitScanForward64(&i2, maskedBlockers);
-
-							if (c)
-							{
-								bitmoves = rays[i][index] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
-							}
-							else bitmoves = rays[i][index]; // no blockers
-
-							enemySlidingAttacks |= bitmoves;
+							bitmoves = rays[oppIndex][index] & ~rays[oppIndex][i2]; // mask our regular ray with our blocker's ray
 						}
+						else bitmoves = rays[oppIndex][index]; // no blockers
+
+						enemySlidingAttacks |= bitmoves;
 					}
 					else std::cout << "PROBLEM WITH BLACK BISHOPS!\n";
 
@@ -2010,24 +2007,22 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 					if (code)
 					{
 						uint64_t blockers = whitePieces | blackPieces;
-						// iterate over all rays
-						for (int i = 0; i < 8; i++)
+						int oppIndex = (i + 4) % 8;
+						if (oppIndex % 2 == 1) continue; // only adjacent rays allowed
+						uint64_t maskedBlockers = rays[oppIndex][index] & blockers;
+						unsigned long i2;
+						unsigned char c;
+						if (oppIndex < 7 && oppIndex > 2) c = _BitScanReverse64(&i2, maskedBlockers); // for negative rays
+						else c = _BitScanForward64(&i2, maskedBlockers);
+
+						if (c)
 						{
-							if (i % 2 == 1) continue; // only adjacent rays allowed
-							uint64_t maskedBlockers = rays[i][index] & blockers;
-							unsigned long i2;
-							unsigned char c;
-							if (i < 7 && i > 2) c = _BitScanReverse64(&i2, maskedBlockers); // for negative rays
-							else c = _BitScanForward64(&i2, maskedBlockers);
-
-							if (c)
-							{
-								bitmoves = rays[i][index] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
-							}
-							else bitmoves = rays[i][index]; // no blockers
-
-							enemySlidingAttacks |= bitmoves;
+							bitmoves = rays[oppIndex][index] & ~rays[oppIndex][i2]; // mask our regular ray with our blocker's ray
 						}
+						else bitmoves = rays[oppIndex][index]; // no blockers
+
+						enemySlidingAttacks |= bitmoves;
+					
 					}
 					else std::cout << "PROBLEM WITH BLACK ROOKS!\n";
 
@@ -2047,23 +2042,21 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 					if (code)
 					{
 						uint64_t blockers = whitePieces | blackPieces;
-						// iterate over all rays
-						for (int i = 0; i < 8; i++)
+						int oppIndex = (i + 4) % 8;
+						uint64_t maskedBlockers = rays[oppIndex][index] & blockers;
+						unsigned long i2;
+						unsigned char c;
+						if (oppIndex < 7 && oppIndex > 2) c = _BitScanReverse64(&i2, maskedBlockers); // for negative rays
+						else c = _BitScanForward64(&i2, maskedBlockers);
+
+						if (c)
 						{
-							uint64_t maskedBlockers = rays[i][index] & blockers;
-							unsigned long i2;
-							unsigned char c;
-							if (i < 7 && i > 2) c = _BitScanReverse64(&i2, maskedBlockers); // for negative rays
-							else c = _BitScanForward64(&i2, maskedBlockers);
-
-							if (c)
-							{
-								bitmoves = rays[i][index] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
-							}
-							else bitmoves = rays[i][index]; // no blockers
-
-							enemySlidingAttacks |= bitmoves;
+							bitmoves = rays[oppIndex][index] & ~rays[oppIndex][i2]; // mask our regular ray with our blocker's ray
 						}
+						else bitmoves = rays[oppIndex][index]; // no blockers
+
+						enemySlidingAttacks |= bitmoves;
+					
 					}
 					else std::cout << "PROBLEM WITH BLACK QUEENS!\n";
 
@@ -2071,14 +2064,14 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 					holder = (holder >> (index + 1)) << (index + 1);
 				}
 
-				// get the overlap of king attack rays, enemy moves, and the white pieces
-				// This will create a mask of all pinned white pieces
-				pinMask = enemySlidingAttacks & kingSlides & whitePieces; // fix!
+				// add the overlap of king attack rays, opposite enemy moves, and the white pieces to the pin mask
+				pinMask |= enemySlidingAttacks & kingSlides & whitePieces;
 			}
 
 			// Now, calculate the pseudo-legal move rays for the pinned pieces
 			uint64_t pinnedPieceMoves[64];
-			holder = pinMask;
+			for (int i = 0; i < 64; i++) pinnedPieceMoves[i] = ULLONG_MAX; // for pieces that aren't pinned, allow all squares
+			uint64_t holder = pinMask;
 			while (holder)
 			{
 				unsigned long index;
