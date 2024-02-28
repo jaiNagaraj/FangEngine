@@ -1879,13 +1879,10 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 			// black pawn
 			uint64_t blackAttackingPawns = 0;
 			blackAttackingPawns |= whitePawnAttacks[kingPos] & pieceBoards[BP_INDEX];
-			// count number of pawns
-			attackers += std::bitset<64>(blackAttackingPawns).count();
 
 			// black knight
 			uint64_t blackAttackingKnights= 0;
 			blackAttackingKnights |= knightMoves[kingPos] & pieceBoards[BK_INDEX];
-			attackers += std::bitset<64>(blackAttackingKnights).count();
 
 			// diagonal rays (black bishop/queen)
 			uint64_t blockers = whiteNoKing | blackPieces;
@@ -1909,7 +1906,6 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				diagonalAttacks |= bitmoves;
 			}
 			diagonalAttacks &= (pieceBoards[BB_INDEX] | pieceBoards[BQ_INDEX]);
-			attackers += std::bitset<64>(diagonalAttacks).count();
 
 			// adjacent rays (black rook/queen)
 			blockers = whiteNoKing | blackPieces;
@@ -1933,7 +1929,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				adjAttacks |= bitmoves;
 			}
 			adjAttacks &= (pieceBoards[BR_INDEX] | pieceBoards[BQ_INDEX]);
-			attackers += std::bitset<64>(adjAttacks).count();
+
 
 			// Next, check for pins
 			uint64_t pinMask = 0;
@@ -2317,7 +2313,9 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				tmp = (tmp >> (index + 1)) << (index + 1);
 			}
 
-
+			// count number of attackers
+			uint64_t attackBoard = blackAttackingKnights & blackAttackingPawns & diagonalAttacks & adjAttacks;
+			attackers += std::bitset<64>(attackBoard).count();
 
 			// Next, check for number of attackers (0, 1, 2)
 			switch (attackers)
@@ -2336,6 +2334,55 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 					// insert bits-to-moves function here
 
 					// Step 2: calculate ways to capture the attacker
+					int attackerSquare = bitToIndex(attackBoard);
+
+					// can any pawn capture?
+					bitmoves = 0;
+					tmp = pieceBoards[WP_INDEX];
+					if (!tmp) std::cout << "No white pawns detected!\n";
+					// loop over each pawn
+					while (tmp)
+					{
+						unsigned long index;
+						unsigned char code = _BitScanForward64(&index, tmp);
+						if (code)
+						{
+							// the ternary operator ensures that a starting-square pawn can't use its two-square push to leap over a blocker
+							bitmoves = ((whitePawnPushes[index] & ~(whitePieces | blackPieces)) == whitePawnPushes[index] ? whitePawnPushes[index] : 0) |
+								(whitePawnAttacks[index] & blackPieces);
+							// make sure the pawn doesn't disobey a pin
+							bitmoves &= pinnedPieceMoves[index];
+							// now, check if capturing the attacker is a possible move
+							bitmoves &= (1ULL << attackerSquare);
+							// insert bits-to-moves function here
+						}
+						else std::cout << "PROBLEM WITH WHITE PAWNS!\n";
+
+						// clear board of that bit
+						tmp = (tmp >> (index + 1)) << (index + 1);
+					}
+
+					// can any knight capture?
+					bitmoves = 0;
+					tmp = pieceBoards[WK_INDEX];
+					if (!tmp) std::cout << "No white knights detected!\n";
+					// loop over each knight
+					while (tmp)
+					{
+						unsigned long index;
+						unsigned char code = _BitScanForward64(&index, tmp);
+						if (code)
+						{
+							// all-in-one check
+							bitmoves = (knightMoves[index] & ~whitePieces & pinnedPieceMoves[index]) & (1ULL << attackerSquare);
+							// insert bits-to-moves function here
+						}
+						else std::cout << "PROBLEM WITH WHITE KNIGHTS!\n";
+
+						// clear board of that bit
+						tmp = (tmp >> (index + 1)) << (index + 1);
+					}
+
 					break;
 				// no checks
 				case 0:
@@ -2360,7 +2407,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				unsigned char code = _BitScanForward64(&index, tmp);
 				if (code)
 				{
-					bitmoves = (whitePawnPushes[index] | whitePawnAttacks[index]) & blackPieces;
+					bitmoves = (whitePawnPushes[index] & ~(whitePieces | blackPieces)) | (whitePawnAttacks[index] & blackPieces);
 					// insert bits-to-moves function here
 				}
 				else std::cout << "PROBLEM WITH WHITE PAWNS!\n";
