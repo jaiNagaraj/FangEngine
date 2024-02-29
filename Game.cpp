@@ -1817,7 +1817,7 @@ std::vector<Move*> Game::bitsToMoves(uint64_t bitboard, unsigned long startSquar
 		{
 			// set move coordinates
 			move->newX = index % 8;
-			move->newY = index/ 8;
+			move->newY = 7 - index / 8;
 			move->oldX = startX;
 			move->oldY = startY;
 
@@ -1838,13 +1838,25 @@ std::vector<Move*> Game::bitsToMoves(uint64_t bitboard, unsigned long startSquar
 			move->isCapture = false;
 			for (Piece* p : piecesOnBoard)
 			{
-				if (p->rect->x == move->newX && p->rect->y == move->newY)
+				if (p->rect->x == move->newX * 60 && p->rect->y == move->newY * 60)
 				{
 					move->captured = p;
 					move->isCapture = true;
 					break;
 				}
 			}
+
+			// check for castle
+			if ((pieceType & KING) && std::abs(move->newX - move->oldX) == 2)
+			{
+				// it's a castle!
+				move->isCastle = true;
+			}
+			else move->isCastle == false;
+
+			// check for end-rank promotion in white
+			if ((pieceType & WHITE_PAWN) && move->newY == 0 || (pieceType & BLACK_PAWN) && move->newY == 7) move->isPromoting = true;
+			else move->isPromoting = false;
 		}
 		else std::cout << "PROBLEM!!\n";
 
@@ -2542,7 +2554,25 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				// no checks
 				case 0:
 					// Step 1: calculate legal king moves
-					legalKingMoves = kingMoves[kingPos] & ~blackAttack;
+					legalKingMoves = 0;
+					// we are now allowed to castle, so check for that
+					if (whiteKingCanCastle) // king hasn't moved
+					{
+						if (whiteKingsideRookCanCastle) // kingside rook hasn't moved
+						{
+							uint64_t whiteKingsideCastle = ((1ULL << (kingPos + 1)) | (1ULL << (kingPos + 2)));
+							// this ternary ensures that the king isn't moving through pieces or check in the castle
+							legalKingMoves |= (whiteKingsideCastle & ~(whitePieces & blackPieces) & ~blackAttack) == whiteKingsideCastle ? whiteKingsideCastle : 0;
+						}
+						else if (whiteQueensideRookCanCastle)
+						{
+							uint64_t whiteQueensideCastle = ((1ULL << (kingPos - 1)) | (1ULL << (kingPos - 2)));
+							// this ternary ensures that the king isn't moving through pieces or check in the castle
+							legalKingMoves |= (whiteQueensideCastle & ~(whitePieces & blackPieces) & ~blackAttack) == whiteQueensideCastle ? whiteQueensideCastle : 0;
+						}
+					}
+					// tack on any other legal king moves
+					legalKingMoves |= kingMoves[kingPos] & ~blackAttack;
 					// insert bits-to-moves function here
 
 					// Step 2: calculate all other pieces' moves
