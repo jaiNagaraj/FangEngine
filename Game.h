@@ -40,8 +40,9 @@ class Game
 		*/
 		uint64_t pieceBoards[12];
 
-		int whiteAttack[8][8] = { 0 }; // the squares white controls
-		int blackAttack[8][8] = { 0 }; // the squares black controls
+		// keep track of EP info. The first element is the square, and the second element is the captured piece square.
+		int enPassantInfo[2];
+
 		std::unordered_map<std::string,int> positions;
 		std::vector<std::string> fens;
 		int turn = 0;
@@ -56,7 +57,6 @@ class Game
 		int bitToIndex(uint64_t);
 		Piece* makePiece(int x, int y, uint8_t info);
 		bool isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY);
-		void updateAttackBoard();
 		Move* validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool test = false);
 		bool validCastle(Piece* piece, int initX, int initY, int kingX, int kingY);
 		void makeMove(Move* move);
