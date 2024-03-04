@@ -1098,16 +1098,30 @@ Move* Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool
 */
 void Game::makeMove(Move* move)
 {
+	int newIndex = 8 * (7 - move->newY) + move->newX;
+	int oldIndex = 8 * (7 - move->oldY) + move->oldX;
 	int distMovedX = move->newX - move->oldX;
 	int distMovedY = move->newY - move->oldY;
 	if (move->isCapture)
 	{
+		// update respective bitboard
+		switch (move->captured->info)
+		{
+			case WHITE_PAWN:
+				// START HERE
+				break;
+		}
+
 		// use the combination of erase and remove to capture piece
 		std::vector<Piece*>::iterator it = std::find(piecesOnBoard.begin(), piecesOnBoard.end(), move->captured);
 		if (it != piecesOnBoard.end()) piecesOnBoard.erase(it);
 		else std::cout << "Error: Could not capture piece!!!\n";
-		//std::cout << "Piece removed!\n";
 	}
+	
+	// if en passant, update board to reflect this
+	if (move->isEP) board[move->oldY][move->newX] = 0;
+	// update respective bitboard
+	if (move->piece->info & WHITE) pieceBoards[BP_INDEX] &= ~(1ULL << enPassantInfo[1]);
 
 	if (move->isCastle)
 	{
@@ -1126,6 +1140,9 @@ void Game::makeMove(Move* move)
 						board[move->newY][move->newX + 1] = board[7][0];
 						board[7][0] = 0;
 						whiteQueensideRookCanCastle = false; // remove queenside castling
+						// update bitboards
+						pieceBoards[WR_INDEX] &= ~(1ULL << 0); // remove left rook from a1
+						pieceBoards[WR_INDEX] |= (1ULL << 3); // add left rook to d1
 						break;
 					}
 				}
@@ -1141,6 +1158,9 @@ void Game::makeMove(Move* move)
 						board[move->newY][move->newX - 1] = board[7][7];
 						board[7][7] = 0;
 						whiteKingsideRookCanCastle = false; // remove kingside castling
+						// update bitboards
+						pieceBoards[WR_INDEX] &= ~(1ULL << 7); // remove right rook from h1
+						pieceBoards[WR_INDEX] |= (1ULL << 5); // add right rook to f1
 						break;
 					}
 				}
@@ -1160,6 +1180,9 @@ void Game::makeMove(Move* move)
 						board[move->newY][move->newX + 1] = board[0][0];
 						board[0][0] = 0;
 						blackQueensideRookCanCastle = false; // revoke queenside castling
+						// update bitboards
+						pieceBoards[BR_INDEX] &= ~(1ULL << 56); // remove left rook from a8
+						pieceBoards[BR_INDEX] |= (1ULL << 59); // add left rook to d8
 						break;
 					}
 				}
@@ -1175,6 +1198,9 @@ void Game::makeMove(Move* move)
 						board[move->newY][move->newX - 1] = board[0][7];
 						board[0][7] = 0;
 						blackKingsideRookCanCastle = false; // revoke kingside castling
+						// update bitboards
+						pieceBoards[WR_INDEX] &= ~(1ULL << 63); // remove right rook from h8
+						pieceBoards[WR_INDEX] |= (1ULL << 61); // add right rook to f8
 						break;
 					}
 				}
@@ -1218,16 +1244,23 @@ void Game::makeMove(Move* move)
 			p->enPassantable = false;
 		}
 	}
+	// reset en passant info
+	enPassantInfo[0] = -1;
+	enPassantInfo[1] = -1;
 	
 	// if pawn passes checks for two spaces
-	if ((move->piece->info & PAWN) == PAWN && abs(distMovedY) == 2) move->piece->enPassantable = true;
+	if ((move->piece->info & PAWN) == PAWN && abs(distMovedY) == 2)
+	{
+		move->piece->enPassantable = true;
+		enPassantInfo[1] = newIndex;
+		if (move->piece->info & WHITE) enPassantInfo[0] = 8 * (7 - (move->newY - 1)) + move->newX;
+		else enPassantInfo[0] = 8 * (7 - (move->newY + 1)) + move->newX;
+	}
 
 	// if pawn move or capture, reset halfmove counter
 	if (move->isCapture || (move->piece->info & PAWN) == PAWN) halfmoves = 0;
 	else halfmoves++;
 
-	// if en passant, update board to reflect this
-	if (move->isEP) board[move->oldY][move->newX] = 0;
 
 	// if promotion
 	if (move->isPromoting)
@@ -1241,6 +1274,15 @@ void Game::makeMove(Move* move)
 	board[move->newY][move->newX] = board[move->oldY][move->oldX];
 	board[move->oldY][move->oldX] = 0;
 	turn++;
+	// update respective bitboard
+	switch (move->piece->info)
+	{
+		case WHITE_PAWN:
+			pieceBoards[WP_INDEX] &= ~(1ULL << oldIndex);
+			pieceBoards[WP_INDEX] &=  (1ULL << newIndex);
+			break;
+		// START HERE
+	}
 
 	// update piece graphic coordinates
 	move->piece->rect->x = move->newX * 60;
@@ -1469,6 +1511,9 @@ std::vector<Move*> Game::bitsToMoves(uint64_t bitboard, unsigned long startSquar
 
 		// remove move from bitboard
 		bitboard = (bitboard >> (index + 1)) << (index + 1);
+
+		// add move object to vector
+		moves.push_back(move);
 	}
 	return moves;
 }
@@ -2197,12 +2242,47 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 						{
 							// check for possible en passant move
 							uint64_t passant = 0;
-							if (enPassantInfo[0] != -1)
+							if (enPassantInfo[0] != -1 && (1ULL << enPassantInfo[1]) & pieceBoards[BP_INDEX])
 							{
 								passant = (1ULL << enPassantInfo[0]);
+								// check for rare en passant pin
+								if (whitePawnAttacks[index] & passant)
+								{
+									// check if the left or right ray is in line with the pawn
+									int rayIndex;
+									if (rays[kingPos][2] & (1ULL << index)) rayIndex = 2;
+									else if (rays[kingPos][6] & (1ULL << index)) rayIndex = 6;
+									else rayIndex = -1;
+									if (rayIndex != -1)
+									{
+										uint64_t blackWithoutPassant = (blackPieces & ~pieceBoards[BP_INDEX]) | (~(1ULL << enPassantInfo[1]) & pieceBoards[BP_INDEX]);
+										uint64_t whiteWithoutPawn = (whitePieces & ~pieceBoards[WP_INDEX]) | (~(1ULL << index) & pieceBoards[WP_INDEX]);
+										uint64_t blockersEP = whiteWithoutPawn | blackWithoutPassant;
+										uint64_t maskedBlockersEP = rays[rayIndex][kingPos] & blockersEP;
+										unsigned long i2;
+										unsigned char c;
+										if (rayIndex < 7 && rayIndex > 2) c = _BitScanReverse64(&i2, maskedBlockersEP); // for negative rays
+										else c = _BitScanForward64(&i2, maskedBlockersEP);
+
+										if (c)
+										{
+											// check if the nearest "blocker" is a rook or queen
+											if (1ULL << i2 & (pieceBoards[BR_INDEX] | pieceBoards[BQ_INDEX])) passant = 0; // pin found!!
+										}
+										else; // do nothing; no pin
+
+									}
+								}
 							}
-							// the ternary operator ensures that a starting-square pawn can't use its two-square push to leap over a blocker
-							bitmoves = ((whitePawnPushes[index] & ~(whitePieces | blackPieces)) == whitePawnPushes[index] ? whitePawnPushes[index] : 0) |
+							uint64_t pawnPushes = whitePawnPushes[index];
+							// for first-row pawns
+							if (index >= 8 && index < 16)
+							{
+								// if something blocks the pawn
+								if ((1ULL << (index + 8)) & (whitePieces | blackPieces)) pawnPushes = 0;
+							}
+							// mask pushes with blockers, mask captures with black pieces
+							bitmoves = (pawnPushes & ~(whitePieces | blackPieces)) |
 								(whitePawnAttacks[index] & (blackPieces | passant));
 							// make sure the pawn doesn't disobey a pin
 							bitmoves &= pinnedPieceMoves[index];
@@ -3657,12 +3737,47 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 					{
 						// check for possible en passant move
 						uint64_t passant = 0;
-						if (enPassantInfo[0] != -1)
+						if (enPassantInfo[0] != -1 && (1ULL << enPassantInfo[1]) & pieceBoards[WP_INDEX])
 						{
 							passant = (1ULL << enPassantInfo[0]);
+							// check for rare en passant pin
+							if (blackPawnAttacks[index] & passant)
+							{
+								// check if the left or right ray is in line with the pawn
+								int rayIndex;
+								if (rays[kingPos][2] & (1ULL << index)) rayIndex = 2;
+								else if (rays[kingPos][6] & (1ULL << index)) rayIndex = 6;
+								else rayIndex = -1;
+								if (rayIndex != -1)
+								{
+									uint64_t whiteWithoutPassant = (whitePieces & ~pieceBoards[WP_INDEX]) | (~(1ULL << enPassantInfo[1]) & pieceBoards[WP_INDEX]);
+									uint64_t blackWithoutPawn = (blackPieces & ~pieceBoards[BP_INDEX]) | (~(1ULL << index) & pieceBoards[BP_INDEX]);
+									uint64_t blockersEP = blackWithoutPawn | whiteWithoutPassant;
+									uint64_t maskedBlockersEP = rays[rayIndex][kingPos] & blockersEP;
+									unsigned long i2;
+									unsigned char c;
+									if (rayIndex < 7 && rayIndex > 2) c = _BitScanReverse64(&i2, maskedBlockersEP); // for negative rays
+									else c = _BitScanForward64(&i2, maskedBlockersEP);
+
+									if (c)
+									{
+										// check if the nearest "blocker" is a rook or queen
+										if (1ULL << i2 & (pieceBoards[WR_INDEX] | pieceBoards[WQ_INDEX])) passant = 0; // pin found!!
+									}
+									else; // do nothing; no pin
+
+								}
+							}
 						}
-						// the ternary operator ensures that a starting-square pawn can't use its two-square push to leap over a blocker
-						bitmoves = ((blackPawnPushes[index] & ~(whitePieces | blackPieces)) == blackPawnPushes[index] ? blackPawnPushes[index] : 0) |
+						uint64_t pawnPushes = blackPawnPushes[index];
+						// for first-row pawns
+						if (index >= 48 && index < 56)
+						{
+							// if something blocks the pawn
+							if ((1ULL << (index - 8)) & (whitePieces | blackPieces)) pawnPushes = 0;
+						}
+						// mask pushes with blockers, mask captures with white pieces
+						bitmoves = (pawnPushes & ~(whitePieces | blackPieces)) |
 							(blackPawnAttacks[index] & (whitePieces | passant));
 						// make sure the pawn doesn't disobey a pin
 						bitmoves &= pinnedPieceMoves[index];
