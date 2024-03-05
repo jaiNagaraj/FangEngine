@@ -6,6 +6,8 @@
 #include <algorithm>
 typedef unsigned long long ull;
 
+#define USING_BITS true
+
 int Game::bitToIndex(uint64_t num)
 {
 	return (int) std::log2(num);
@@ -15,6 +17,47 @@ Piece* Game::makePiece(int x, int y, uint8_t info)
 {
 	// add to game board
 	board[y][x] = info;
+	// update respective bitboard
+	int index = 8 * (7 - y) + x;
+	switch (info)
+	{
+		case WHITE_PAWN:
+			pieceBoards[WP_INDEX] |= (1ULL << index);
+			break;
+		case WHITE_KNIGHT:
+			pieceBoards[WK_INDEX] |= (1ULL << index);
+			break;
+		case WHITE_BISHOP:
+			pieceBoards[WB_INDEX] |= (1ULL << index);
+			break;
+		case WHITE_ROOK:
+			pieceBoards[WR_INDEX] |= (1ULL << index);
+			break;
+		case WHITE_QUEEN:
+			pieceBoards[WQ_INDEX] |= (1ULL << index);
+			break;
+		case WHITE_KING:
+			pieceBoards[WK_INDEX] |= (1ULL << index);
+			break;
+		case BLACK_PAWN:
+			pieceBoards[BP_INDEX] |= (1ULL << index);
+			break;
+		case BLACK_KNIGHT:
+			pieceBoards[BK_INDEX] |= (1ULL << index);
+			break;
+		case BLACK_BISHOP:
+			pieceBoards[BB_INDEX] |= (1ULL << index);
+			break;
+		case BLACK_ROOK:
+			pieceBoards[BR_INDEX] |= (1ULL << index);
+			break;
+		case BLACK_QUEEN:
+			pieceBoards[BQ_INDEX] |= (1ULL << index);
+			break;
+		case BLACK_KING:
+			pieceBoards[BK_INDEX] |= (1ULL << index);
+			break;
+	}
 	// set up graphic rect
 	SDL_Rect* dstRect = new SDL_Rect;
 	dstRect->x = x * 60;
@@ -1296,6 +1339,9 @@ void Game::makeMove(Move* move)
 	// if promotion
 	if (move->isPromoting)
 	{
+		// first, clear old pawn from respective bitboard
+		if (move->piece->info & WHITE) pieceBoards[WP_INDEX] &= ~(1ULL << oldIndex);
+		else pieceBoards[BP_INDEX] &= ~(1ULL << oldIndex);
 		// update board and piece info
 		move->piece->info = move->promoPiece;
 		board[move->oldY][move->oldX] = move->piece->info;
@@ -1373,13 +1419,55 @@ void Game::makeMove(Move* move)
 
 void Game::unmakeMove(Move* move)
 {
+	int newIndex = 8 * (7 - move->newY) + move->newX;
+	int oldIndex = 8 * (7 - move->oldY) + move->oldX;
 	int distMovedX = move->newX - move->oldX;
 	int distMovedY = move->newY - move->oldY;
 	if (move->isCapture)
 	{
 		// Add the captured piece back
 		piecesOnBoard.push_back(move->captured);
+
+		// update respective bitboard
+		switch (move->captured->info)
+		{
+			case WHITE_PAWN:
+				if (!(move->isEP)) pieceBoards[WP_INDEX] |= (1ULL << newIndex);
+				break;
+			case WHITE_KNIGHT:
+				pieceBoards[WK_INDEX] |= (1ULL << newIndex);
+				break;
+			case WHITE_BISHOP:
+				pieceBoards[WB_INDEX] |= (1ULL << newIndex);
+				break;
+			case WHITE_ROOK:
+				pieceBoards[WR_INDEX] |= (1ULL << newIndex);
+				break;
+			case WHITE_QUEEN:
+				pieceBoards[WQ_INDEX] |= (1ULL << newIndex);
+				break;
+			case BLACK_PAWN:
+				if (!(move->isEP)) pieceBoards[BP_INDEX] |= (1ULL << newIndex);
+				break;
+			case BLACK_KNIGHT:
+				pieceBoards[BK_INDEX] |= (1ULL << newIndex);
+				break;
+			case BLACK_BISHOP:
+				pieceBoards[BB_INDEX] |= (1ULL << newIndex);
+				break;
+			case BLACK_ROOK:
+				pieceBoards[BR_INDEX] |= (1ULL << newIndex);
+				break;
+			case BLACK_QUEEN:
+				pieceBoards[BQ_INDEX] |= (1ULL << newIndex);
+				break;
+		}
 	}
+
+	// if en passant, put passanted pawn back on board
+	if (move->isEP) board[move->oldY][move->newX] = move->captured->info;
+	if (move->piece->info & WHITE) pieceBoards[BP_INDEX] |= 8 * (7 - move->oldY) + move->newX;
+	else pieceBoards[WP_INDEX] |= 8 * (7 - move->oldY) + move->newX;
 
 	if (move->isCastle)
 	{
@@ -1396,6 +1484,9 @@ void Game::unmakeMove(Move* move)
 						p->rect->x = 0; // move back to the left-most square
 						board[7][0] = board[move->newY][move->newX + 1];
 						board[move->newY][move->newX + 1] = 0;
+						// update bitboards
+						pieceBoards[WR_INDEX] &= ~(1ULL << 3); // remove left rook from d1
+						pieceBoards[WR_INDEX] |=  (1ULL << 0); // add left rook to a1
 						break;
 					}
 				}
@@ -1410,6 +1501,9 @@ void Game::unmakeMove(Move* move)
 						p->rect->x = 7 * 60; // move back to the right-most square
 						board[7][7] = board[move->newY][move->newX - 1];
 						board[move->newY][move->newX - 1] = 0;
+						// update bitboards
+						pieceBoards[WR_INDEX] &= ~(1ULL << 5); // remove right rook from f1
+						pieceBoards[WR_INDEX] |=  (1ULL << 7); // add right rook to h1
 						break;
 					}
 				}
@@ -1427,6 +1521,9 @@ void Game::unmakeMove(Move* move)
 						p->rect->x = 0; // move back to the left-most square
 						board[0][0] = board[move->newY][move->newX + 1];
 						board[move->newY][move->newX + 1] = 0;
+						// update bitboards
+						pieceBoards[BR_INDEX] &= ~(1ULL << 59); // remove left rook from d8
+						pieceBoards[BR_INDEX] |=  (1ULL << 56); // add left rook to a8
 						break;
 					}
 				}
@@ -1441,6 +1538,9 @@ void Game::unmakeMove(Move* move)
 						p->rect->x = 7 * 60; // move back to the right-most square
 						board[0][7] = board[move->newY][move->newX - 1];
 						board[move->newY][move->newX - 1] = 0;
+						// update bitboards
+						pieceBoards[WR_INDEX] &= ~(1ULL << 61); // remove right rook from f8
+						pieceBoards[WR_INDEX] |=  (1ULL << 63); // add right rook to h8
 						break;
 					}
 				}
@@ -1453,6 +1553,9 @@ void Game::unmakeMove(Move* move)
 	{
 		move->lostEP->enPassantable = true;
 	}
+	// reset en passant info
+	enPassantInfo[0] = move->oldPassantSquare;
+	enPassantInfo[1] = move->oldPassantPieceSquare;
 
 	// reset castling rights
 	if (move->oldCastlingRights & WK_CASTLE) whiteKingCanCastle = true;
@@ -1468,25 +1571,106 @@ void Game::unmakeMove(Move* move)
 	// reinstate halfmove counter
 	halfmoves = move->oldHalfmoves;
 
-	// if en passant, put passanted pawn back on board
-	if (move->isEP) board[move->oldY][move->newX] = move->captured->info;
 
 	// if promotion, unpromote
 	if (move->isPromoting)
 	{
+		// update respective promoPiece bitboard
+		switch (move->promoPiece)
+		{
+			case WHITE_KNIGHT:
+				pieceBoards[WK_INDEX] &= ~(1ULL << newIndex);
+				break;
+			case WHITE_BISHOP:
+				pieceBoards[WB_INDEX] &= ~(1ULL << newIndex);
+				break;
+			case WHITE_ROOK:
+				pieceBoards[WR_INDEX] &= ~(1ULL << newIndex);
+				break;
+			case WHITE_QUEEN:
+				pieceBoards[WQ_INDEX] &= ~(1ULL << newIndex);
+				break;
+			case BLACK_KNIGHT:
+				pieceBoards[BK_INDEX] &= ~(1ULL << newIndex);
+				break;
+			case BLACK_BISHOP:
+				pieceBoards[BB_INDEX] &= ~(1ULL << newIndex);
+				break;
+			case BLACK_ROOK:
+				pieceBoards[BR_INDEX] &= ~(1ULL << newIndex);
+				break;
+			case BLACK_QUEEN:
+				pieceBoards[BQ_INDEX] &= ~(1ULL << newIndex);
+				break;
+		}
 		// update board and piece info
 		if ((turn - 1) % 2 == 0) move->piece->info = WHITE_PAWN;
 		else move->piece->info = BLACK_PAWN;
-		board[move->newY][move->newX] = move->piece->info;
+		board[move->newY][move->newX] = move->piece->info; // temporary change for the new position, which will be later overwritten
+		// note: updating bitboards is unnecessary since it will anyway clear the bit
+
 	}
 
 	// update board and turn
 	board[move->oldY][move->oldX] = board[move->newY][move->newX];
 	if (move->isCapture && !(move->isEP))
 	{
+		// already updated bitboards for capture earlier, update array now
 		board[move->newY][move->newX] = move->captured->info;
 	}
 	else board[move->newY][move->newX] = 0;
+	// update respective bitboard
+	switch (move->piece->info)
+	{
+		case WHITE_PAWN:
+			pieceBoards[WP_INDEX] |=  (1ULL << oldIndex);
+			pieceBoards[WP_INDEX] &= ~(1ULL << newIndex);
+			break;
+		case WHITE_KNIGHT:
+			pieceBoards[WK_INDEX] |=  (1ULL << oldIndex);
+			pieceBoards[WK_INDEX] &= ~(1ULL << newIndex);
+			break;
+		case WHITE_BISHOP:
+			pieceBoards[WB_INDEX] |=  (1ULL << oldIndex);
+			pieceBoards[WB_INDEX] &= ~(1ULL << newIndex);
+			break;
+		case WHITE_ROOK:
+			pieceBoards[WR_INDEX] |=  (1ULL << oldIndex);
+			pieceBoards[WR_INDEX] &= ~(1ULL << newIndex);
+			break;
+		case WHITE_QUEEN:
+			pieceBoards[WQ_INDEX] |=  (1ULL << oldIndex);
+			pieceBoards[WQ_INDEX] &= ~(1ULL << newIndex);
+			break;
+		case WHITE_KING:
+			pieceBoards[WK_INDEX] |=  (1ULL << oldIndex);
+			pieceBoards[WK_INDEX] &= ~(1ULL << newIndex);
+			break;
+		case BLACK_PAWN:
+			pieceBoards[BP_INDEX] |=  (1ULL << oldIndex);
+			pieceBoards[BP_INDEX] &= ~(1ULL << newIndex);
+			break;
+		case BLACK_KNIGHT:
+			pieceBoards[BK_INDEX] |=  (1ULL << oldIndex);
+			pieceBoards[BK_INDEX] &= ~(1ULL << newIndex);
+			break;
+		case BLACK_BISHOP:
+			pieceBoards[BB_INDEX] |=  (1ULL << oldIndex);
+			pieceBoards[BB_INDEX] &= ~(1ULL << newIndex);
+			break;
+		case BLACK_ROOK:
+			pieceBoards[BR_INDEX] |=  (1ULL << oldIndex);
+			pieceBoards[BR_INDEX] &= ~(1ULL << newIndex);
+			break;
+		case BLACK_QUEEN:
+			pieceBoards[BQ_INDEX] |=  (1ULL << oldIndex);
+			pieceBoards[BQ_INDEX] &= ~(1ULL << newIndex);
+			break;
+		case BLACK_KING:
+			pieceBoards[BK_INDEX] |=  (1ULL << oldIndex);
+			pieceBoards[BK_INDEX] &= ~(1ULL << newIndex);
+			break;
+	}
 	turn--;
 
 	// reset piece graphic coordinates
@@ -1529,6 +1713,8 @@ std::vector<Move*> Game::bitsToMoves(uint64_t bitboard, unsigned long startSquar
 
 			// miscellaneous
 			move->oldHalfmoves = halfmoves;
+			move->oldPassantSquare = enPassantInfo[0];
+			move->oldPassantPieceSquare = enPassantInfo[1];
 			// record old castling rights
 			uint8_t castlingRights = 0;
 			if (whiteKingCanCastle) castlingRights |= WK_CASTLE;
@@ -1575,7 +1761,7 @@ std::vector<Move*> Game::bitsToMoves(uint64_t bitboard, unsigned long startSquar
 				// it's a castle!
 				move->isCastle = true;
 			}
-			else move->isCastle == false;
+			else move->isCastle = false;
 
 			// check for end-rank promotion in white
 			if ((pieceType & WHITE_PAWN) && move->newY == 0 || (pieceType & BLACK_PAWN) && move->newY == 7) move->isPromoting = true;
@@ -1584,7 +1770,7 @@ std::vector<Move*> Game::bitsToMoves(uint64_t bitboard, unsigned long startSquar
 		else std::cout << "PROBLEM!!\n";
 
 		// remove move from bitboard
-		bitboard = (bitboard >> (index + 1)) << (index + 1);
+		bitboard = (((bitboard >> index) >> 1)) << (index + 1);
 
 		// add move object to vector
 		moves.push_back(move);
@@ -1605,8 +1791,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 	blackNoKing = blackPieces & ~pieceBoards[BK_INDEX];
 	if (turn % 2 == 0) // for white
 	{
-		bool usingBits = false;
-		if (usingBits)
+		#ifdef USING_BITS
 		{
 			// first, look for checks
 			// get the king position
@@ -1668,6 +1853,8 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 			}
 			adjAttacks &= (pieceBoards[BR_INDEX] | pieceBoards[BQ_INDEX]);
 
+			
+
 
 			// Next, check for pins
 			uint64_t pinMask = 0;
@@ -1708,7 +1895,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 					{
 						uint64_t blockers = whitePieces | blackPieces;
 						int oppIndex = (i + 4) % 8;
-						if (oppIndex % 2 == 0) continue; // only diagonal rays allowed
+						if (oppIndex % 2 == 0) break; // only diagonal rays allowed
 						uint64_t maskedBlockers = rays[oppIndex][index] & blockers;
 						unsigned long i2;
 						unsigned char c;
@@ -1724,10 +1911,10 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 						enemySlidingAttacks |= bitmoves;
 					}
 					else std::cout << "PROBLEM WITH BLACK BISHOPS!\n";
-
 					// clear board of that bit
-					holder = (holder >> (index + 1)) << (index + 1);
+					holder = (((holder >> index) >> 1)) << (index + 1);
 				}
+
 
 				// for black rooks
 				bitmoves = 0;
@@ -1742,7 +1929,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 					{
 						uint64_t blockers = whitePieces | blackPieces;
 						int oppIndex = (i + 4) % 8;
-						if (oppIndex % 2 == 1) continue; // only adjacent rays allowed
+						if (oppIndex % 2 == 1) break; // only adjacent rays allowed
 						uint64_t maskedBlockers = rays[oppIndex][index] & blockers;
 						unsigned long i2;
 						unsigned char c;
@@ -1761,7 +1948,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 					else std::cout << "PROBLEM WITH BLACK ROOKS!\n";
 
 					// clear board of that bit
-					holder = (holder >> (index + 1)) << (index + 1);
+					holder = (((holder >> index) >> 1)) << (index + 1);
 				}
 
 				// for black queens
@@ -1795,12 +1982,13 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 					else std::cout << "PROBLEM WITH BLACK QUEENS!\n";
 
 					// clear board of that bit
-					holder = (holder >> (index + 1)) << (index + 1);
+					holder = (((holder >> index) >> 1)) << (index + 1);
 				}
 
 				// add the overlap of king attack rays, opposite enemy moves, and the white pieces to the pin mask
 				pinMask |= enemySlidingAttacks & kingSlides & whitePieces;
 			}
+
 
 			// Now, calculate the pseudo-legal move rays for the pinned pieces
 			uint64_t pinnedPieceMoves[64];
@@ -1871,10 +2059,10 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				}
 
 				// clear board of that bit
-				holder = (holder >> (index + 1)) << (index + 1);
+				holder = (((holder >> index) >> 1)) << (index + 1);
 			}
 
-
+			
 
 			// Next, calculate danger squares
 			// this is done by calculating all possible moves for black w/o king on the board for black pawns
@@ -1896,7 +2084,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				else std::cout << "PROBLEM WITH BLACK PAWNS!\n";
 
 				// clear board of that bit
-				tmp = (tmp >> (index + 1)) << (index + 1);
+				tmp = (((tmp >> index) >> 1)) << (index + 1);
 			}
 
 			// for black knights
@@ -1916,7 +2104,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				else std::cout << "PROBLEM WITH BLACK KNIGHTS!\n";
 
 				// clear board of that bit
-				tmp = (tmp >> (index + 1)) << (index + 1);
+				tmp = (((tmp >> index) >> 1)) << (index + 1);
 			}
 
 			// for black bishops
@@ -1954,7 +2142,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				else std::cout << "PROBLEM WITH BLACK BISHOPS!\n";
 
 				// clear board of that bit
-				tmp = (tmp >> (index + 1)) << (index + 1);
+				tmp = (((tmp >> index) >> 1)) << (index + 1);
 			}
 
 			// for black rooks
@@ -1992,7 +2180,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				else std::cout << "PROBLEM WITH BLACK ROOKS!\n";
 
 				// clear board of that bit
-				tmp = (tmp >> (index + 1)) << (index + 1);
+				tmp = (((tmp >> index) >> 1)) << (index + 1);
 			}
 
 			// for black queens
@@ -2029,7 +2217,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				else std::cout << "PROBLEM WITH BLACK QUEENS!\n";
 
 				// clear board of that bit
-				tmp = (tmp >> (index + 1)) << (index + 1);
+				tmp = (((tmp >> index) >> 1)) << (index + 1);
 			}
 
 			// for black king
@@ -2048,31 +2236,35 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				else std::cout << "PROBLEM WITH BLACK KING!\n";
 
 				// clear board of that bit
-				tmp = (tmp >> (index + 1)) << (index + 1);
+				tmp = (((tmp >> index) >> 1)) << (index + 1);
 			}
 
 			// count number of attackers
 			uint64_t attackBoard = blackAttackingKnights & blackAttackingPawns & diagonalAttacks & adjAttacks;
 			attackers += std::bitset<64>(attackBoard).count();
 
+
 			// Next, check for number of attackers (0, 1, 2)
 			uint64_t legalKingMoves;
 			uint64_t checkRay;
 			int attackerSquare;
+			std::vector<Move*> movesToAdd;
 			switch (attackers)
 			{
 				// double check
 				case 2:
 					// only king moves are allowed; mask them with the danger squares
 					legalKingMoves = kingMoves[kingPos] & ~blackAttack;
-					// insert bits-to-moves function here
+					movesToAdd = bitsToMoves(legalKingMoves, kingPos, WHITE_KING);
+					moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 					break;
 
 				// single check
 				case 1:
 					// Step 1: calculate legal king moves
 					legalKingMoves = kingMoves[kingPos] & ~blackAttack;
-					// insert bits-to-moves function here
+					movesToAdd = bitsToMoves(legalKingMoves, kingPos, WHITE_KING);
+					moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 
 					// Step 2: calculate ways to capture or block the attacker
 					attackerSquare = bitToIndex(attackBoard);
@@ -2114,12 +2306,13 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 							bitmoves &= pinnedPieceMoves[index];
 							// now, check if capturing or blocking the attacker is a possible move
 							bitmoves &= checkRay;
-							// insert bits-to-moves function here
+							movesToAdd = bitsToMoves(bitmoves, index, WHITE_PAWN);
+							moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 						}
 						else std::cout << "PROBLEM WITH WHITE PAWNS!\n";
 
 						// clear board of that bit
-						tmp = (tmp >> (index + 1)) << (index + 1);
+						tmp = (((tmp >> index) >> 1)) << (index + 1);
 					}
 
 					// can any knight move?
@@ -2135,12 +2328,13 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 						{
 							// all-in-one check
 							bitmoves = (knightMoves[index] & ~whitePieces & pinnedPieceMoves[index]) & checkRay;
-							// insert bits-to-moves function here
+							movesToAdd = bitsToMoves(bitmoves, index, WHITE_KNIGHT);
+							moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 						}
 						else std::cout << "PROBLEM WITH WHITE KNIGHTS!\n";
 
 						// clear board of that bit
-						tmp = (tmp >> (index + 1)) << (index + 1);
+						tmp = (((tmp >> index) >> 1)) << (index + 1);
 					}
 
 					// can any bishop move?
@@ -2178,13 +2372,14 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 								// now check the moves against the check ray
 								bitmoves &= checkRay;
 
-								// insert bits-to-moves function here
+								movesToAdd = bitsToMoves(bitmoves, index, WHITE_BISHOP);
+								moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 							}
 						}
 						else std::cout << "PROBLEM WITH WHITE BISHOPS!\n";
 
 						// clear board of that bit
-						tmp = (tmp >> (index + 1)) << (index + 1);
+						tmp = (((tmp >> index) >> 1)) << (index + 1);
 					}
 
 					// can any rook move?
@@ -2222,13 +2417,14 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 								// now check the moves against the check ray
 								bitmoves &= checkRay;
 
-								// insert bits-to-moves function here
+								movesToAdd = bitsToMoves(bitmoves, index, WHITE_ROOK);
+								moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 							}
 						}
 						else std::cout << "PROBLEM WITH WHITE ROOKS!\n";
 
 						// clear board of that bit
-						tmp = (tmp >> (index + 1)) << (index + 1);
+						tmp = (((tmp >> index) >> 1)) << (index + 1);
 					}
 
 					// can any queen move?
@@ -2265,13 +2461,14 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 								// now check the moves against the check ray
 								bitmoves &= checkRay;
 
-								// insert bits-to-moves function here
+								movesToAdd = bitsToMoves(bitmoves, index, WHITE_QUEEN);
+								moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 							}
 						}
 						else std::cout << "PROBLEM WITH WHITE QUEENS!\n";
 
 						// clear board of that bit
-						tmp = (tmp >> (index + 1)) << (index + 1);
+						tmp = (((tmp >> index) >> 1)) << (index + 1);
 					}
 
 					break;
@@ -2299,7 +2496,8 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 					}
 					// tack on any other legal king moves
 					legalKingMoves |= kingMoves[kingPos] & ~blackAttack;
-					// insert bits-to-moves function here
+					movesToAdd = bitsToMoves(legalKingMoves, kingPos, WHITE_KING);
+					moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 
 					// Step 2: calculate all other pieces' moves
 
@@ -2361,12 +2559,13 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 							// make sure the pawn doesn't disobey a pin
 							bitmoves &= pinnedPieceMoves[index];
 
-							// insert bits-to-moves function here
+							movesToAdd = bitsToMoves(bitmoves, index, WHITE_PAWN);
+							moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 						}
 						else std::cout << "PROBLEM WITH WHITE PAWNS!\n";
 
 						// clear board of that bit
-						tmp = (tmp >> (index + 1)) << (index + 1);
+						tmp = (((tmp >> index) >> 1)) << (index + 1);
 					}
 
 					// can any knight move?
@@ -2382,12 +2581,13 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 						{
 							// all-in-one check
 							bitmoves = (knightMoves[index] & ~whitePieces & pinnedPieceMoves[index]);
-							// insert bits-to-moves function here
+							movesToAdd = bitsToMoves(bitmoves, index, WHITE_KNIGHT);
+							moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 						}
 						else std::cout << "PROBLEM WITH WHITE KNIGHTS!\n";
 
 						// clear board of that bit
-						tmp = (tmp >> (index + 1)) << (index + 1);
+						tmp = (((tmp >> index) >> 1)) << (index + 1);
 					}
 
 					// can any bishop move?
@@ -2422,13 +2622,14 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 								// ensure we follow pin rules
 								bitmoves &= pinnedPieceMoves[index];
 
-								// insert bits-to-moves function here
+								movesToAdd = bitsToMoves(bitmoves, index, WHITE_BISHOP);
+								moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 							}
 						}
 						else std::cout << "PROBLEM WITH WHITE BISHOPS!\n";
 
 						// clear board of that bit
-						tmp = (tmp >> (index + 1)) << (index + 1);
+						tmp = (((tmp >> index) >> 1)) << (index + 1);
 					}
 
 					// can any rook move?
@@ -2463,13 +2664,14 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 								// ensure we follow pin rules
 								bitmoves &= pinnedPieceMoves[index];
 
-								// insert bits-to-moves function here
+								movesToAdd = bitsToMoves(bitmoves, index, WHITE_ROOK);
+								moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 							}
 						}
 						else std::cout << "PROBLEM WITH WHITE ROOKS!\n";
 
 						// clear board of that bit
-						tmp = (tmp >> (index + 1)) << (index + 1);
+						tmp = (((tmp >> index) >> 1)) << (index + 1);
 					}
 
 					// can any queen move?
@@ -2503,13 +2705,14 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 								// ensure we follow pin rules
 								bitmoves &= pinnedPieceMoves[index];
 
-								// insert bits-to-moves function here
+								movesToAdd = bitsToMoves(bitmoves, index, WHITE_QUEEN);
+								moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 							}
 						}
 						else std::cout << "PROBLEM WITH WHITE QUEENS!\n";
 
 						// clear board of that bit
-						tmp = (tmp >> (index + 1)) << (index + 1);
+						tmp = (((tmp >> index) >> 1)) << (index + 1);
 					}
 					break;
 
@@ -2697,7 +2900,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 			}*/
 		}
 
-
+		#else
 		for (Piece* p : piecesOnBoard)
 		{
 			Move* potentialMove;
@@ -3095,11 +3298,11 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				}
 			}
 		}
+		#endif
 	}
 	else // for black
 	{
-		bool usingBits = false;
-		if (usingBits)
+		#ifdef USING_BITS
 		{
 			// first, look for checks
 			// get the king position
@@ -3219,7 +3422,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 					else std::cout << "PROBLEM WITH WHITE BISHOPS!\n";
 
 					// clear board of that bit
-					holder = (holder >> (index + 1)) << (index + 1);
+					holder = (((holder >> index) >> 1)) << (index + 1);
 				}
 
 				// for white rooks
@@ -3254,7 +3457,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 					else std::cout << "PROBLEM WITH WHITE ROOKS!\n";
 
 					// clear board of that bit
-					holder = (holder >> (index + 1)) << (index + 1);
+					holder = (((holder >> index) >> 1)) << (index + 1);
 				}
 
 				// for white queens
@@ -3288,7 +3491,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 					else std::cout << "PROBLEM WITH WHITE QUEENS!\n";
 
 					// clear board of that bit
-					holder = (holder >> (index + 1)) << (index + 1);
+					holder = (((holder >> index) >> 1)) << (index + 1);
 				}
 
 				// add the overlap of king attack rays, opposite enemy moves, and the black pieces to the pin mask
@@ -3364,7 +3567,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				}
 
 				// clear board of that bit
-				holder = (holder >> (index + 1)) << (index + 1);
+				holder = (((holder >> index) >> 1)) << (index + 1);
 			}
 
 
@@ -3391,7 +3594,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				else std::cout << "PROBLEM WITH WHITE PAWNS!\n";
 
 				// clear board of that bit
-				tmp = (tmp >> (index + 1)) << (index + 1);
+				tmp = (((tmp >> index) >> 1)) << (index + 1);
 			}
 
 			// for white knights
@@ -3411,7 +3614,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				else std::cout << "PROBLEM WITH WHITE KNIGHTS!\n";
 
 				// clear board of that bit
-				tmp = (tmp >> (index + 1)) << (index + 1);
+				tmp = (((tmp >> index) >> 1)) << (index + 1);
 			}
 
 			// for white bishops
@@ -3449,7 +3652,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				else std::cout << "PROBLEM WITH WHITE BISHOPS!\n";
 
 				// clear board of that bit
-				tmp = (tmp >> (index + 1)) << (index + 1);
+				tmp = (((tmp >> index) >> 1)) << (index + 1);
 			}
 
 			// for white rooks
@@ -3487,7 +3690,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				else std::cout << "PROBLEM WITH WHITE ROOKS!\n";
 
 				// clear board of that bit
-				tmp = (tmp >> (index + 1)) << (index + 1);
+				tmp = (((tmp >> index) >> 1)) << (index + 1);
 			}
 
 			// for white queens
@@ -3524,7 +3727,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				else std::cout << "PROBLEM WITH WHITE QUEENS!\n";
 
 				// clear board of that bit
-				tmp = (tmp >> (index + 1)) << (index + 1);
+				tmp = (((tmp >> index) >> 1)) << (index + 1);
 			}
 
 			// for white king
@@ -3543,7 +3746,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				else std::cout << "PROBLEM WITH WHITE KING!\n";
 
 				// clear board of that bit
-				tmp = (tmp >> (index + 1)) << (index + 1);
+				tmp = (((tmp >> index) >> 1)) << (index + 1);
 			}
 
 			// count number of attackers
@@ -3554,20 +3757,23 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 			uint64_t legalKingMoves;
 			uint64_t checkRay;
 			int attackerSquare;
+			std::vector<Move*> movesToAdd;
 			switch (attackers)
 			{
 				// double check
 			case 2:
 				// only king moves are allowed; mask them with the danger squares
 				legalKingMoves = kingMoves[kingPos] & ~whiteAttack;
-				// insert bits-to-moves function here
+				movesToAdd = bitsToMoves(legalKingMoves, kingPos, BLACK_KING);
+				moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 				break;
 
 				// single check
 			case 1:
 				// Step 1: calculate legal king moves
 				legalKingMoves = kingMoves[kingPos] & ~whiteAttack;
-				// insert bits-to-moves function here
+				movesToAdd = bitsToMoves(legalKingMoves, kingPos, BLACK_KING);
+				moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 
 				// Step 2: calculate ways to capture or block the attacker
 				attackerSquare = bitToIndex(attackBoard);
@@ -3609,12 +3815,14 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 						bitmoves &= pinnedPieceMoves[index];
 						// now, check if capturing or blocking the attacker is a possible move
 						bitmoves &= checkRay;
-						// insert bits-to-moves function here
+
+						movesToAdd = bitsToMoves(bitmoves, index, BLACK_PAWN);
+						moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 					}
 					else std::cout << "PROBLEM WITH BLACK PAWNS!\n";
 
 					// clear board of that bit
-					tmp = (tmp >> (index + 1)) << (index + 1);
+					tmp = (((tmp >> index) >> 1)) << (index + 1);
 				}
 
 				// can any knight move?
@@ -3630,12 +3838,14 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 					{
 						// all-in-one check
 						bitmoves = (knightMoves[index] & ~blackPieces & pinnedPieceMoves[index]) & checkRay;
-						// insert bits-to-moves function here
+						
+						movesToAdd = bitsToMoves(bitmoves, index, BLACK_KNIGHT);
+						moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 					}
 					else std::cout << "PROBLEM WITH BLACK KNIGHTS!\n";
 
 					// clear board of that bit
-					tmp = (tmp >> (index + 1)) << (index + 1);
+					tmp = (((tmp >> index) >> 1)) << (index + 1);
 				}
 
 				// can any bishop move?
@@ -3673,13 +3883,14 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 							// now check the moves against the check ray
 							bitmoves &= checkRay;
 
-							// insert bits-to-moves function here
+							movesToAdd = bitsToMoves(bitmoves, index, BLACK_BISHOP);
+							moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 						}
 					}
 					else std::cout << "PROBLEM WITH BLACK BISHOPS!\n";
 
 					// clear board of that bit
-					tmp = (tmp >> (index + 1)) << (index + 1);
+					tmp = (((tmp >> index) >> 1)) << (index + 1);
 				}
 
 				// can any rook move?
@@ -3717,13 +3928,14 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 							// now check the moves against the check ray
 							bitmoves &= checkRay;
 
-							// insert bits-to-moves function here
+							movesToAdd = bitsToMoves(bitmoves, index, BLACK_ROOK);
+							moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 						}
 					}
 					else std::cout << "PROBLEM WITH BLACK ROOKS!\n";
 
 					// clear board of that bit
-					tmp = (tmp >> (index + 1)) << (index + 1);
+					tmp = (((tmp >> index) >> 1)) << (index + 1);
 				}
 
 				// can any queen move?
@@ -3760,13 +3972,14 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 							// now check the moves against the check ray
 							bitmoves &= checkRay;
 
-							// insert bits-to-moves function here
+							movesToAdd = bitsToMoves(bitmoves, index, BLACK_QUEEN);
+							moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 						}
 					}
 					else std::cout << "PROBLEM WITH BLACK QUEENS!\n";
 
 					// clear board of that bit
-					tmp = (tmp >> (index + 1)) << (index + 1);
+					tmp = (((tmp >> index) >> 1)) << (index + 1);
 				}
 
 				break;
@@ -3794,7 +4007,8 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				}
 				// tack on any other legal king moves
 				legalKingMoves |= kingMoves[kingPos] & ~whiteAttack;
-				// insert bits-to-moves function here
+				movesToAdd = bitsToMoves(legalKingMoves, kingPos, BLACK_KING);
+				moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 
 				// Step 2: calculate all other pieces' moves
 
@@ -3856,12 +4070,13 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 						// make sure the pawn doesn't disobey a pin
 						bitmoves &= pinnedPieceMoves[index];
 
-						// insert bits-to-moves function here
+						movesToAdd = bitsToMoves(bitmoves, index, BLACK_PAWN);
+						moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 					}
 					else std::cout << "PROBLEM WITH BLACK PAWNS!\n";
 
 					// clear board of that bit
-					tmp = (tmp >> (index + 1)) << (index + 1);
+					tmp = (((tmp >> index) >> 1)) << (index + 1);
 				}
 
 				// can any knight move?
@@ -3877,12 +4092,14 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 					{
 						// all-in-one check
 						bitmoves = (knightMoves[index] & ~blackPieces & pinnedPieceMoves[index]);
-						// insert bits-to-moves function here
+						
+						movesToAdd = bitsToMoves(bitmoves, index, BLACK_KNIGHT);
+						moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 					}
 					else std::cout << "PROBLEM WITH BLACK KNIGHTS!\n";
 
 					// clear board of that bit
-					tmp = (tmp >> (index + 1)) << (index + 1);
+					tmp = (((tmp >> index) >> 1)) << (index + 1);
 				}
 
 				// can any bishop move?
@@ -3917,13 +4134,14 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 							// ensure we follow pin rules
 							bitmoves &= pinnedPieceMoves[index];
 
-							// insert bits-to-moves function here
+							movesToAdd = bitsToMoves(bitmoves, index, BLACK_BISHOP);
+							moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 						}
 					}
 					else std::cout << "PROBLEM WITH BLACK BISHOPS!\n";
 
 					// clear board of that bit
-					tmp = (tmp >> (index + 1)) << (index + 1);
+					tmp = (((tmp >> index) >> 1)) << (index + 1);
 				}
 
 				// can any rook move?
@@ -3958,13 +4176,14 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 							// ensure we follow pin rules
 							bitmoves &= pinnedPieceMoves[index];
 
-							// insert bits-to-moves function here
+							movesToAdd = bitsToMoves(bitmoves, index, BLACK_ROOK);
+							moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 						}
 					}
 					else std::cout << "PROBLEM WITH BLACK ROOKS!\n";
 
 					// clear board of that bit
-					tmp = (tmp >> (index + 1)) << (index + 1);
+					tmp = (((tmp >> index) >> 1)) << (index + 1);
 				}
 
 				// can any queen move?
@@ -3998,13 +4217,14 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 							// ensure we follow pin rules
 							bitmoves &= pinnedPieceMoves[index];
 
-							// insert bits-to-moves function here
+							movesToAdd = bitsToMoves(bitmoves, index, BLACK_QUEEN);
+							moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 						}
 					}
 					else std::cout << "PROBLEM WITH BLACK QUEENS!\n";
 
 					// clear board of that bit
-					tmp = (tmp >> (index + 1)) << (index + 1);
+					tmp = (((tmp >> index) >> 1)) << (index + 1);
 				}
 				break;
 
@@ -4192,7 +4412,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 			}*/
 		}
 
-
+		#else
 		for (Piece* p : piecesOnBoard)
 		{
 			Move* potentialMove;
@@ -4589,6 +4809,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				}
 			}
 		}
+		#endif
 	}
 
 	return (ull) moves.size();
@@ -5887,10 +6108,14 @@ void Game::buildFromFEN(std::string fen)
 		// get coordinates from rank-file notation
 		int x = enPassant[0] - 97; // from file
 		int y = 7 - (enPassant[1] - 49); // from rank
+		// update passant square info
+		enPassantInfo[0] = 8 * (7 - y) + x;
 
 		// note: FEN stores the SQUARE that can be attacked, NOT the PIECE
 		if (turn == "w") y++;
 		else y--;
+		// update passant piece square info
+		enPassantInfo[1] = 8 * (7 - y) + x;
 
 		for (Piece* p : piecesOnBoard)
 		{

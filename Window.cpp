@@ -40,41 +40,13 @@ void Window::init()
         //return -1;
     }
 
-    /*
-
-    // Make pawns
-    for (int i = 0; i < 8; i++) game.makePiece(i, 6, WHITE_PAWN);
-    for (int i = 0; i < 8; i++) game.makePiece(i, 1, BLACK_PAWN);
-    // Make rest of white
-    game.makePiece(0, 7, WHITE_ROOK); // queenside rook
-    game.makePiece(1, 7, WHITE_KNIGHT);
-    game.makePiece(2, 7, WHITE_BISHOP);
-    game.makePiece(3, 7, WHITE_QUEEN);
-    game.makePiece(4, 7, WHITE_KING);
-    game.makePiece(5, 7, WHITE_BISHOP);
-    game.makePiece(6, 7, WHITE_KNIGHT);
-    game.makePiece(7, 7, WHITE_ROOK); // kingside rook
-    // Make rest of black
-    game.makePiece(0, 0, BLACK_ROOK); // queenside rook
-    game.makePiece(1, 0, BLACK_KNIGHT);
-    game.makePiece(2, 0, BLACK_BISHOP);
-    game.makePiece(3, 0, BLACK_QUEEN);
-    game.makePiece(4, 0, BLACK_KING);
-    game.makePiece(5, 0, BLACK_BISHOP);
-    game.makePiece(6, 0, BLACK_KNIGHT);
-    game.makePiece(7, 0, BLACK_ROOK); // kingside rook
-
-    // FEN and position initialization
-    std::string fen = game.getFEN();
-    game.fens.push_back(fen);
-    std::string pos = fen.substr(0, fen.find(" "));
-    if (game.positions.find(pos) == game.positions.end()) game.positions[pos] = 1;
-    else game.positions[pos]++;
-    std::cout << "FEN: " << fen << "\n";*/
-
     // build game state
     std::string startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     game.buildFromFEN(startingFEN);
+
+    // test legal moves
+    //std::vector<Move*> m;
+    //std::cout << game.generateLegalMoves(m);
 
     // Print game to start
     game.printBoard();
@@ -87,10 +59,10 @@ void Window::init()
     p2 = FangEngine(&game);
 
     /* PERFORMANCE TESTING */
-    //for (int depth = 1; depth <= 5; depth++)
-    //{
-    //    std::cout << "Number of possible positions at depth = " << depth << ": " << game.perft(depth) << '\n';
-    //}
+    for (int depth = 1; depth <= 1; depth++)
+    {
+        std::cout << "Number of possible positions at depth = " << depth << ": " << game.perft(depth) << '\n';
+    }
     // Debugging: Check position count
     //for (auto i : game.positions)
     //{

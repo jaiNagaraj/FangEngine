@@ -10,6 +10,8 @@ class Move
 		bool isPromoting;
 		bool isCapture;
 		bool isEP; // en passant capture
+		int oldPassantSquare;
+		int oldPassantPieceSquare;
 		bool isCastle;
 		uint8_t oldCastlingRights;
 		bool lossOfEP;
@@ -25,7 +27,7 @@ class Move
 		int newY;
 
 		Move();
-		Move(Piece* p, Piece* cap, bool isPromo, bool isCap, bool ispassant, bool isCas, uint8_t oldCas,
+		Move(Piece* p, Piece* cap, bool isPromo, bool isCap, bool ispassant, int oldPasSq, int oldPasP, bool isCas, uint8_t oldCas,
 			bool lossPass, Piece* lostPass, uint8_t proPiece, int oldHalves, int oldx, int oldy, int newx, int newy, std::string FEN);
 		~Move();
 		Move* cloneMove();
