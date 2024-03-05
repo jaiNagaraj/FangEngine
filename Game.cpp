@@ -1108,7 +1108,34 @@ void Game::makeMove(Move* move)
 		switch (move->captured->info)
 		{
 			case WHITE_PAWN:
-				// START HERE
+				pieceBoards[WP_INDEX] &= ~(1ULL << newIndex);
+				break;
+			case WHITE_KNIGHT:
+				pieceBoards[WK_INDEX] &= ~(1ULL << newIndex);
+				break;
+			case WHITE_BISHOP:
+				pieceBoards[WB_INDEX] &= ~(1ULL << newIndex);
+				break;
+			case WHITE_ROOK:
+				pieceBoards[WR_INDEX] &= ~(1ULL << newIndex);
+				break;
+			case WHITE_QUEEN:
+				pieceBoards[WQ_INDEX] &= ~(1ULL << newIndex);
+				break;
+			case BLACK_PAWN:
+				pieceBoards[BP_INDEX] &= ~(1ULL << newIndex);
+				break;
+			case BLACK_KNIGHT:
+				pieceBoards[BK_INDEX] &= ~(1ULL << newIndex);
+				break;
+			case BLACK_BISHOP:
+				pieceBoards[BB_INDEX] &= ~(1ULL << newIndex);
+				break;
+			case BLACK_ROOK:
+				pieceBoards[BR_INDEX] &= ~(1ULL << newIndex);
+				break;
+			case BLACK_QUEEN:
+				pieceBoards[BQ_INDEX] &= ~(1ULL << newIndex);
 				break;
 		}
 
@@ -1119,9 +1146,13 @@ void Game::makeMove(Move* move)
 	}
 	
 	// if en passant, update board to reflect this
-	if (move->isEP) board[move->oldY][move->newX] = 0;
-	// update respective bitboard
-	if (move->piece->info & WHITE) pieceBoards[BP_INDEX] &= ~(1ULL << enPassantInfo[1]);
+	if (move->isEP)
+	{
+		board[move->oldY][move->newX] = 0;
+		// update respective bitboard
+		if (move->piece->info & WHITE) pieceBoards[BP_INDEX] &= ~(1ULL << enPassantInfo[1]);
+		else pieceBoards[WP_INDEX] &= ~(1ULL << enPassantInfo[1]);
+	}
 
 	if (move->isCastle)
 	{
@@ -1279,9 +1310,52 @@ void Game::makeMove(Move* move)
 	{
 		case WHITE_PAWN:
 			pieceBoards[WP_INDEX] &= ~(1ULL << oldIndex);
-			pieceBoards[WP_INDEX] &=  (1ULL << newIndex);
+			pieceBoards[WP_INDEX] |= (1ULL << newIndex);
 			break;
-		// START HERE
+		case WHITE_KNIGHT:
+			pieceBoards[WK_INDEX] &= ~(1ULL << oldIndex);
+			pieceBoards[WK_INDEX] |= (1ULL << newIndex);
+			break;
+		case WHITE_BISHOP:
+			pieceBoards[WB_INDEX] &= ~(1ULL << oldIndex);
+			pieceBoards[WB_INDEX] |= (1ULL << newIndex);
+			break;
+		case WHITE_ROOK:
+			pieceBoards[WR_INDEX] &= ~(1ULL << oldIndex);
+			pieceBoards[WR_INDEX] |= (1ULL << newIndex);
+			break;
+		case WHITE_QUEEN:
+			pieceBoards[WQ_INDEX] &= ~(1ULL << oldIndex);
+			pieceBoards[WQ_INDEX] |= (1ULL << newIndex);
+			break;
+		case WHITE_KING:
+			pieceBoards[WK_INDEX] &= ~(1ULL << oldIndex);
+			pieceBoards[WK_INDEX] |= (1ULL << newIndex);
+			break;
+		case BLACK_PAWN:
+			pieceBoards[BP_INDEX] &= ~(1ULL << oldIndex);
+			pieceBoards[BP_INDEX] |= (1ULL << newIndex);
+			break;
+		case BLACK_KNIGHT:
+			pieceBoards[BK_INDEX] &= ~(1ULL << oldIndex);
+			pieceBoards[BK_INDEX] |= (1ULL << newIndex);
+			break;
+		case BLACK_BISHOP:
+			pieceBoards[BB_INDEX] &= ~(1ULL << oldIndex);
+			pieceBoards[BB_INDEX] |= (1ULL << newIndex);
+			break;
+		case BLACK_ROOK:
+			pieceBoards[BR_INDEX] &= ~(1ULL << oldIndex);
+			pieceBoards[BR_INDEX] |= (1ULL << newIndex);
+			break;
+		case BLACK_QUEEN:
+			pieceBoards[BQ_INDEX] &= ~(1ULL << oldIndex);
+			pieceBoards[BQ_INDEX] |= (1ULL << newIndex);
+			break;
+		case BLACK_KING:
+			pieceBoards[BK_INDEX] &= ~(1ULL << oldIndex);
+			pieceBoards[BK_INDEX] |= (1ULL << newIndex);
+			break;
 	}
 
 	// update piece graphic coordinates
