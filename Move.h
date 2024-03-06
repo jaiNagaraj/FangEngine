@@ -31,4 +31,5 @@ class Move
 			bool lossPass, Piece* lostPass, uint8_t proPiece, int oldHalves, int oldx, int oldy, int newx, int newy, std::string FEN);
 		~Move();
 		Move* cloneMove();
+		void printMove();
 };

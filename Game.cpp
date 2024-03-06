@@ -25,7 +25,7 @@ Piece* Game::makePiece(int x, int y, uint8_t info)
 			pieceBoards[WP_INDEX] |= (1ULL << index);
 			break;
 		case WHITE_KNIGHT:
-			pieceBoards[WK_INDEX] |= (1ULL << index);
+			pieceBoards[WN_INDEX] |= (1ULL << index);
 			break;
 		case WHITE_BISHOP:
 			pieceBoards[WB_INDEX] |= (1ULL << index);
@@ -43,7 +43,7 @@ Piece* Game::makePiece(int x, int y, uint8_t info)
 			pieceBoards[BP_INDEX] |= (1ULL << index);
 			break;
 		case BLACK_KNIGHT:
-			pieceBoards[BK_INDEX] |= (1ULL << index);
+			pieceBoards[BN_INDEX] |= (1ULL << index);
 			break;
 		case BLACK_BISHOP:
 			pieceBoards[BB_INDEX] |= (1ULL << index);
@@ -1154,7 +1154,7 @@ void Game::makeMove(Move* move)
 				pieceBoards[WP_INDEX] &= ~(1ULL << newIndex);
 				break;
 			case WHITE_KNIGHT:
-				pieceBoards[WK_INDEX] &= ~(1ULL << newIndex);
+				pieceBoards[WN_INDEX] &= ~(1ULL << newIndex);
 				break;
 			case WHITE_BISHOP:
 				pieceBoards[WB_INDEX] &= ~(1ULL << newIndex);
@@ -1169,7 +1169,7 @@ void Game::makeMove(Move* move)
 				pieceBoards[BP_INDEX] &= ~(1ULL << newIndex);
 				break;
 			case BLACK_KNIGHT:
-				pieceBoards[BK_INDEX] &= ~(1ULL << newIndex);
+				pieceBoards[BN_INDEX] &= ~(1ULL << newIndex);
 				break;
 			case BLACK_BISHOP:
 				pieceBoards[BB_INDEX] &= ~(1ULL << newIndex);
@@ -1359,8 +1359,8 @@ void Game::makeMove(Move* move)
 			pieceBoards[WP_INDEX] |= (1ULL << newIndex);
 			break;
 		case WHITE_KNIGHT:
-			pieceBoards[WK_INDEX] &= ~(1ULL << oldIndex);
-			pieceBoards[WK_INDEX] |= (1ULL << newIndex);
+			pieceBoards[WN_INDEX] &= ~(1ULL << oldIndex);
+			pieceBoards[WN_INDEX] |= (1ULL << newIndex);
 			break;
 		case WHITE_BISHOP:
 			pieceBoards[WB_INDEX] &= ~(1ULL << oldIndex);
@@ -1383,8 +1383,8 @@ void Game::makeMove(Move* move)
 			pieceBoards[BP_INDEX] |= (1ULL << newIndex);
 			break;
 		case BLACK_KNIGHT:
-			pieceBoards[BK_INDEX] &= ~(1ULL << oldIndex);
-			pieceBoards[BK_INDEX] |= (1ULL << newIndex);
+			pieceBoards[BN_INDEX] &= ~(1ULL << oldIndex);
+			pieceBoards[BN_INDEX] |= (1ULL << newIndex);
 			break;
 		case BLACK_BISHOP:
 			pieceBoards[BB_INDEX] &= ~(1ULL << oldIndex);
@@ -1435,7 +1435,7 @@ void Game::unmakeMove(Move* move)
 				if (!(move->isEP)) pieceBoards[WP_INDEX] |= (1ULL << newIndex);
 				break;
 			case WHITE_KNIGHT:
-				pieceBoards[WK_INDEX] |= (1ULL << newIndex);
+				pieceBoards[WN_INDEX] |= (1ULL << newIndex);
 				break;
 			case WHITE_BISHOP:
 				pieceBoards[WB_INDEX] |= (1ULL << newIndex);
@@ -1450,7 +1450,7 @@ void Game::unmakeMove(Move* move)
 				if (!(move->isEP)) pieceBoards[BP_INDEX] |= (1ULL << newIndex);
 				break;
 			case BLACK_KNIGHT:
-				pieceBoards[BK_INDEX] |= (1ULL << newIndex);
+				pieceBoards[BN_INDEX] |= (1ULL << newIndex);
 				break;
 			case BLACK_BISHOP:
 				pieceBoards[BB_INDEX] |= (1ULL << newIndex);
@@ -1579,7 +1579,7 @@ void Game::unmakeMove(Move* move)
 		switch (move->promoPiece)
 		{
 			case WHITE_KNIGHT:
-				pieceBoards[WK_INDEX] &= ~(1ULL << newIndex);
+				pieceBoards[WN_INDEX] &= ~(1ULL << newIndex);
 				break;
 			case WHITE_BISHOP:
 				pieceBoards[WB_INDEX] &= ~(1ULL << newIndex);
@@ -1591,7 +1591,7 @@ void Game::unmakeMove(Move* move)
 				pieceBoards[WQ_INDEX] &= ~(1ULL << newIndex);
 				break;
 			case BLACK_KNIGHT:
-				pieceBoards[BK_INDEX] &= ~(1ULL << newIndex);
+				pieceBoards[BN_INDEX] &= ~(1ULL << newIndex);
 				break;
 			case BLACK_BISHOP:
 				pieceBoards[BB_INDEX] &= ~(1ULL << newIndex);
@@ -1627,8 +1627,8 @@ void Game::unmakeMove(Move* move)
 			pieceBoards[WP_INDEX] &= ~(1ULL << newIndex);
 			break;
 		case WHITE_KNIGHT:
-			pieceBoards[WK_INDEX] |=  (1ULL << oldIndex);
-			pieceBoards[WK_INDEX] &= ~(1ULL << newIndex);
+			pieceBoards[WN_INDEX] |=  (1ULL << oldIndex);
+			pieceBoards[WN_INDEX] &= ~(1ULL << newIndex);
 			break;
 		case WHITE_BISHOP:
 			pieceBoards[WB_INDEX] |=  (1ULL << oldIndex);
@@ -1651,8 +1651,8 @@ void Game::unmakeMove(Move* move)
 			pieceBoards[BP_INDEX] &= ~(1ULL << newIndex);
 			break;
 		case BLACK_KNIGHT:
-			pieceBoards[BK_INDEX] |=  (1ULL << oldIndex);
-			pieceBoards[BK_INDEX] &= ~(1ULL << newIndex);
+			pieceBoards[BN_INDEX] |=  (1ULL << oldIndex);
+			pieceBoards[BN_INDEX] &= ~(1ULL << newIndex);
 			break;
 		case BLACK_BISHOP:
 			pieceBoards[BB_INDEX] |=  (1ULL << oldIndex);
@@ -1691,7 +1691,7 @@ std::vector<Move*> Game::bitsToMoves(uint64_t bitboard, unsigned long startSquar
 	Piece* startPiece = nullptr;
 	// first, search for piece on the origin square
 	int startX = startSquare % 8;
-	int startY = startSquare / 8;
+	int startY = 7 - startSquare / 8;
 	for (Piece* p : piecesOnBoard)
 	{
 		if (p->rect->x / 60 == startX && p->rect->y / 60 == startY) startPiece = p;
@@ -1712,6 +1712,7 @@ std::vector<Move*> Game::bitsToMoves(uint64_t bitboard, unsigned long startSquar
 			move->oldY = startY;
 
 			// miscellaneous
+			move->piece = startPiece;
 			move->oldHalfmoves = halfmoves;
 			move->oldPassantSquare = enPassantInfo[0];
 			move->oldPassantPieceSquare = enPassantInfo[1];
@@ -1764,7 +1765,38 @@ std::vector<Move*> Game::bitsToMoves(uint64_t bitboard, unsigned long startSquar
 			else move->isCastle = false;
 
 			// check for end-rank promotion in white
-			if ((pieceType & WHITE_PAWN) && move->newY == 0 || (pieceType & BLACK_PAWN) && move->newY == 7) move->isPromoting = true;
+			if ((pieceType & WHITE_PAWN) && move->newY == 0)
+			{
+				move->isPromoting = true;
+				// spawn multiple moves for different promotions
+				Move* knightPromo = move->cloneMove();
+				knightPromo->promoPiece = WHITE_KNIGHT;
+				moves.push_back(knightPromo);
+				Move* bishopPromo = move->cloneMove();
+				bishopPromo->promoPiece = WHITE_BISHOP;
+				moves.push_back(bishopPromo);
+				Move* rookPromo = move->cloneMove();
+				rookPromo->promoPiece = WHITE_ROOK;
+				moves.push_back(rookPromo);
+				// leave queen promotion to original
+				move->promoPiece = WHITE_QUEEN;
+			}
+			else if ((pieceType & BLACK_PAWN) && move->newY == 7)
+			{
+				move->isPromoting = true;
+				// spawn multiple moves for different promotions
+				Move* knightPromo = move->cloneMove();
+				knightPromo->promoPiece = BLACK_KNIGHT;
+				moves.push_back(knightPromo);
+				Move* bishopPromo = move->cloneMove();
+				bishopPromo->promoPiece = BLACK_BISHOP;
+				moves.push_back(bishopPromo);
+				Move* rookPromo = move->cloneMove();
+				rookPromo->promoPiece = BLACK_ROOK;
+				moves.push_back(rookPromo);
+				// leave queen promotion to original
+				move->promoPiece = BLACK_QUEEN;
+			}
 			else move->isPromoting = false;
 		}
 		else std::cout << "PROBLEM!!\n";
@@ -1785,8 +1817,8 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 	uint64_t blackPieces = 0;
 	uint64_t whiteNoKing = 0;
 	uint64_t blackNoKing = 0;
-	whitePieces |= pieceBoards[WP_INDEX] | pieceBoards[WK_INDEX] | pieceBoards[WB_INDEX] | pieceBoards[WR_INDEX] | pieceBoards[WQ_INDEX] | pieceBoards[WK_INDEX];
-	blackPieces |= pieceBoards[BP_INDEX] | pieceBoards[BK_INDEX] | pieceBoards[BB_INDEX] | pieceBoards[BR_INDEX] | pieceBoards[BQ_INDEX] | pieceBoards[BK_INDEX];
+	whitePieces |= pieceBoards[WP_INDEX] | pieceBoards[WN_INDEX] | pieceBoards[WB_INDEX] | pieceBoards[WR_INDEX] | pieceBoards[WQ_INDEX] | pieceBoards[WK_INDEX];
+	blackPieces |= pieceBoards[BP_INDEX] | pieceBoards[BN_INDEX] | pieceBoards[BB_INDEX] | pieceBoards[BR_INDEX] | pieceBoards[BQ_INDEX] | pieceBoards[BK_INDEX];
 	whiteNoKing = whitePieces & ~pieceBoards[WK_INDEX];
 	blackNoKing = blackPieces & ~pieceBoards[BK_INDEX];
 	if (turn % 2 == 0) // for white
@@ -1796,7 +1828,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 			// first, look for checks
 			// get the king position
 			unsigned long kingPos;
-			if (!_BitScanForward64(&kingPos, pieceBoards[WK_INDEX])) std::cout << "WHITE KING NOT FOUND!!\n";
+			if (!(_BitScanForward64(&kingPos, pieceBoards[WK_INDEX]))) std::cout << "WHITE KING NOT FOUND!!\n";
 			// then, look for pieces in the king's POV
 			int attackers = 0;
 			// black pawn
@@ -1805,7 +1837,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 
 			// black knight
 			uint64_t blackAttackingKnights= 0;
-			blackAttackingKnights |= knightMoves[kingPos] & pieceBoards[BK_INDEX];
+			blackAttackingKnights |= knightMoves[kingPos] & pieceBoards[BN_INDEX];
 
 			// diagonal rays (black bishop/queen)
 			uint64_t blockers = whiteNoKing | blackPieces;
@@ -2033,7 +2065,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 						uint64_t pawnMoves = (possiblePawnCaptures | whitePawnPushes[index]) & pinRay;
 						pinnedPieceMoves[index] = pawnMoves;
 					}
-					else if ((1ULL << index) & pieceBoards[WK_INDEX])
+					else if ((1ULL << index) & pieceBoards[WN_INDEX])
 					{
 						// it's a knight! ...it can't move
 						pinnedPieceMoves[index] = 0;
@@ -2089,7 +2121,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 
 			// for black knights
 			bitmoves = 0;
-			tmp = pieceBoards[BK_INDEX];
+			tmp = pieceBoards[BN_INDEX];
 			if (!tmp) std::cout << "No black knights detected!\n";
 			// loop over each knight
 			while (tmp)
@@ -2254,7 +2286,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				// double check
 				case 2:
 					// only king moves are allowed; mask them with the danger squares
-					legalKingMoves = kingMoves[kingPos] & ~blackAttack;
+					legalKingMoves = kingMoves[kingPos] & ~blackAttack & ~whitePieces;
 					movesToAdd = bitsToMoves(legalKingMoves, kingPos, WHITE_KING);
 					moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 					break;
@@ -2262,7 +2294,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				// single check
 				case 1:
 					// Step 1: calculate legal king moves
-					legalKingMoves = kingMoves[kingPos] & ~blackAttack;
+					legalKingMoves = kingMoves[kingPos] & ~blackAttack & ~whitePieces;
 					movesToAdd = bitsToMoves(legalKingMoves, kingPos, WHITE_KING);
 					moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 
@@ -2271,7 +2303,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 					checkRay = 0;
 
 					// if checker is a pawn or knight, the check ray should only be the attacker square
-					if (attackBoard & (pieceBoards[BP_INDEX] | pieceBoards[BK_INDEX])) checkRay = attackBoard;
+					if (attackBoard & (pieceBoards[BP_INDEX] | pieceBoards[BN_INDEX])) checkRay = attackBoard;
 					else
 					{
 						// first, figure out the ray along which the king is in check
@@ -2317,7 +2349,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 
 					// can any knight move?
 					bitmoves = 0;
-					tmp = pieceBoards[WK_INDEX];
+					tmp = pieceBoards[WN_INDEX];
 					if (!tmp) std::cout << "No white knights detected!\n";
 					// loop over each knight
 					while (tmp)
@@ -2476,6 +2508,14 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 
 				// no checks
 				case 0:
+					// Debugging info:
+					std::cout << "KING POSITION: " << kingPos << '\n';
+					std::cout << "PAWN BITBOARD: " << pieceBoards[WP_INDEX] << '\n';
+					std::cout << "KNIGHT BITBOARD: " << pieceBoards[WN_INDEX] << '\n';
+					std::cout << "BISHOP BITBOARD: " << pieceBoards[WB_INDEX] << '\n';
+					std::cout << "ROOK BITBOARD: " << pieceBoards[WR_INDEX] << '\n';
+					std::cout << "QUEEN BITBOARD: " << pieceBoards[WQ_INDEX] << '\n';
+					std::cout << "KING BITBOARD: " << pieceBoards[WK_INDEX] << '\n';
 					// Step 1: calculate legal king moves
 					legalKingMoves = 0;
 					// we are now allowed to castle, so check for that
@@ -2485,17 +2525,18 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 						{
 							uint64_t whiteKingsideCastle = ((1ULL << (kingPos + 1)) | (1ULL << (kingPos + 2)));
 							// this ternary ensures that the king isn't moving through pieces or check in the castle
-							legalKingMoves |= (whiteKingsideCastle & ~(whitePieces & blackPieces) & ~blackAttack) == whiteKingsideCastle ? whiteKingsideCastle : 0;
+							legalKingMoves |= (whiteKingsideCastle & ~(whitePieces | blackPieces) & ~blackAttack) == whiteKingsideCastle ? whiteKingsideCastle : 0;
 						}
 						if (whiteQueensideRookCanCastle)
 						{
 							uint64_t whiteQueensideCastle = ((1ULL << (kingPos - 1)) | (1ULL << (kingPos - 2)));
 							// this ternary ensures that the king isn't moving through pieces or check in the castle
-							legalKingMoves |= (whiteQueensideCastle & ~(whitePieces & blackPieces) & ~blackAttack) == whiteQueensideCastle ? whiteQueensideCastle : 0;
+							legalKingMoves |= (whiteQueensideCastle & ~(whitePieces | blackPieces) & ~blackAttack) == whiteQueensideCastle ? whiteQueensideCastle : 0;
 						}
 					}
 					// tack on any other legal king moves
-					legalKingMoves |= kingMoves[kingPos] & ~blackAttack;
+					legalKingMoves |= kingMoves[kingPos] & ~blackAttack & ~whitePieces;
+					std::cout << "King Moves: " << legalKingMoves << '\n';
 					movesToAdd = bitsToMoves(legalKingMoves, kingPos, WHITE_KING);
 					moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 
@@ -2558,6 +2599,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 								(whitePawnAttacks[index] & (blackPieces | passant));
 							// make sure the pawn doesn't disobey a pin
 							bitmoves &= pinnedPieceMoves[index];
+							std::cout << "Pawn Moves: " << bitmoves << '\n';
 
 							movesToAdd = bitsToMoves(bitmoves, index, WHITE_PAWN);
 							moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
@@ -2570,7 +2612,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 
 					// can any knight move?
 					bitmoves = 0;
-					tmp = pieceBoards[WK_INDEX];
+					tmp = pieceBoards[WN_INDEX];
 					if (!tmp) std::cout << "No white knights detected!\n";
 					// loop over each knight
 					while (tmp)
@@ -2581,6 +2623,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 						{
 							// all-in-one check
 							bitmoves = (knightMoves[index] & ~whitePieces & pinnedPieceMoves[index]);
+							std::cout << "Knight Moves: " << bitmoves << '\n';
 							movesToAdd = bitsToMoves(bitmoves, index, WHITE_KNIGHT);
 							moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 						}
@@ -2621,6 +2664,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 
 								// ensure we follow pin rules
 								bitmoves &= pinnedPieceMoves[index];
+								std::cout << "Bishop Moves: " << bitmoves << '\n';
 
 								movesToAdd = bitsToMoves(bitmoves, index, WHITE_BISHOP);
 								moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
@@ -2663,6 +2707,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 
 								// ensure we follow pin rules
 								bitmoves &= pinnedPieceMoves[index];
+								std::cout << "Rook Moves: " << bitmoves << '\n';
 
 								movesToAdd = bitsToMoves(bitmoves, index, WHITE_ROOK);
 								moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
@@ -2704,6 +2749,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 
 								// ensure we follow pin rules
 								bitmoves &= pinnedPieceMoves[index];
+								std::cout << "Queen Moves: " << bitmoves << '\n';
 
 								movesToAdd = bitsToMoves(bitmoves, index, WHITE_QUEEN);
 								moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
@@ -3316,7 +3362,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 
 			// white knight
 			uint64_t whiteAttackingKnights = 0;
-			whiteAttackingKnights |= knightMoves[kingPos] & pieceBoards[WK_INDEX];
+			whiteAttackingKnights |= knightMoves[kingPos] & pieceBoards[WN_INDEX];
 
 			// diagonal rays (white bishop/queen)
 			uint64_t blockers = blackNoKing | whitePieces;
@@ -3541,7 +3587,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 						uint64_t pawnMoves = (possiblePawnCaptures | blackPawnPushes[index]) & pinRay;
 						pinnedPieceMoves[index] = pawnMoves;
 					}
-					else if ((1ULL << index) & pieceBoards[BK_INDEX])
+					else if ((1ULL << index) & pieceBoards[BN_INDEX])
 					{
 						// it's a knight! ...it can't move
 						pinnedPieceMoves[index] = 0;
@@ -3599,7 +3645,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 
 			// for white knights
 			bitmoves = 0;
-			tmp = pieceBoards[WK_INDEX];
+			tmp = pieceBoards[WN_INDEX];
 			if (!tmp) std::cout << "No white knights detected!\n";
 			// loop over each knight
 			while (tmp)
@@ -3763,7 +3809,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				// double check
 			case 2:
 				// only king moves are allowed; mask them with the danger squares
-				legalKingMoves = kingMoves[kingPos] & ~whiteAttack;
+				legalKingMoves = kingMoves[kingPos] & ~whiteAttack & ~blackPieces;
 				movesToAdd = bitsToMoves(legalKingMoves, kingPos, BLACK_KING);
 				moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 				break;
@@ -3771,7 +3817,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				// single check
 			case 1:
 				// Step 1: calculate legal king moves
-				legalKingMoves = kingMoves[kingPos] & ~whiteAttack;
+				legalKingMoves = kingMoves[kingPos] & ~whiteAttack & ~blackPieces;
 				movesToAdd = bitsToMoves(legalKingMoves, kingPos, BLACK_KING);
 				moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 
@@ -3780,7 +3826,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				checkRay = 0;
 
 				// if checker is a pawn or knight, the check ray should only be the attacker square
-				if (attackBoard & (pieceBoards[WP_INDEX] | pieceBoards[WK_INDEX])) checkRay = attackBoard;
+				if (attackBoard & (pieceBoards[WP_INDEX] | pieceBoards[WN_INDEX])) checkRay = attackBoard;
 				else
 				{
 					// first, figure out the ray along which the king is in check
@@ -3827,7 +3873,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 
 				// can any knight move?
 				bitmoves = 0;
-				tmp = pieceBoards[BK_INDEX];
+				tmp = pieceBoards[BN_INDEX];
 				if (!tmp) std::cout << "No black knights detected!\n";
 				// loop over each knight
 				while (tmp)
@@ -3996,17 +4042,17 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 					{
 						uint64_t blackKingsideCastle = ((1ULL << (kingPos + 1)) | (1ULL << (kingPos + 2)));
 						// this ternary ensures that the king isn't moving through pieces or check in the castle
-						legalKingMoves |= (blackKingsideCastle & ~(whitePieces & blackPieces) & ~whiteAttack) == blackKingsideCastle ? blackKingsideCastle : 0;
+						legalKingMoves |= (blackKingsideCastle & ~(whitePieces | blackPieces) & ~whiteAttack) == blackKingsideCastle ? blackKingsideCastle : 0;
 					}
 					if (blackQueensideRookCanCastle)
 					{
 						uint64_t blackQueensideCastle = ((1ULL << (kingPos - 1)) | (1ULL << (kingPos - 2)));
 						// this ternary ensures that the king isn't moving through pieces or check in the castle
-						legalKingMoves |= (blackQueensideCastle & ~(whitePieces & blackPieces) & ~whiteAttack) == blackQueensideCastle ? blackQueensideCastle : 0;
+						legalKingMoves |= (blackQueensideCastle & ~(whitePieces | blackPieces) & ~whiteAttack) == blackQueensideCastle ? blackQueensideCastle : 0;
 					}
 				}
 				// tack on any other legal king moves
-				legalKingMoves |= kingMoves[kingPos] & ~whiteAttack;
+				legalKingMoves |= kingMoves[kingPos] & ~whiteAttack & ~blackPieces;
 				movesToAdd = bitsToMoves(legalKingMoves, kingPos, BLACK_KING);
 				moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 
@@ -6125,6 +6171,11 @@ void Game::buildFromFEN(std::string fen)
 				break;
 			}
 		}
+	}
+	else
+	{
+		enPassantInfo[0] = -1;
+		enPassantInfo[1] = -1;
 	}
 
 	// set halfmoves

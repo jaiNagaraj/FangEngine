@@ -61,7 +61,7 @@ void Window::init()
     /* PERFORMANCE TESTING */
     for (int depth = 1; depth <= 1; depth++)
     {
-        std::cout << "Number of possible positions at depth = " << depth << ": " << game.perft(depth) << '\n';
+        std::cout << "Number of possible positions at depth = " << depth << ": " << perft(depth) << '\n';
     }
     // Debugging: Check position count
     //for (auto i : game.positions)
@@ -513,13 +513,15 @@ ull Window::perft(int depth /* assuming >= 1 */)
     //std::string startingFen = getFEN();
     std::string currFen;
 
+    if (depth == 0)
+    {
+        //for (auto p : move_list) delete p;
+        //return (ull) n_moves;
+        return 1;
+    }
+
     n_moves = game.generateLegalMoves(move_list);
 
-    if (depth == 1)
-    {
-        for (auto p : move_list) delete p;
-        return (ull) n_moves;
-    }
 
     for (i = 0; i < n_moves; i++)
     {
@@ -530,11 +532,15 @@ ull Window::perft(int depth /* assuming >= 1 */)
         //	std::cout << "Good FEN: " << startingFen << '\n';
         //	std::cout << "Bad (current) FEN: " << currFen << '\n';
         //}
-        game.makeMove(move_list[i]);
+        move_list[i]->printMove();
+        //game.makeMove(move_list[i]);
         refresh();
         SDL_UpdateWindowSurface(window);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        //std::this_thread::sleep_until(std::chrono::system_clock::now() + std::chrono::milliseconds(50));
         nodes += perft(depth - 1);
         game.unmakeMove(move_list[i]);
+        //std::cout << "\nhelo\n";
         refresh();
         SDL_UpdateWindowSurface(window);
     }

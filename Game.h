@@ -12,13 +12,13 @@
 #define BKR_CASTLE 0b00000001
 
 #define WP_INDEX 0
-#define WK_INDEX 1
+#define WN_INDEX 1
 #define WB_INDEX 2
 #define WR_INDEX 3
 #define WQ_INDEX 4
 #define WK_INDEX 5
 #define BP_INDEX 6
-#define BK_INDEX 7
+#define BN_INDEX 7
 #define BB_INDEX 8
 #define BR_INDEX 9
 #define BQ_INDEX 10
@@ -38,7 +38,7 @@ class Game
 		/*
 		* Array of piece bitboards. Indices defined by macros above.
 		*/
-		uint64_t pieceBoards[12];
+		uint64_t pieceBoards[12] = { 0 };
 
 		// keep track of EP info. The first element is the square, and the second element is the captured piece square.
 		int enPassantInfo[2];
