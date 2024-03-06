@@ -59,7 +59,7 @@ void Window::init()
     p2 = FangEngine(&game);
 
     /* PERFORMANCE TESTING */
-    for (int depth = 1; depth <= 1; depth++)
+    for (int depth = 1; depth <= 2; depth++)
     {
         std::cout << "Number of possible positions at depth = " << depth << ": " << perft(depth) << '\n';
     }
@@ -533,7 +533,7 @@ ull Window::perft(int depth /* assuming >= 1 */)
         //	std::cout << "Bad (current) FEN: " << currFen << '\n';
         //}
         move_list[i]->printMove();
-        //game.makeMove(move_list[i]);
+        game.makeMove(move_list[i]);
         refresh();
         SDL_UpdateWindowSurface(window);
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
