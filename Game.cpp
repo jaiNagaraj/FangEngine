@@ -665,9 +665,19 @@ bool Game::validCastle(Piece* piece, int initX, int initY, int kingX, int kingY)
 Move* Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool test)
 {
 	int oldXCoord = oldX / 60, oldYCoord = oldY / 60, newXCoord = newX / 60, newYCoord = newY / 60;
-	//std::cout << oldX << " " << oldY << " " << newX << " " << newY << '\n';
-	//std::cout << oldXCoord << " " << oldYCoord << " " << newXCoord << " " << newYCoord << '\n';
-	//std::cout << "TURN: " << (turn % 2 == 0 ? "White" : "Black") << '\n';
+	
+	#ifdef USING_BITS
+	
+	int oldIndex = 8 * (7 - oldYCoord) + oldXCoord;
+	int newIndex = 8 * (7 - newYCoord) + newXCoord;
+	generateLegalMoves(legalMoveList);
+	for (Move* m : legalMoveList)
+	{
+		if (m->oldX == oldXCoord && m->oldY == oldYCoord && m->newX == newXCoord && m->newY == newYCoord) return m;
+	}
+	return nullptr;
+
+	#else
 
 	bool isCapturing = false;
 	bool isEP = false;
@@ -1134,6 +1144,8 @@ Move* Game::validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool
 
 	// passed the gauntlet!
 	return move;
+
+	#endif
 }
 
 /*
@@ -1465,9 +1477,12 @@ void Game::unmakeMove(Move* move)
 	}
 
 	// if en passant, put passanted pawn back on board
-	if (move->isEP) board[move->oldY][move->newX] = move->captured->info;
-	if (move->piece->info & WHITE) pieceBoards[BP_INDEX] |= 8 * (7 - move->oldY) + move->newX;
-	else pieceBoards[WP_INDEX] |= 8 * (7 - move->oldY) + move->newX;
+	if (move->isEP)
+	{
+		board[move->oldY][move->newX] = move->captured->info;
+		if (move->piece->info & WHITE) pieceBoards[BP_INDEX] |= 8 * (7 - move->oldY) + move->newX;
+		else pieceBoards[WP_INDEX] |= 8 * (7 - move->oldY) + move->newX;
+	}
 
 	if (move->isCastle)
 	{
@@ -1696,6 +1711,7 @@ std::vector<Move*> Game::bitsToMoves(uint64_t bitboard, unsigned long startSquar
 	{
 		if (p->rect->x / 60 == startX && p->rect->y / 60 == startY) startPiece = p;
 	}
+	//if (!startPiece) std::cout << "uh oh, couldn't find piece\n";
 	// loop through moves in bitboard
 	while (bitboard)
 	{
@@ -1725,13 +1741,18 @@ std::vector<Move*> Game::bitsToMoves(uint64_t bitboard, unsigned long startSquar
 			if (blackQueensideRookCanCastle) castlingRights |= BQR_CASTLE;
 			if (blackKingsideRookCanCastle) castlingRights |= BKR_CASTLE;
 			move->oldCastlingRights = castlingRights;
+			
+			// check for en passant
+			move->isEP = false;
+			if ((pieceType & PAWN) && index == enPassantInfo[0]) move->isEP = true;
 
 			// check for capture
 			move->captured = nullptr;
 			move->isCapture = false;
 			for (Piece* p : piecesOnBoard)
 			{
-				if (p->rect->x == move->newX * 60 && p->rect->y == move->newY * 60)
+				if ((p->rect->x == move->newX * 60 && p->rect->y == move->newY * 60) || 
+					move->isEP && (8 * (7 - p->rect->y / 60) + p->rect->x / 60) == enPassantInfo[1])
 				{
 					move->captured = p;
 					move->isCapture = true;
@@ -1739,9 +1760,6 @@ std::vector<Move*> Game::bitsToMoves(uint64_t bitboard, unsigned long startSquar
 				}
 			}
 
-			// check for en passant
-			move->isEP = false;
-			if ((pieceType & PAWN) && index == enPassantInfo[0]) move->isEP = true;
 
 			// check for loss of en passant
 			move->lossOfEP = false;
@@ -2110,7 +2128,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				unsigned char code = _BitScanForward64(&index, tmp);
 				if (code)
 				{
-					bitmoves = (blackPawnPushes[index] | blackPawnAttacks[index]) & whiteNoKing;
+					bitmoves = (blackPawnAttacks[index]) & whiteNoKing;
 					blackAttack |= bitmoves;
 				}
 				else std::cout << "PROBLEM WITH BLACK PAWNS!\n";
@@ -2130,7 +2148,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				unsigned char code = _BitScanForward64(&index, tmp);
 				if (code)
 				{
-					bitmoves = knightMoves[index] & whiteNoKing;
+					bitmoves = knightMoves[index];
 					blackAttack |= bitmoves;
 				}
 				else std::cout << "PROBLEM WITH BLACK KNIGHTS!\n";
@@ -2272,7 +2290,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 			}
 
 			// count number of attackers
-			uint64_t attackBoard = blackAttackingKnights & blackAttackingPawns & diagonalAttacks & adjAttacks;
+			uint64_t attackBoard = blackAttackingKnights | blackAttackingPawns | diagonalAttacks | adjAttacks;
 			attackers += std::bitset<64>(attackBoard).count();
 
 
@@ -2285,6 +2303,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 			{
 				// double check
 				case 2:
+					std::cout << "Double check!\n";
 					// only king moves are allowed; mask them with the danger squares
 					legalKingMoves = kingMoves[kingPos] & ~blackAttack & ~whitePieces;
 					movesToAdd = bitsToMoves(legalKingMoves, kingPos, WHITE_KING);
@@ -2293,6 +2312,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 
 				// single check
 				case 1:
+					std::cout << "Single check!\n";
 					// Step 1: calculate legal king moves
 					legalKingMoves = kingMoves[kingPos] & ~blackAttack & ~whitePieces;
 					movesToAdd = bitsToMoves(legalKingMoves, kingPos, WHITE_KING);
@@ -2508,14 +2528,15 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 
 				// no checks
 				case 0:
+					std::cout << "No check!\n";
 					// Debugging info:
-					std::cout << "KING POSITION: " << kingPos << '\n';
-					std::cout << "PAWN BITBOARD: " << pieceBoards[WP_INDEX] << '\n';
-					std::cout << "KNIGHT BITBOARD: " << pieceBoards[WN_INDEX] << '\n';
-					std::cout << "BISHOP BITBOARD: " << pieceBoards[WB_INDEX] << '\n';
-					std::cout << "ROOK BITBOARD: " << pieceBoards[WR_INDEX] << '\n';
-					std::cout << "QUEEN BITBOARD: " << pieceBoards[WQ_INDEX] << '\n';
-					std::cout << "KING BITBOARD: " << pieceBoards[WK_INDEX] << '\n';
+					//std::cout << "KING POSITION: " << kingPos << '\n';
+					//std::cout << "PAWN BITBOARD: " << pieceBoards[WP_INDEX] << '\n';
+					//std::cout << "KNIGHT BITBOARD: " << pieceBoards[WN_INDEX] << '\n';
+					//std::cout << "BISHOP BITBOARD: " << pieceBoards[WB_INDEX] << '\n';
+					//std::cout << "ROOK BITBOARD: " << pieceBoards[WR_INDEX] << '\n';
+					//std::cout << "QUEEN BITBOARD: " << pieceBoards[WQ_INDEX] << '\n';
+					//std::cout << "KING BITBOARD: " << pieceBoards[WK_INDEX] << '\n';
 					// Step 1: calculate legal king moves
 					legalKingMoves = 0;
 					// we are now allowed to castle, so check for that
@@ -2535,8 +2556,8 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 						}
 					}
 					// tack on any other legal king moves
-					legalKingMoves |= kingMoves[kingPos] & ~blackAttack & ~whitePieces;
-					std::cout << "King Moves: " << legalKingMoves << '\n';
+					legalKingMoves |= (kingMoves[kingPos] & ~blackAttack) & ~whitePieces;
+					//std::cout << "King Moves: " << legalKingMoves << '\n';
 					movesToAdd = bitsToMoves(legalKingMoves, kingPos, WHITE_KING);
 					moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 
@@ -2599,7 +2620,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 								(whitePawnAttacks[index] & (blackPieces | passant));
 							// make sure the pawn doesn't disobey a pin
 							bitmoves &= pinnedPieceMoves[index];
-							std::cout << "Pawn Moves: " << bitmoves << '\n';
+							//std::cout << "Pawn Moves: " << bitmoves << '\n';
 
 							movesToAdd = bitsToMoves(bitmoves, index, WHITE_PAWN);
 							moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
@@ -2623,7 +2644,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 						{
 							// all-in-one check
 							bitmoves = (knightMoves[index] & ~whitePieces & pinnedPieceMoves[index]);
-							std::cout << "Knight Moves: " << bitmoves << '\n';
+							//std::cout << "Knight Moves: " << bitmoves << '\n';
 							movesToAdd = bitsToMoves(bitmoves, index, WHITE_KNIGHT);
 							moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
 						}
@@ -2664,7 +2685,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 
 								// ensure we follow pin rules
 								bitmoves &= pinnedPieceMoves[index];
-								std::cout << "Bishop Moves: " << bitmoves << '\n';
+								//std::cout << "Bishop Moves: " << bitmoves << '\n';
 
 								movesToAdd = bitsToMoves(bitmoves, index, WHITE_BISHOP);
 								moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
@@ -2707,7 +2728,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 
 								// ensure we follow pin rules
 								bitmoves &= pinnedPieceMoves[index];
-								std::cout << "Rook Moves: " << bitmoves << '\n';
+								//std::cout << "Rook Moves: " << bitmoves << '\n';
 
 								movesToAdd = bitsToMoves(bitmoves, index, WHITE_ROOK);
 								moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
@@ -2749,7 +2770,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 
 								// ensure we follow pin rules
 								bitmoves &= pinnedPieceMoves[index];
-								std::cout << "Queen Moves: " << bitmoves << '\n';
+								//std::cout << "Queen Moves: " << bitmoves << '\n';
 
 								movesToAdd = bitsToMoves(bitmoves, index, WHITE_QUEEN);
 								moves.insert(std::end(moves), std::begin(movesToAdd), std::end(movesToAdd));
@@ -3634,7 +3655,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				unsigned char code = _BitScanForward64(&index, tmp);
 				if (code)
 				{
-					bitmoves = (whitePawnPushes[index] | whitePawnAttacks[index]) & blackNoKing;
+					bitmoves = (whitePawnAttacks[index]) & blackNoKing;
 					whiteAttack |= bitmoves;
 				}
 				else std::cout << "PROBLEM WITH WHITE PAWNS!\n";
@@ -3654,7 +3675,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				unsigned char code = _BitScanForward64(&index, tmp);
 				if (code)
 				{
-					bitmoves = knightMoves[index] & blackNoKing;
+					bitmoves = knightMoves[index];
 					whiteAttack |= bitmoves;
 				}
 				else std::cout << "PROBLEM WITH WHITE KNIGHTS!\n";
@@ -3796,7 +3817,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 			}
 
 			// count number of attackers
-			uint64_t attackBoard = whiteAttackingKnights & whiteAttackingPawns & diagonalAttacks & adjAttacks;
+			uint64_t attackBoard = whiteAttackingKnights | whiteAttackingPawns | diagonalAttacks | adjAttacks;
 			attackers += std::bitset<64>(attackBoard).count();
 
 			// Next, check for number of attackers (0, 1, 2)
@@ -3808,6 +3829,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 			{
 				// double check
 			case 2:
+				std::cout << "Double check!\n";
 				// only king moves are allowed; mask them with the danger squares
 				legalKingMoves = kingMoves[kingPos] & ~whiteAttack & ~blackPieces;
 				movesToAdd = bitsToMoves(legalKingMoves, kingPos, BLACK_KING);
@@ -3816,6 +3838,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 
 				// single check
 			case 1:
+				std::cout << "Single check!\n";
 				// Step 1: calculate legal king moves
 				legalKingMoves = kingMoves[kingPos] & ~whiteAttack & ~blackPieces;
 				movesToAdd = bitsToMoves(legalKingMoves, kingPos, BLACK_KING);
@@ -4033,14 +4056,15 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 
 				// no checks
 			case 0:
+				std::cout << "No check!\n";
 				// Debugging info:
-				std::cout << "KING POSITION: " << kingPos << '\n';
-				std::cout << "PAWN BITBOARD: " << pieceBoards[BP_INDEX] << '\n';
-				std::cout << "KNIGHT BITBOARD: " << pieceBoards[BN_INDEX] << '\n';
-				std::cout << "BISHOP BITBOARD: " << pieceBoards[BB_INDEX] << '\n';
-				std::cout << "ROOK BITBOARD: " << pieceBoards[BR_INDEX] << '\n';
-				std::cout << "QUEEN BITBOARD: " << pieceBoards[BQ_INDEX] << '\n';
-				std::cout << "KING BITBOARD: " << pieceBoards[BK_INDEX] << '\n';
+				//std::cout << "KING POSITION: " << kingPos << '\n';
+				//std::cout << "PAWN BITBOARD: " << pieceBoards[BP_INDEX] << '\n';
+				//std::cout << "KNIGHT BITBOARD: " << pieceBoards[BN_INDEX] << '\n';
+				//std::cout << "BISHOP BITBOARD: " << pieceBoards[BB_INDEX] << '\n';
+				//std::cout << "ROOK BITBOARD: " << pieceBoards[BR_INDEX] << '\n';
+				//std::cout << "QUEEN BITBOARD: " << pieceBoards[BQ_INDEX] << '\n';
+				//std::cout << "KING BITBOARD: " << pieceBoards[BK_INDEX] << '\n';
 				// Step 1: calculate legal king moves
 				legalKingMoves = 0;
 				// we are now allowed to castle, so check for that

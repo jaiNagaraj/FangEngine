@@ -43,6 +43,9 @@ class Game
 		// keep track of EP info. The first element is the square, and the second element is the captured piece square.
 		int enPassantInfo[2];
 
+		// List of current legal moves. Useful for debugging.
+		std::vector<Move*> legalMoveList;
+
 		std::unordered_map<std::string,int> positions;
 		std::vector<std::string> fens;
 		int turn = 0;

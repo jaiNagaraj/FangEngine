@@ -61,7 +61,7 @@ void Window::init()
     /* PERFORMANCE TESTING */
     for (int depth = 1; depth <= 2; depth++)
     {
-        std::cout << "Number of possible positions at depth = " << depth << ": " << perft(depth) << '\n';
+        std::cout << "Number of possible positions at depth = " << depth << ": " << game.perft(depth) << '\n';
     }
     // Debugging: Check position count
     //for (auto i : game.positions)
@@ -139,19 +139,19 @@ void Window::init()
             //        SDL_UpdateWindowSurface(window);
             //    }
             //}
-            if (game.turn % 2 == 1)
-            {
-                Move* m = p2.search(3);
-                if (m && m->piece)
-                {
-                    game.makeMove(m);
-                    std::cout << "FEN: " << m->fen << "\n";
-                    endCode = game.isCheckmate(game.turn);
-                    endCodeCheck();
-                    SDL_UpdateWindowSurface(window);
-                }
-                if (m) delete m;
-            }
+            //if (game.turn % 2 == 1)
+            //{
+            //    Move* m = p2.search(3);
+            //    if (m && m->piece)
+            //    {
+            //        game.makeMove(m);
+            //        std::cout << "FEN: " << m->fen << "\n";
+            //        endCode = game.isCheckmate(game.turn);
+            //        endCodeCheck();
+            //        SDL_UpdateWindowSurface(window);
+            //    }
+            //    if (m) delete m;
+            //}
         }
     }
 }
@@ -285,6 +285,8 @@ int Window::dropPiece()
         // set the x and y coordinates to be multiples of 60 (this makes the piece snap to the grid)
         draggedPiece->rect->x = newX;
         draggedPiece->rect->y = newY;
+
+        if (!(moveToMake->piece)) moveToMake->piece = draggedPiece;
          
 
         // check for pawn promotion
@@ -390,6 +392,10 @@ int Window::dropPiece()
         game.printBoard();
 
         draggedPiece = nullptr; // drop the bass- i mean piece
+
+        // print list of legal moves
+        //game.generateLegalMoves(game.legalMoveList);
+        //for (Move* move : game.legalMoveList) move->printMove();
         return game.isCheckmate(game.turn); // check for checkmate!
     }
     else
