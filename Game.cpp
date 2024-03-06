@@ -1327,8 +1327,8 @@ void Game::makeMove(Move* move)
 	{
 		move->piece->enPassantable = true;
 		enPassantInfo[1] = newIndex;
-		if (move->piece->info & WHITE) enPassantInfo[0] = 8 * (7 - (move->newY - 1)) + move->newX;
-		else enPassantInfo[0] = 8 * (7 - (move->newY + 1)) + move->newX;
+		if (move->piece->info & WHITE) enPassantInfo[0] = 8 * (7 - (move->newY + 1)) + move->newX;
+		else enPassantInfo[0] = 8 * (7 - (move->newY - 1)) + move->newX;
 	}
 
 	// if pawn move or capture, reset halfmove counter
@@ -1741,7 +1741,7 @@ std::vector<Move*> Game::bitsToMoves(uint64_t bitboard, unsigned long startSquar
 
 			// check for en passant
 			move->isEP = false;
-			if (index == enPassantInfo[0]) move->isEP = true;
+			if ((pieceType & PAWN) && index == enPassantInfo[0]) move->isEP = true;
 
 			// check for loss of en passant
 			move->lossOfEP = false;
@@ -3450,7 +3450,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 					{
 						uint64_t blockers = whitePieces | blackPieces;
 						int oppIndex = (i + 4) % 8;
-						if (oppIndex % 2 == 0) continue; // only diagonal rays allowed
+						if (oppIndex % 2 == 0) break; // only diagonal rays allowed
 						uint64_t maskedBlockers = rays[oppIndex][index] & blockers;
 						unsigned long i2;
 						unsigned char c;
@@ -3484,7 +3484,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 					{
 						uint64_t blockers = whitePieces | blackPieces;
 						int oppIndex = (i + 4) % 8;
-						if (oppIndex % 2 == 1) continue; // only adjacent rays allowed
+						if (oppIndex % 2 == 1) break; // only adjacent rays allowed
 						uint64_t maskedBlockers = rays[oppIndex][index] & blockers;
 						unsigned long i2;
 						unsigned char c;
@@ -4033,6 +4033,14 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 
 				// no checks
 			case 0:
+				// Debugging info:
+				std::cout << "KING POSITION: " << kingPos << '\n';
+				std::cout << "PAWN BITBOARD: " << pieceBoards[BP_INDEX] << '\n';
+				std::cout << "KNIGHT BITBOARD: " << pieceBoards[BN_INDEX] << '\n';
+				std::cout << "BISHOP BITBOARD: " << pieceBoards[BB_INDEX] << '\n';
+				std::cout << "ROOK BITBOARD: " << pieceBoards[BR_INDEX] << '\n';
+				std::cout << "QUEEN BITBOARD: " << pieceBoards[BQ_INDEX] << '\n';
+				std::cout << "KING BITBOARD: " << pieceBoards[BK_INDEX] << '\n';
 				// Step 1: calculate legal king moves
 				legalKingMoves = 0;
 				// we are now allowed to castle, so check for that
@@ -4127,7 +4135,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 
 				// can any knight move?
 				bitmoves = 0;
-				tmp = pieceBoards[BK_INDEX];
+				tmp = pieceBoards[BN_INDEX];
 				if (!tmp) std::cout << "No black knights detected!\n";
 				// loop over each knight
 				while (tmp)
