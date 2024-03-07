@@ -2,7 +2,8 @@
 #include <vector>
 #include <unordered_map>
 #include "Move.h"
-//#include "Tables.h"
+
+#define USING_BITS true
 
 #define WK_CASTLE 0b10000000
 #define WQR_CASTLE 0b01000000
@@ -23,6 +24,10 @@
 #define BR_INDEX 9
 #define BQ_INDEX 10
 #define BK_INDEX 11
+
+#define DRAW_BY_REPETITION 3
+#define DRAW_BY_MATERIAL 2
+#define DRAW_BY_FIFTY 50
 
 typedef unsigned long long ull;
 

@@ -59,10 +59,10 @@ void Window::init()
     p2 = FangEngine(&game);
 
     /* PERFORMANCE TESTING */
-    for (int depth = 1; depth <= 2; depth++)
-    {
-        std::cout << "Number of possible positions at depth = " << depth << ": " << game.perft(depth) << '\n';
-    }
+    //for (int depth = 1; depth <= 5; depth++)
+    //{
+    //    std::cout << "Number of possible positions at depth = " << depth << ": " << game.perft(depth) << '\n';
+    //}
     // Debugging: Check position count
     //for (auto i : game.positions)
     //{
@@ -75,6 +75,10 @@ void Window::init()
     //{
     //    std::cout << "Number of possible captures at depth = " << depth << ": " << game.perftCaps(depth, false) << '\n';
     //}
+
+    // print out starting moves
+    game.generateLegalMoves(game.legalMoveList);
+    //for (auto m : game.legalMoveList) m->printMove();
 
     bool keep_window_open = true;
     endLock = false;
@@ -282,6 +286,7 @@ int Window::dropPiece()
     Move* moveToMake = game.validMove(draggedPiece, initX, initY, newX, newY);
     if (moveToMake)
     {
+        std::cout << "VALID MOVE!!!\n";
         // set the x and y coordinates to be multiples of 60 (this makes the piece snap to the grid)
         draggedPiece->rect->x = newX;
         draggedPiece->rect->y = newY;
@@ -393,13 +398,16 @@ int Window::dropPiece()
 
         draggedPiece = nullptr; // drop the bass- i mean piece
 
-        // print list of legal moves
-        //game.generateLegalMoves(game.legalMoveList);
-        //for (Move* move : game.legalMoveList) move->printMove();
+        // print out next person's moves
+        for (auto m : game.legalMoveList) delete m;
+        game.legalMoveList.clear();
+        game.generateLegalMoves(game.legalMoveList);
+        //for (auto m : game.legalMoveList) m->printMove();
         return game.isCheckmate(game.turn); // check for checkmate!
     }
     else
     {
+        std::cout << "INVALID MOVE!!!\n";
         draggedPiece->rect->x = initX;
         draggedPiece->rect->y = initY;
         draggedPiece = nullptr; // drop the bass- i mean piece
@@ -443,71 +451,51 @@ void Window::endCodeCheck()
         refresh();
         SDL_BlitSurface(textSurface, NULL, window_surface, textRect);
     }
-    else // check for other types for draws
+    else if (endCode == DRAW_BY_REPETITION)
     {
-        // check repetition
-        bool rep = false;
-        bool fifty = false;
-        for (auto str : game.positions)
-        {
-            if (str.second == 3)
-            {
-                rep = true;
-                endLock = true;
-                std::string text = "Draw by repetition!";
-                SDL_Color color = { 255, 0, 0, 255 };
-                SDL_Surface* textSurface = TTF_RenderText_Solid(font, text.c_str(), color);
-                SDL_Rect* textRect = new SDL_Rect;
-                textRect->x = 60;
-                textRect->y = 60;
-                textRect->w = 60;
-                textRect->h = 60;
-                refresh();
-                SDL_BlitSurface(textSurface, NULL, window_surface, textRect);
-                break;
-            }
-        }
-        if (!rep)
-        {
-            // check for 50 move rule
-            if (game.halfmoves == 100)
-            {
-                fifty = true;
-                endLock = true;
-                std::string text = "Draw by 50 move rule!";
-                SDL_Color color = { 255, 0, 0, 255 };
-                SDL_Surface* textSurface = TTF_RenderText_Solid(font, text.c_str(), color);
-                SDL_Rect* textRect = new SDL_Rect;
-                textRect->x = 60;
-                textRect->y = 60;
-                textRect->w = 60;
-                textRect->h = 60;
-                refresh();
-                SDL_BlitSurface(textSurface, NULL, window_surface, textRect);
-            }
-        }
-        if (!(rep || fifty))
-        {
-            // check for insufficient material
-            if (game.insufficientMaterial())
-            {
-                endLock = true;
-                std::string text = "Draw by insufficient material!";
-                SDL_Color color = { 255, 0, 0, 255 };
-                SDL_Surface* textSurface = TTF_RenderText_Solid(font, text.c_str(), color);
-                SDL_Rect* textRect = new SDL_Rect;
-                textRect->x = 60;
-                textRect->y = 60;
-                textRect->w = 60;
-                textRect->h = 60;
-                refresh();
-                SDL_BlitSurface(textSurface, NULL, window_surface, textRect);
-            }
-            else // nothing found, make computer move
-            {
-                refresh(); // nothing found
-            }
-        }
+        endLock = true;
+        std::string text = "Draw by repetition!";
+        SDL_Color color = { 255, 0, 0, 255 };
+        SDL_Surface* textSurface = TTF_RenderText_Solid(font, text.c_str(), color);
+        SDL_Rect* textRect = new SDL_Rect;
+        textRect->x = 60;
+        textRect->y = 60;
+        textRect->w = 60;
+        textRect->h = 60;
+        refresh();
+        SDL_BlitSurface(textSurface, NULL, window_surface, textRect);
+    }
+    else if (endCode == DRAW_BY_FIFTY)
+    {
+        endLock = true;
+        std::string text = "Draw by 50 move rule!";
+        SDL_Color color = { 255, 0, 0, 255 };
+        SDL_Surface* textSurface = TTF_RenderText_Solid(font, text.c_str(), color);
+        SDL_Rect* textRect = new SDL_Rect;
+        textRect->x = 60;
+        textRect->y = 60;
+        textRect->w = 60;
+        textRect->h = 60;
+        refresh();
+        SDL_BlitSurface(textSurface, NULL, window_surface, textRect);
+    }
+    else if (endCode == DRAW_BY_MATERIAL)
+    {
+        endLock = true;
+        std::string text = "Draw by insufficient material!";
+        SDL_Color color = { 255, 0, 0, 255 };
+        SDL_Surface* textSurface = TTF_RenderText_Solid(font, text.c_str(), color);
+        SDL_Rect* textRect = new SDL_Rect;
+        textRect->x = 60;
+        textRect->y = 60;
+        textRect->w = 60;
+        textRect->h = 60;
+        refresh();
+        SDL_BlitSurface(textSurface, NULL, window_surface, textRect);
+    }
+    else // nothing found, make computer move
+    {
+        refresh(); // nothing found
     }
 }
 
