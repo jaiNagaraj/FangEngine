@@ -143,19 +143,19 @@ void Window::init()
             //        SDL_UpdateWindowSurface(window);
             //    }
             //}
-            //if (game.turn % 2 == 1)
-            //{
-            //    Move* m = p2.search(3);
-            //    if (m && m->piece)
-            //    {
-            //        game.makeMove(m);
-            //        std::cout << "FEN: " << m->fen << "\n";
-            //        endCode = game.isCheckmate(game.turn);
-            //        endCodeCheck();
-            //        SDL_UpdateWindowSurface(window);
-            //    }
-            //    if (m) delete m;
-            //}
+            if (game.turn % 2 == 1)
+            {
+                Move* m = p2.search(3);
+                if (m && m->piece)
+                {
+                    game.makeMove(m);
+                    std::cout << "FEN: " << m->fen << "\n";
+                    endCode = game.isCheckmate(game.turn);
+                    endCodeCheck();
+                    SDL_UpdateWindowSurface(window);
+                }
+                if (m) delete m;
+            }
         }
     }
 }

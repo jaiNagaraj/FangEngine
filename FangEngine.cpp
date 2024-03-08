@@ -39,7 +39,7 @@ double FangEngine::minimax(int depth, bool trueDepth, bool maxer, double alpha, 
 		}
 		int end = game->isCheckmate(game->turn);
 		if (end == -1) return eval();
-		else if (end == 0) return 0;
+		else if (end == 0 || end == DRAW_BY_FIFTY || end == DRAW_BY_MATERIAL || end == DRAW_BY_REPETITION) return 0;
 		else
 		{
 			if (maxer) return -10000; // white is checkmated
