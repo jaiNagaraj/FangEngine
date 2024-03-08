@@ -3,7 +3,7 @@
 #include <unordered_map>
 #include "Move.h"
 
-//#define USING_BITS true
+#define USING_BITS true
 
 #define WK_CASTLE 0b10000000
 #define WQR_CASTLE 0b01000000

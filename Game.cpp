@@ -1286,8 +1286,8 @@ void Game::makeMove(Move* move)
 						board[0][7] = 0;
 						blackKingsideRookCanCastle = false; // revoke kingside castling
 						// update bitboards
-						pieceBoards[WR_INDEX] &= ~(1ULL << 63); // remove right rook from h8
-						pieceBoards[WR_INDEX] |= (1ULL << 61); // add right rook to f8
+						pieceBoards[BR_INDEX] &= ~(1ULL << 63); // remove right rook from h8
+						pieceBoards[BR_INDEX] |= (1ULL << 61); // add right rook to f8
 						break;
 					}
 				}
@@ -1784,7 +1784,7 @@ std::vector<Move*> Game::bitsToMoves(uint64_t bitboard, unsigned long startSquar
 			else move->isCastle = false;
 
 			// check for end-rank promotion in white
-			if ((pieceType & WHITE_PAWN) && move->newY == 0)
+			if ((pieceType == WHITE_PAWN) && move->newY == 0)
 			{
 				move->isPromoting = true;
 				// spawn multiple moves for different promotions
@@ -1800,7 +1800,7 @@ std::vector<Move*> Game::bitsToMoves(uint64_t bitboard, unsigned long startSquar
 				// leave queen promotion to original
 				move->promoPiece = WHITE_QUEEN;
 			}
-			else if ((pieceType & BLACK_PAWN) && move->newY == 7)
+			else if ((pieceType == BLACK_PAWN) && move->newY == 7)
 			{
 				move->isPromoting = true;
 				// spawn multiple moves for different promotions
@@ -2129,7 +2129,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				unsigned char code = _BitScanForward64(&index, tmp);
 				if (code)
 				{
-					bitmoves = (blackPawnAttacks[index]) & whiteNoKing;
+					bitmoves = (blackPawnAttacks[index]);
 					blackAttack |= bitmoves;
 				}
 				else std::cout << "PROBLEM WITH BLACK PAWNS!\n";
@@ -2183,7 +2183,6 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 						if (c)
 						{
 							bitmoves = rays[i][index] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
-							bitmoves &= ~blackPieces; // ensure that we aren't capturing a black blocker
 						}
 						else bitmoves = rays[i][index]; // no blockers
 
@@ -2221,7 +2220,6 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 						if (c)
 						{
 							bitmoves = rays[i][index] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
-							bitmoves &= ~blackPieces; // ensure that we aren't capturing a black blocker
 						}
 						else bitmoves = rays[i][index]; // no blockers
 
@@ -2258,7 +2256,6 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 						if (c)
 						{
 							bitmoves = rays[i][index] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
-							bitmoves &= ~blackPieces; // ensure that we aren't capturing a black blocker
 						}
 						else bitmoves = rays[i][index]; // no blockers
 
@@ -2363,8 +2360,8 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 								{
 									// check if the left or right ray is in line with the pawn
 									int rayIndex;
-									if (rays[kingPos][2] & (1ULL << index)) rayIndex = 2;
-									else if (rays[kingPos][6] & (1ULL << index)) rayIndex = 6;
+									if (rays[2][kingPos] & (1ULL << index)) rayIndex = 2;
+									else if (rays[6][kingPos] & (1ULL << index)) rayIndex = 6;
 									else rayIndex = -1;
 									if (rayIndex != -1)
 									{
@@ -2629,8 +2626,8 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 								{
 									// check if the left or right ray is in line with the pawn
 									int rayIndex;
-									if (rays[kingPos][2] & (1ULL << index)) rayIndex = 2;
-									else if (rays[kingPos][6] & (1ULL << index)) rayIndex = 6;
+									if (rays[2][kingPos] & (1ULL << index)) rayIndex = 2;
+									else if (rays[6][kingPos] & (1ULL << index)) rayIndex = 6;
 									else rayIndex = -1;
 									if (rayIndex != -1)
 									{
@@ -3700,7 +3697,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				unsigned char code = _BitScanForward64(&index, tmp);
 				if (code)
 				{
-					bitmoves = (whitePawnAttacks[index]) & blackNoKing;
+					bitmoves = (whitePawnAttacks[index]);
 					whiteAttack |= bitmoves;
 				}
 				else std::cout << "PROBLEM WITH WHITE PAWNS!\n";
@@ -3754,7 +3751,6 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 						if (c)
 						{
 							bitmoves = rays[i][index] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
-							bitmoves &= ~whitePieces; // ensure that we aren't capturing a white blocker
 						}
 						else bitmoves = rays[i][index]; // no blockers
 
@@ -3792,7 +3788,6 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 						if (c)
 						{
 							bitmoves = rays[i][index] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
-							bitmoves &= ~whitePieces; // ensure that we aren't capturing a white blocker
 						}
 						else bitmoves = rays[i][index]; // no blockers
 
@@ -3829,7 +3824,6 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 						if (c)
 						{
 							bitmoves = rays[i][index] & ~rays[i][i2]; // mask our regular ray with our blocker's ray
-							bitmoves &= ~whitePieces; // ensure that we aren't capturing a white blocker
 						}
 						else bitmoves = rays[i][index]; // no blockers
 
@@ -3852,7 +3846,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				unsigned char code = _BitScanForward64(&index, tmp);
 				if (code)
 				{
-					bitmoves = kingMoves[index] & blackNoKing;
+					bitmoves = kingMoves[index];
 					whiteAttack |= bitmoves;
 				}
 				else std::cout << "PROBLEM WITH WHITE KING!\n";
@@ -3932,8 +3926,8 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 							{
 								// check if the left or right ray is in line with the pawn
 								int rayIndex;
-								if (rays[kingPos][2] & (1ULL << index)) rayIndex = 2;
-								else if (rays[kingPos][6] & (1ULL << index)) rayIndex = 6;
+								if (rays[2][kingPos] & (1ULL << index)) rayIndex = 2;
+								else if (rays[6][kingPos] & (1ULL << index)) rayIndex = 6;
 								else rayIndex = -1;
 								if (rayIndex != -1)
 								{
@@ -4196,8 +4190,8 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 							{
 								// check if the left or right ray is in line with the pawn
 								int rayIndex;
-								if (rays[kingPos][2] & (1ULL << index)) rayIndex = 2;
-								else if (rays[kingPos][6] & (1ULL << index)) rayIndex = 6;
+								if (rays[2][kingPos] & (1ULL << index)) rayIndex = 2;
+								else if (rays[6][kingPos] & (1ULL << index)) rayIndex = 6;
 								else rayIndex = -1;
 								if (rayIndex != -1)
 								{

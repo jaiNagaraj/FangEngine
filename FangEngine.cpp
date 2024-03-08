@@ -100,6 +100,183 @@ double FangEngine::eval()
 	bool whiteHasQueen = false, blackHasQueen = false;
 	int whiteMinors = 0, blackMinors = 0;
 	double eval = 0; // evaluation in centipawns
+	uint64_t tmp;
+	
+	#ifdef USING_BITS
+
+	// loop over white pawns
+	tmp = game->pieceBoards[WP_INDEX];
+	while (tmp)
+	{
+		unsigned long index;
+		char ch = _BitScanForward64(&index, tmp);
+		if (ch)
+		{
+			eval += PAWN_VALUE + whitePawnPlacement[7 - (index / 8)][index % 8];
+		}
+		else std::cout << "Something wrong with white pawns in eval()!\n";
+
+		tmp = ((tmp >> index) >> 1) << (index + 1);
+	}
+
+	// loop over white knights
+	tmp = game->pieceBoards[WN_INDEX];
+	while (tmp)
+	{
+		unsigned long index;
+		char ch = _BitScanForward64(&index, tmp);
+		if (ch)
+		{
+			eval += KNIGHT_VALUE + whiteKnightPlacement[7 - (index / 8)][index % 8];
+			whiteMinors += KNIGHT_VALUE;
+		}
+		else std::cout << "Something wrong with white knights in eval()!\n";
+
+		tmp = ((tmp >> index) >> 1) << (index + 1);
+	}
+
+	// loop over white bishop
+	tmp = game->pieceBoards[WB_INDEX];
+	while (tmp)
+	{
+		unsigned long index;
+		char ch = _BitScanForward64(&index, tmp);
+		if (ch)
+		{
+			eval += BISHOP_VALUE + whiteBishopPlacement[7 - (index / 8)][index % 8];
+			whiteMinors += BISHOP_VALUE;
+		}
+		else std::cout << "Something wrong with white bishops in eval()!\n";
+
+		tmp = ((tmp >> index) >> 1) << (index + 1);
+	}
+
+	// loop over white rooks
+	tmp = game->pieceBoards[WR_INDEX];
+	while (tmp)
+	{
+		unsigned long index;
+		char ch = _BitScanForward64(&index, tmp);
+		if (ch)
+		{
+			eval += ROOK_VALUE + whiteRookPlacement[7 - (index / 8)][index % 8];
+		}
+		else std::cout << "Something wrong with white rooks in eval()!\n";
+
+		tmp = ((tmp >> index) >> 1) << (index + 1);
+	}
+
+	// loop over white queens
+	tmp = game->pieceBoards[WQ_INDEX];
+	while (tmp)
+	{
+		unsigned long index;
+		char ch = _BitScanForward64(&index, tmp);
+		if (ch)
+		{
+			eval += QUEEN_VALUE + whiteQueenPlacement[7 - (index / 8)][index % 8];
+			whiteHasQueen = true;
+		}
+		else std::cout << "Something wrong with white queens in eval()!\n";
+
+		tmp = ((tmp >> index) >> 1) << (index + 1);
+	}
+
+	// get white king index
+	tmp = game->pieceBoards[WK_INDEX];
+	if (!tmp) std::cout << "CANNOT FIND WHITE KING IN eval()!\n";
+	int whiteKingIndex = game->bitToIndex(tmp);
+	whiteKingX = whiteKingIndex & 8;
+	whiteKingY = 7 - (whiteKingIndex / 8);
+
+
+	// loop over black pawns
+	tmp = game->pieceBoards[BP_INDEX];
+	while (tmp)
+	{
+		unsigned long index;
+		char ch = _BitScanForward64(&index, tmp);
+		if (ch)
+		{
+			eval += -PAWN_VALUE + blackPawnPlacement[7 - (index / 8)][index % 8];
+		}
+		else std::cout << "Something wrong with black pawns in eval()!\n";
+
+		tmp = ((tmp >> index) >> 1) << (index + 1);
+	}
+
+	// loop over black kngihts
+	tmp = game->pieceBoards[BN_INDEX];
+	while (tmp)
+	{
+		unsigned long index;
+		char ch = _BitScanForward64(&index, tmp);
+		if (ch)
+		{
+			eval += -KNIGHT_VALUE + blackKnightPlacement[7 - (index / 8)][index % 8];
+			blackMinors += KNIGHT_VALUE;
+		}
+		else std::cout << "Something wrong with black knights in eval()!\n";
+
+		tmp = ((tmp >> index) >> 1) << (index + 1);
+	}
+
+	// loop over black bishop
+	tmp = game->pieceBoards[BB_INDEX];
+	while (tmp)
+	{
+		unsigned long index;
+		char ch = _BitScanForward64(&index, tmp);
+		if (ch)
+		{
+			eval += -BISHOP_VALUE + blackBishopPlacement[7 - (index / 8)][index % 8];
+			blackMinors += BISHOP_VALUE;
+		}
+		else std::cout << "Something wrong with black bishops in eval()!\n";
+
+		tmp = ((tmp >> index) >> 1) << (index + 1);
+	}
+
+	// loop over black rooks
+	tmp = game->pieceBoards[BR_INDEX];
+	while (tmp)
+	{
+		unsigned long index;
+		char ch = _BitScanForward64(&index, tmp);
+		if (ch)
+		{
+			eval += -ROOK_VALUE + blackRookPlacement[7 - (index / 8)][index % 8];
+		}
+		else std::cout << "Something wrong with black rooks in eval()!\n";
+
+		tmp = ((tmp >> index) >> 1) << (index + 1);
+}
+
+	// loop over black queens
+	tmp = game->pieceBoards[BQ_INDEX];
+	while (tmp)
+	{
+		unsigned long index;
+		char ch = _BitScanForward64(&index, tmp);
+		if (ch)
+		{
+			eval += -QUEEN_VALUE + blackQueenPlacement[7 - (index / 8)][index % 8];
+			blackHasQueen = true;
+		}
+		else std::cout << "Something wrong with black queens in eval()!\n";
+
+		tmp = ((tmp >> index) >> 1) << (index + 1);
+	}
+
+	// get black king index
+	tmp = game->pieceBoards[BK_INDEX];
+	if (!tmp) std::cout << "CANNOT FIND BLACK KING IN eval()!\n";
+	int blackKingIndex = game->bitToIndex(tmp);
+	blackKingX = blackKingIndex & 8;
+	blackKingY = 7 - (blackKingIndex / 8);
+
+
+	#else
 	for (int y = 0; y < 8; y++)
 	{
 		for (int x = 0; x < 8; x++)
@@ -151,6 +328,8 @@ double FangEngine::eval()
 			}
 		}
 	}
+
+	#endif
 
 	// check for endgame
 	if (!(whiteHasQueen || blackHasQueen) || 
