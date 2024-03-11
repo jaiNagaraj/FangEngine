@@ -61,7 +61,11 @@ void Window::init()
     /* PERFORMANCE TESTING */
     for (int depth = 1; depth <= 5; depth++)
     {
+        auto t1 = std::chrono::high_resolution_clock::now();
         std::cout << "Number of possible positions at depth = " << depth << ": " << game.perft(depth) << '\n';
+        auto t2 = std::chrono::high_resolution_clock::now();
+        auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+        std::cout << "This took " << ms_int.count() << "ms\n";
     }
     // Debugging: Check position count
     //for (auto i : game.positions)
@@ -141,21 +145,37 @@ void Window::init()
             //        endCode = game.isCheckmate(game.turn);
             //        endCodeCheck();
             //        SDL_UpdateWindowSurface(window);
+                      // print out next person's moves
+            //        for (auto m : game.legalMoveList) delete m;
+            //        game.legalMoveList.clear();
+            //        game.generateLegalMoves(game.legalMoveList);
             //    }
             //}
-            //if (game.turn % 2 == 1)
-            //{
-            //    Move* m = p2.search(3);
-            //    if (m && m->piece)
-            //    {
-            //        game.makeMove(m);
-            //        std::cout << "FEN: " << m->fen << "\n";
-            //        endCode = game.isCheckmate(game.turn);
-            //        endCodeCheck();
-            //        SDL_UpdateWindowSurface(window);
-            //    }
-            //    if (m) delete m;
-            //}
+            if (game.turn % 2 == 1)
+            {
+                Move* m = p2.search(4);
+                if (m && m->piece)
+                {
+                    game.makeMove(m);
+                    endCode = game.isCheckmate(game.turn);
+                    endCodeCheck();
+                    SDL_UpdateWindowSurface(window);
+                    // print out next person's moves
+                    for (auto m : game.legalMoveList) delete m;
+                    game.legalMoveList.clear();
+                    game.generateLegalMoves(game.legalMoveList);
+            
+                    // finaly, update fen and position data
+                    std::string fen = game.getFEN();
+                    game.fens.push_back(fen);
+                    std::string pos = fen.substr(0, fen.find(" "));
+                    if (game.positions.count(pos) == 0) game.positions[pos] = 1;
+                    else game.positions[pos]++;
+                    std::cout << "FEN: " << fen << "\n";
+                    //std::cout << "FEN: " << move->fen << "\n";
+                }
+                if (m) delete m;
+            }
         }
     }
 }
@@ -403,6 +423,15 @@ int Window::dropPiece()
         game.legalMoveList.clear();
         game.generateLegalMoves(game.legalMoveList);
         //for (auto m : game.legalMoveList) m->printMove();
+
+        // finaly, update fen and position data
+        std::string fen = game.getFEN();
+        game.fens.push_back(fen);
+        std::string pos = fen.substr(0, fen.find(" "));
+        if (game.positions.count(pos) == 0) game.positions[pos] = 1;
+        else game.positions[pos]++;
+        std::cout << "FEN: " << fen << "\n";
+
         return game.isCheckmate(game.turn); // check for checkmate!
     }
     else
@@ -529,11 +558,11 @@ ull Window::perft(int depth /* assuming >= 1 */)
         //	std::cout << "Good FEN: " << startingFen << '\n';
         //	std::cout << "Bad (current) FEN: " << currFen << '\n';
         //}
-        move_list[i]->printMove();
+        //move_list[i]->printMove();
         game.makeMove(move_list[i]);
         refresh();
         SDL_UpdateWindowSurface(window);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        //std::this_thread::sleep_for(std::chrono::milliseconds(100));
         //std::this_thread::sleep_until(std::chrono::system_clock::now() + std::chrono::milliseconds(50));
         nodes += perft(depth - 1);
         game.unmakeMove(move_list[i]);

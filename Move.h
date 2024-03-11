@@ -14,11 +14,11 @@ class Move
 		int oldPassantPieceSquare;
 		bool isCastle;
 		uint8_t oldCastlingRights;
-		bool lossOfEP;
-		Piece* lostEP; // piece that lost en passant
+		// bool lossOfEP;
+		// Piece* lostEP; // piece that lost en passant
 		uint8_t promoPiece; // the piece being promoted to
 		int oldHalfmoves;
-		std::string fen;
+		//std::string fen;
 
 		// the old and new move coordinates
 		int oldX;
@@ -28,7 +28,7 @@ class Move
 
 		Move();
 		Move(Piece* p, Piece* cap, bool isPromo, bool isCap, bool ispassant, int oldPasSq, int oldPasP, bool isCas, uint8_t oldCas,
-			bool lossPass, Piece* lostPass, uint8_t proPiece, int oldHalves, int oldx, int oldy, int newx, int newy, std::string FEN);
+			/*bool lossPass, Piece* lostPass,*/ uint8_t proPiece, int oldHalves, int oldx, int oldy, int newx, int newy/*, std::string FEN */);
 		~Move();
 		Move* cloneMove();
 		void printMove();

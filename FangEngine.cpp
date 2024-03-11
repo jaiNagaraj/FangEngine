@@ -116,7 +116,7 @@ double FangEngine::eval()
 		}
 		else std::cout << "Something wrong with white pawns in eval()!\n";
 
-		tmp = ((tmp >> index) >> 1) << (index + 1);
+		tmp &= tmp - 1;
 	}
 
 	// loop over white knights
@@ -132,7 +132,7 @@ double FangEngine::eval()
 		}
 		else std::cout << "Something wrong with white knights in eval()!\n";
 
-		tmp = ((tmp >> index) >> 1) << (index + 1);
+		tmp &= tmp - 1;
 	}
 
 	// loop over white bishop
@@ -148,7 +148,7 @@ double FangEngine::eval()
 		}
 		else std::cout << "Something wrong with white bishops in eval()!\n";
 
-		tmp = ((tmp >> index) >> 1) << (index + 1);
+		tmp &= tmp - 1;
 	}
 
 	// loop over white rooks
@@ -163,7 +163,7 @@ double FangEngine::eval()
 		}
 		else std::cout << "Something wrong with white rooks in eval()!\n";
 
-		tmp = ((tmp >> index) >> 1) << (index + 1);
+		tmp &= tmp - 1;
 	}
 
 	// loop over white queens
@@ -179,7 +179,7 @@ double FangEngine::eval()
 		}
 		else std::cout << "Something wrong with white queens in eval()!\n";
 
-		tmp = ((tmp >> index) >> 1) << (index + 1);
+		tmp &= tmp - 1;
 	}
 
 	// get white king index
@@ -202,10 +202,10 @@ double FangEngine::eval()
 		}
 		else std::cout << "Something wrong with black pawns in eval()!\n";
 
-		tmp = ((tmp >> index) >> 1) << (index + 1);
+		tmp &= tmp - 1;
 	}
 
-	// loop over black kngihts
+	// loop over black knights
 	tmp = game->pieceBoards[BN_INDEX];
 	while (tmp)
 	{
@@ -218,7 +218,7 @@ double FangEngine::eval()
 		}
 		else std::cout << "Something wrong with black knights in eval()!\n";
 
-		tmp = ((tmp >> index) >> 1) << (index + 1);
+		tmp &= tmp - 1;
 	}
 
 	// loop over black bishop
@@ -234,7 +234,7 @@ double FangEngine::eval()
 		}
 		else std::cout << "Something wrong with black bishops in eval()!\n";
 
-		tmp = ((tmp >> index) >> 1) << (index + 1);
+		tmp &= tmp - 1;
 	}
 
 	// loop over black rooks
@@ -249,7 +249,7 @@ double FangEngine::eval()
 		}
 		else std::cout << "Something wrong with black rooks in eval()!\n";
 
-		tmp = ((tmp >> index) >> 1) << (index + 1);
+		tmp &= tmp - 1;
 }
 
 	// loop over black queens
@@ -265,7 +265,7 @@ double FangEngine::eval()
 		}
 		else std::cout << "Something wrong with black queens in eval()!\n";
 
-		tmp = ((tmp >> index) >> 1) << (index + 1);
+		tmp &= tmp - 1;
 	}
 
 	// get black king index

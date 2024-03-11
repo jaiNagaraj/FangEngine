@@ -38,7 +38,7 @@ class Game
 	public:
 		std::vector<Piece*> piecesOnBoard;
 
-		uint8_t board[8][8] = {0};
+		Piece* board[8][8] = { 0 };
 
 		/*
 		* Array of piece bitboards. Indices defined by macros above.
@@ -64,19 +64,20 @@ class Game
 
 		int bitToIndex(uint64_t);
 		Piece* makePiece(int x, int y, uint8_t info);
-		bool isInCheck(uint8_t gameBoard[][8], int turn, int kingX, int kingY);
+		bool isInCheck(int turn);
+		//bool isInCheck(Piece* gameBoard[][8], int turn, int kingX, int kingY);
 		Move* validMove(Piece* piece, int oldX, int oldY, int newX, int newY, bool test = false);
 		bool validCastle(Piece* piece, int initX, int initY, int kingX, int kingY);
 		void makeMove(Move* move);
 		void unmakeMove(Move* move);
-		std::vector<Move*> bitsToMoves(uint64_t bitboard, unsigned long startSquare, uint8_t pieceType);
+		inline void bitsToMoves(uint64_t bitboard, unsigned long startSquare, uint8_t pieceType, std::vector<Move*>& moves) const;
 		ull generateLegalMoves(std::vector<Move*>& moves);
 		int isCheckmate(int turn);
 		int oldIsCheckmate(int turn);
 		bool insufficientMaterial();
 		std::string getFEN();
 		void buildFromFEN(std::string fen);
-		void printBoard();
+		void printBoard() const;
 		ull perft(int depth /* assuming >= 1 */);
 		ull perftCaps(int depth, bool hasCapture);
 
