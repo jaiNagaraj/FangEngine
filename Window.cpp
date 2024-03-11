@@ -55,7 +55,7 @@ void Window::init()
     SDL_UpdateWindowSurface(window);
 
     // initialize players
-    p1 = RandomPlayer(&game);
+    p1 = FangEngine(&game);
     p2 = FangEngine(&game);
 
     /* PERFORMANCE TESTING */
@@ -138,19 +138,30 @@ void Window::init()
             // make computer move
             //if (game.turn % 2 == 0)
             //{
-            //    Move* m = p1.search(3);
+            //    Move* m = p1.search(4);
             //    if (m && m->piece)
             //    {
             //        game.makeMove(m);
             //        endCode = game.isCheckmate(game.turn);
             //        endCodeCheck();
             //        SDL_UpdateWindowSurface(window);
-                      // print out next person's moves
+            //        // print out next person's moves
             //        for (auto m : game.legalMoveList) delete m;
             //        game.legalMoveList.clear();
             //        game.generateLegalMoves(game.legalMoveList);
+            //
+            //        // finaly, update fen and position data
+            //        std::string fen = game.getFEN();
+            //        game.fens.push_back(fen);
+            //        std::string pos = fen.substr(0, fen.find(" "));
+            //        if (game.positions.count(pos) == 0) game.positions[pos] = 1;
+            //        else game.positions[pos]++;
+            //        std::cout << "FEN: " << fen << "\n";
+            //        //std::cout << "FEN: " << move->fen << "\n";
             //    }
+            //    if (m) delete m;
             //}
+            
             if (game.turn % 2 == 1)
             {
                 Move* m = p2.search(4);

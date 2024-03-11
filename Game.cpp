@@ -2083,6 +2083,8 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 							// make sure the pawn doesn't disobey a pin or disregard check
 							bitmoves &= pinnedPieceMoves[index];
 							bitmoves &= checkRay;
+							// finally, check for en passant capture check evasion
+							if ((attackBoard & pieceBoards[BP_INDEX]) && bitToIndex(attackBoard) == enPassantInfo[1]) bitmoves |= whitePawnAttacks[index] & passant;
 							//std::cout << "Pawn Moves: " << bitmoves << '\n';
 
 							bitsToMoves(bitmoves, index, WHITE_PAWN, moves);
@@ -2268,13 +2270,13 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 						{
 							uint64_t whiteKingsideCastle = ((1ULL << (kingPos + 1)) | (1ULL << (kingPos + 2)));
 							// this ternary ensures that the king isn't moving through pieces or check in the castle
-							legalKingMoves |= (whiteKingsideCastle & ~(whitePieces | blackPieces) & ~blackAttack) == whiteKingsideCastle ? whiteKingsideCastle : 0;
+							legalKingMoves |= (whiteKingsideCastle & ~(whitePieces | blackPieces) & ~blackAttack) == whiteKingsideCastle ? (1ULL << (kingPos + 2)) : 0;
 						}
 						if (whiteQueensideRookCanCastle)
 						{
 							uint64_t whiteQueensideCastle = ((1ULL << (kingPos - 1)) | (1ULL << (kingPos - 2)));
 							// this ternary ensures that the king isn't moving through pieces or check in the castle
-							legalKingMoves |= (whiteQueensideCastle & ~(whitePieces | blackPieces) & ~blackAttack) == whiteQueensideCastle ? whiteQueensideCastle : 0;
+							legalKingMoves |= (whiteQueensideCastle & ~(whitePieces | blackPieces) & ~blackAttack) == whiteQueensideCastle ? (1ULL << (kingPos - 2)) : 0;
 						}
 					}
 					// tack on any other legal king moves
@@ -3463,6 +3465,8 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 						// make sure the pawn doesn't disobey a pin or disregard check
 						bitmoves &= pinnedPieceMoves[index];
 						bitmoves &= checkRay;
+						// finally, check for en passant capture check evasion
+						if ((attackBoard & pieceBoards[WP_INDEX]) && bitToIndex(attackBoard) == enPassantInfo[1]) bitmoves |= blackPawnAttacks[index] & passant;
 
 						bitsToMoves(bitmoves, index, BLACK_PAWN, moves);
 					}
@@ -3648,13 +3652,13 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 					{
 						uint64_t blackKingsideCastle = ((1ULL << (kingPos + 1)) | (1ULL << (kingPos + 2)));
 						// this ternary ensures that the king isn't moving through pieces or check in the castle
-						legalKingMoves |= (blackKingsideCastle & ~(whitePieces | blackPieces) & ~whiteAttack) == blackKingsideCastle ? blackKingsideCastle : 0;
+						legalKingMoves |= (blackKingsideCastle & ~(whitePieces | blackPieces) & ~whiteAttack) == blackKingsideCastle ? (1ULL << (kingPos + 2)) : 0;
 					}
 					if (blackQueensideRookCanCastle)
 					{
 						uint64_t blackQueensideCastle = ((1ULL << (kingPos - 1)) | (1ULL << (kingPos - 2)));
 						// this ternary ensures that the king isn't moving through pieces or check in the castle
-						legalKingMoves |= (blackQueensideCastle & ~(whitePieces | blackPieces) & ~whiteAttack) == blackQueensideCastle ? blackQueensideCastle : 0;
+						legalKingMoves |= (blackQueensideCastle & ~(whitePieces | blackPieces) & ~whiteAttack) == blackQueensideCastle ? (1ULL << (kingPos - 2)) : 0;
 					}
 				}
 				// tack on any other legal king moves

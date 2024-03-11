@@ -16,7 +16,7 @@ class Window
 		SDL_Window* window;
 		SDL_Renderer* window_renderer;
 		Game game;
-		RandomPlayer p1;
+		FangEngine p1;
 		FangEngine p2;
 		int endCode;
 		bool endLock;
