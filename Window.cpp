@@ -43,7 +43,7 @@ void Window::init()
     // build game state
     std::string startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     std::string buildFEN = "r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1";
-    game.buildFromFEN(buildFEN);
+    game.buildFromFEN(startingFEN);
 
     // test legal moves
     //std::vector<Move*> m;
@@ -60,14 +60,14 @@ void Window::init()
     p2 = FangEngine(&game);
 
     /* PERFORMANCE TESTING */
-    for (int depth = 3; depth <= 3; depth++)
-    {
-        auto t1 = std::chrono::high_resolution_clock::now();
-        std::cout << "Number of possible positions at depth = " << depth << ": " << perft(depth) << '\n';
-        auto t2 = std::chrono::high_resolution_clock::now();
-        auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
-        std::cout << "This took " << ms_int.count() << "ms\n";
-    }
+    //for (int depth = 3; depth <= 3; depth++)
+    //{
+    //    auto t1 = std::chrono::high_resolution_clock::now();
+    //    std::cout << "Number of possible positions at depth = " << depth << ": " << perft(depth) << '\n';
+    //    auto t2 = std::chrono::high_resolution_clock::now();
+    //    auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+    //    std::cout << "This took " << ms_int.count() << "ms\n";
+    //}
     // Debugging: Check position count
     //for (auto i : game.positions)
     //{
@@ -137,7 +137,7 @@ void Window::init()
             //std::this_thread::sleep_until(std::chrono::system_clock::now() + std::chrono::milliseconds(50));
 
             // 0 for white, 1 for black, -1 to disable
-            int computerTurn1 = -1, computerTurn2 = -1;
+            int computerTurn1 = 1, computerTurn2 = -1;
 
             // make computer move
             if (game.turn % 2 == computerTurn1)

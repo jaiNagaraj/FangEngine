@@ -230,56 +230,50 @@ bool Move::operator< (const Move* m)
 	int value1, value2, attack1, attack2, vic1, vic2;
 
 	// get first move's attacker index
-	if (piece->info & KING)
+	if (piece->info & PAWN)
 	{
 		attack1 = 5;
-	}
-	else if (piece->info & PAWN)
-	{
-		attack1 = 4;
 	}
 	else if (piece->info & KNIGHT)
 	{
-		attack1 = 3;
+		attack1 = 4;
 	}
 	else if (piece->info & BISHOP)
 	{
-		attack1 = 2;
+		attack1 = 3;
 	}
 	else if (piece->info & ROOK)
 	{
-		attack1 = 1;
+		attack1 = 2;
 	}
 	else if (piece->info & QUEEN)
 	{
-		attack1 = 0;
-	}
-
-	// get second move's attacker index
-	if (m->piece->info & KING)
-	{
-		attack1 = 5;
-	}
-	else if (m->piece->info & PAWN)
-	{
-		attack1 = 4;
-	}
-	else if (m->piece->info & KNIGHT)
-	{
-		attack1 = 3;
-	}
-	else if (m->piece->info & BISHOP)
-	{
-		attack1 = 2;
-	}
-	else if (m->piece->info & ROOK)
-	{
 		attack1 = 1;
 	}
-	else if (m->piece->info & QUEEN)
+	else attack1 = 0; // king
+
+	// get second move's attacker index
+	if (piece->info & PAWN)
 	{
-		attack1 = 0;
+		attack2 = 5;
 	}
+	else if (piece->info & KNIGHT)
+	{
+		attack2 = 4;
+	}
+	else if (piece->info & BISHOP)
+	{
+		attack2 = 3;
+	}
+	else if (piece->info & ROOK)
+	{
+		attack2 = 2;
+	}
+	else if (piece->info & QUEEN)
+	{
+		attack2 = 1;
+	}
+	else attack2 = 0; // king
 
 	// get first move's victim index
 	if (captured)
