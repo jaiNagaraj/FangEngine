@@ -43,6 +43,7 @@ void Window::init()
     // build game state
     std::string startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     std::string buildFEN = "r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1";
+    std::string possibleErrFEN = "r7/B1p1kpp1/7p/4p3/4p3/2P5/5PPP/1R4K1 b - - 0 32";
     game.buildFromFEN(startingFEN);
 
     // test legal moves

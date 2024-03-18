@@ -71,6 +71,7 @@ class Game
 		void makeMove(Move* move);
 		void unmakeMove(Move* move);
 		inline void bitsToMoves(uint64_t bitboard, unsigned long startSquare, uint8_t pieceType, std::vector<Move*>& moves) const;
+		Move* strToMove(std::string str);
 		ull generateLegalMoves(std::vector<Move*>& moves);
 		int isCheckmate(int turn);
 		int oldIsCheckmate(int turn);

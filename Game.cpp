@@ -1538,6 +1538,23 @@ inline void Game::bitsToMoves(uint64_t bitboard, unsigned long startSquare, uint
 	}
 }
 
+// returns nullptr if the move isn't possible
+// otherwise, returns a valid move
+Move* Game::strToMove(std::string str)
+{
+	if (turn % 2 == 0)
+	{
+		switch (str.length())
+		{
+			// pawn push
+			case 2:
+				int file = str[0] - 97, rank = str[1] - 48;
+				int index = ((rank - 1) * 8) + file;
+
+		}
+	}
+}
+
 ull Game::generateLegalMoves(std::vector<Move*>& moves)
 {
 	uint64_t bitmoves = 0;

@@ -152,6 +152,22 @@ class FangEngine :
             { 30,20,10,  0,  0,10,20,30 },
             { 50,40,30,20,20,30,40,50 }
         };
+
+        // A table of common brief openings based on FEN strings.
+        std::unordered_map<std::string, std::string> openings;
+        // for white
+        // play king's pawn
+        constexpr openings["rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"] = "e4";
+        // play Vienna
+        constexpr openings["rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2"] = "Nc3";
+        // play open Sicilian
+        constexpr openings["rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2"] = "Nf3";
+        // for black
+        // play king's pawn
+        constexpr openings["rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"] = "e5";
+        // play Indian defense
+        constexpr openings["rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1"] = "Nf6";
+
     public:
         FangEngine();
         FangEngine(Game* g);
