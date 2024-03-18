@@ -223,3 +223,117 @@ void Move::printMove()
 	std::cout << "Is castle: " << isCastle << '\n';
 	std::cout << "Is en passant: " << isEP << "\n\n\n";
 }
+
+// on the basis of MVV LVA for move ordering.
+bool Move::operator< (const Move* m)
+{
+	int value1, value2, attack1, attack2, vic1, vic2;
+
+	// get first move's attacker index
+	if (piece->info & KING)
+	{
+		attack1 = 5;
+	}
+	else if (piece->info & PAWN)
+	{
+		attack1 = 4;
+	}
+	else if (piece->info & KNIGHT)
+	{
+		attack1 = 3;
+	}
+	else if (piece->info & BISHOP)
+	{
+		attack1 = 2;
+	}
+	else if (piece->info & ROOK)
+	{
+		attack1 = 1;
+	}
+	else if (piece->info & QUEEN)
+	{
+		attack1 = 0;
+	}
+
+	// get second move's attacker index
+	if (m->piece->info & KING)
+	{
+		attack1 = 5;
+	}
+	else if (m->piece->info & PAWN)
+	{
+		attack1 = 4;
+	}
+	else if (m->piece->info & KNIGHT)
+	{
+		attack1 = 3;
+	}
+	else if (m->piece->info & BISHOP)
+	{
+		attack1 = 2;
+	}
+	else if (m->piece->info & ROOK)
+	{
+		attack1 = 1;
+	}
+	else if (m->piece->info & QUEEN)
+	{
+		attack1 = 0;
+	}
+
+	// get first move's victim index
+	if (captured)
+	{
+		if (captured->info & PAWN)
+		{
+			vic1 = 4;
+		}
+		else if (captured->info & KNIGHT)
+		{
+			vic1 = 3;
+		}
+		else if (captured->info & BISHOP)
+		{
+			vic1 = 2;
+		}
+		else if (captured->info & ROOK)
+		{
+			vic1 = 1;
+		}
+		else if (captured->info & QUEEN)
+		{
+			vic1 = 0;
+		}
+	}
+	else vic1 = 5;
+
+	// get second move's victim index
+	if (m->captured)
+	{
+		if (m->captured->info & PAWN)
+		{
+			vic2 = 4;
+		}
+		else if (m->captured->info & KNIGHT)
+		{
+			vic2 = 3;
+		}
+		else if (m->captured->info & BISHOP)
+		{
+			vic2 = 2;
+		}
+		else if (m->captured->info & ROOK)
+		{
+			vic2 = 1;
+		}
+		else if (m->captured->info & QUEEN)
+		{
+			vic2 = 0;
+		}
+	}
+	else vic2 = 5;
+
+	// now, get capture values from table
+	value1 = MVVLVA_TABLE[vic1][attack1], value2 = MVVLVA_TABLE[vic2][attack2];
+	return (value1 > value2); // if the first value is greater, the first move should come before the other
+}

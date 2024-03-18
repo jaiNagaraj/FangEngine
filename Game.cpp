@@ -733,6 +733,9 @@ void Game::makeMove(Move* move)
 				break;
 			case WHITE_ROOK:
 				pieceBoards[WR_INDEX] &= ~(1ULL << newIndex);
+				// check for loss of castle due to loss of rook
+				if (move->newX == 0 && move->newY == 7) whiteQueensideRookCanCastle = false;
+				else if (move->newX == 7 && move->newY == 7) whiteKingsideRookCanCastle = false;
 				break;
 			case WHITE_QUEEN:
 				pieceBoards[WQ_INDEX] &= ~(1ULL << newIndex);
@@ -748,6 +751,9 @@ void Game::makeMove(Move* move)
 				break;
 			case BLACK_ROOK:
 				pieceBoards[BR_INDEX] &= ~(1ULL << newIndex);
+				// check for loss of castle due to loss of rook
+				if (move->newX == 0 && move->newY == 0) blackQueensideRookCanCastle = false;
+				else if (move->newX == 7 && move->newY == 0) blackKingsideRookCanCastle = false;
 				break;
 			case BLACK_QUEEN:
 				pieceBoards[BQ_INDEX] &= ~(1ULL << newIndex);
@@ -877,19 +883,20 @@ void Game::makeMove(Move* move)
 	}
 
 	// reset all previously enPassantable pieces
-	for (Piece* p : piecesOnBoard)
-	{
-		// if it is white's turn
-		if (turn % 2 == 0 && (p->info & BLACK) == BLACK)
-		{
-			p->enPassantable = false;
-		}
-		// if it is black's turn
-		if (turn % 2 == 1 && (p->info & WHITE) == WHITE)
-		{
-			p->enPassantable = false;
-		}
-	}
+	//for (Piece* p : piecesOnBoard)
+	//{
+	//	// if it is white's turn
+	//	if (turn % 2 == 0 && (p->info & BLACK) == BLACK)
+	//	{
+	//		p->enPassantable = false;
+	//	}
+	//	// if it is black's turn
+	//	if (turn % 2 == 1 && (p->info & WHITE) == WHITE)
+	//	{
+	//		p->enPassantable = false;
+	//	}
+	//}
+	
 	// reset en passant info
 	enPassantInfo[0] = -1;
 	enPassantInfo[1] = -1;
@@ -897,7 +904,7 @@ void Game::makeMove(Move* move)
 	// if pawn passes checks for two spaces
 	if ((move->piece->info & PAWN) == PAWN && abs(distMovedY) == 2)
 	{
-		move->piece->enPassantable = true;
+		//move->piece->enPassantable = true;
 		enPassantInfo[1] = newIndex;
 		if (move->piece->info & WHITE) enPassantInfo[0] = 8 * (7 - (move->newY + 1)) + move->newX;
 		else enPassantInfo[0] = 8 * (7 - (move->newY - 1)) + move->newX;
@@ -978,6 +985,15 @@ void Game::makeMove(Move* move)
 	// update piece graphic coordinates
 	move->piece->rect->x = move->newX * 60;
 	move->piece->rect->y = move->newY * 60;
+
+	// finaly, update fen and position data
+	std::string fen = getFEN();
+	fens.push_back(fen);
+	std::string pos = fen.substr(0, fen.find(" "));
+	if (positions.count(pos) == 0) positions[pos] = 1;
+	else positions[pos]++;
+
+	//std::cout << "FEN: " << fen << "\n";
 }
 
 void Game::unmakeMove(Move* move)
@@ -1248,14 +1264,15 @@ void Game::unmakeMove(Move* move)
 	move->piece->rect->x = move->oldX * 60;
 	move->piece->rect->y = move->oldY * 60;
 
-	/*
+	
 	// finaly, delete fen and position data
+	std::string fen = fens.back();
 	fens.pop_back(); // assuming we unmake right after we make...
-	std::string pos = move->fen.substr(0, move->fen.find(" "));
+	std::string pos = fen.substr(0, fen.find(" "));
 	if (positions.count(pos) == 0) std::cout << "Something is afoot!\n";
 	else positions[pos]--; // the position should already exist, so just decrease counter
 	if (positions[pos] == 0) positions.erase(pos); // prevent unnecessarily large map
-	*/
+	
 }
 
 inline void Game::bitsToMoves(uint64_t bitboard, unsigned long startSquare, uint8_t pieceType, std::vector<Move*> &moves) const
@@ -1306,7 +1323,7 @@ inline void Game::bitsToMoves(uint64_t bitboard, unsigned long startSquare, uint
 				std::cout << "Black knight";
 				break;
 			case BLACK_BISHOP:
-				std::cout << "Black bishoP";
+				std::cout << "Black bishop";
 				break;
 			case BLACK_ROOK:
 				std::cout << "Black rook";
@@ -1388,6 +1405,9 @@ inline void Game::bitsToMoves(uint64_t bitboard, unsigned long startSquare, uint
 				{
 					captured = board[newY][newX];
 					isCapture = true;
+					if (board[newY][newX]->info == WHITE_KING) std::cout << "ERROR!! CAPTURING A KING!!!\n";
+					else if ((board[newY][newX]->info & WHITE) && (piece->info & WHITE)) std::cout << "ERROR! WHITE ON WHITE CRIME!\n";
+					else if ((board[newY][newX]->info & BLACK) && (piece->info & BLACK)) std::cout << "ERROR! BLACK ON BLACK CRIME!\n";
 				}
 			}
 			/*
@@ -1768,7 +1788,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 					if ((1ULL << index) & pieceBoards[WP_INDEX])
 					{
 						// it's a pawn! Check for possible captures
-						uint64_t possiblePawnCaptures = whitePawnAttacks[index] & blackPieces;
+						uint64_t possiblePawnCaptures = whitePawnAttacks[index] & (blackPieces | (enPassantInfo[0] != -1 ? (1ULL << enPassantInfo[0]) : 0));
 						// verify the captures and pushes against the pin ray
 						uint64_t pawnMoves = (possiblePawnCaptures | whitePawnPushes[index]) & pinRay;
 						pinnedPieceMoves[index] = pawnMoves;
@@ -1967,7 +1987,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 				unsigned char code = _BitScanForward64(&index, tmp);
 				if (code)
 				{
-					bitmoves = kingMoves[index] & whiteNoKing;
+					bitmoves = kingMoves[index];
 					blackAttack |= bitmoves;
 				}
 				else std::cout << "PROBLEM WITH BLACK KING!\n";
@@ -3150,7 +3170,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 					if ((1ULL << index) & pieceBoards[BP_INDEX])
 					{
 						// it's a pawn! Check for possible captures
-						uint64_t possiblePawnCaptures = blackPawnAttacks[index] & whitePieces;
+						uint64_t possiblePawnCaptures = blackPawnAttacks[index] & (whitePieces | (enPassantInfo[0] != -1 ? (1ULL << enPassantInfo[0]) : 0));
 						// verify the captures and pushes against the pin ray
 						uint64_t pawnMoves = (possiblePawnCaptures | blackPawnPushes[index]) & pinRay;
 						pinnedPieceMoves[index] = pawnMoves;
@@ -4389,7 +4409,7 @@ int Game::isCheckmate(int turn)
 		// check repetition
 		for (auto str : positions)
 		{
-			if (str.second == 3)
+			if (str.second >= 3)
 			{
 				return DRAW_BY_REPETITION;
 			}
@@ -4670,11 +4690,23 @@ std::string Game::getFEN()
 	if (castlingStr == "") castlingStr = "-";
 	castlingStr += " ";
 	fenStr += castlingStr;
-
+	
 	// get en passant square
 	bool noPassant = true;
-	int passantCount = 0;
 	std::string passantStr = "";
+
+	#ifdef USING_BITS
+
+	if (enPassantInfo[0] != -1)
+	{
+		noPassant = false;
+		int xCoord = enPassantInfo[0] % 8, yCoord = enPassantInfo[0] / 8 + 1;
+		char fileLetter = xCoord + 97;
+		passantStr = fileLetter + std::to_string(yCoord) + " ";
+	}
+
+	#else
+
 	for (Piece* p : piecesOnBoard)
 	{
 		if (p->enPassantable)
@@ -4693,6 +4725,9 @@ std::string Game::getFEN()
 			}
 		}
 	}
+
+	#endif
+
 	if (noPassant) passantStr = "- ";
 	fenStr += passantStr;
 
@@ -4710,12 +4745,12 @@ void Game::buildFromFEN(std::string fen)
 {
 	std::stringstream ss(fen);
 	std::string layout;
-	std::string turn;
+	std::string turnColor;
 	std::string castling;
 	std::string enPassant;
 	std::string halfs;
 	std::string moves;
-	ss >> layout >> turn >> castling >> enPassant >> halfs >> moves;
+	ss >> layout >> turnColor >> castling >> enPassant >> halfs >> moves;
 
 	// build layout of board
 	layout += "/"; // for formatting purposes
@@ -4831,19 +4866,19 @@ void Game::buildFromFEN(std::string fen)
 		enPassantInfo[0] = 8 * (7 - y) + x;
 
 		// note: FEN stores the SQUARE that can be attacked, NOT the PIECE
-		if (turn == "w") y++;
+		if (turnColor == "w") y++;
 		else y--;
 		// update passant piece square info
 		enPassantInfo[1] = 8 * (7 - y) + x;
 
-		for (Piece* p : piecesOnBoard)
-		{
-			if (p->rect->x == x * 60 && p->rect->y == y * 60)
-			{
-				p->enPassantable = true;
-				break;
-			}
-		}
+		//for (Piece* p : piecesOnBoard)
+		//{
+		//	if (p->rect->x == x * 60 && p->rect->y == y * 60)
+		//	{
+		//		p->enPassantable = true;
+		//		break;
+		//	}
+		//}
 	}
 	else
 	{
@@ -4855,7 +4890,7 @@ void Game::buildFromFEN(std::string fen)
 	halfmoves = std::stoi(halfs);
 
 	// set turn based on white/black to move
-	turn = std::stoi(moves) * 2 + ((turn == "w") ? 0 : 1);
+	turn = std::stoi(moves) * 2 + ((turnColor == "w") ? 0 : 1);
 
 	// FEN and position initialization
 	fens.push_back(fen);

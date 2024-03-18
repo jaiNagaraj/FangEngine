@@ -42,7 +42,8 @@ void Window::init()
 
     // build game state
     std::string startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    game.buildFromFEN(startingFEN);
+    std::string buildFEN = "r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1";
+    game.buildFromFEN(buildFEN);
 
     // test legal moves
     //std::vector<Move*> m;
@@ -59,10 +60,10 @@ void Window::init()
     p2 = FangEngine(&game);
 
     /* PERFORMANCE TESTING */
-    for (int depth = 1; depth <= 5; depth++)
+    for (int depth = 3; depth <= 3; depth++)
     {
         auto t1 = std::chrono::high_resolution_clock::now();
-        std::cout << "Number of possible positions at depth = " << depth << ": " << game.perft(depth) << '\n';
+        std::cout << "Number of possible positions at depth = " << depth << ": " << perft(depth) << '\n';
         auto t2 = std::chrono::high_resolution_clock::now();
         auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
         std::cout << "This took " << ms_int.count() << "ms\n";
@@ -135,34 +136,36 @@ void Window::init()
             //std::this_thread::sleep_for(std::chrono::nanoseconds(10));
             //std::this_thread::sleep_until(std::chrono::system_clock::now() + std::chrono::milliseconds(50));
 
+            // 0 for white, 1 for black, -1 to disable
+            int computerTurn1 = -1, computerTurn2 = -1;
+
             // make computer move
-            //if (game.turn % 2 == 0)
-            //{
-            //    Move* m = p1.search(4);
-            //    if (m && m->piece)
-            //    {
-            //        game.makeMove(m);
-            //        endCode = game.isCheckmate(game.turn);
-            //        endCodeCheck();
-            //        SDL_UpdateWindowSurface(window);
-            //        // print out next person's moves
-            //        for (auto m : game.legalMoveList) delete m;
-            //        game.legalMoveList.clear();
-            //        game.generateLegalMoves(game.legalMoveList);
-            //
-            //        // finaly, update fen and position data
-            //        std::string fen = game.getFEN();
-            //        game.fens.push_back(fen);
-            //        std::string pos = fen.substr(0, fen.find(" "));
-            //        if (game.positions.count(pos) == 0) game.positions[pos] = 1;
-            //        else game.positions[pos]++;
-            //        std::cout << "FEN: " << fen << "\n";
-            //        //std::cout << "FEN: " << move->fen << "\n";
-            //    }
-            //    if (m) delete m;
-            //}
+            if (game.turn % 2 == computerTurn1)
+            {
+                Move* m = p1.search(4);
+                if (m && m->piece)
+                {
+                    game.makeMove(m);
+                    endCode = game.isCheckmate(game.turn);
+                    endCodeCheck();
+                    SDL_UpdateWindowSurface(window);
+                    // print out next person's moves
+                    for (auto m : game.legalMoveList) delete m;
+                    game.legalMoveList.clear();
+                    game.generateLegalMoves(game.legalMoveList);
             
-            if (game.turn % 2 == 1)
+                    //// finaly, update fen and position data
+                    //std::string fen = game.getFEN();
+                    //game.fens.push_back(fen);
+                    //std::string pos = fen.substr(0, fen.find(" "));
+                    //if (game.positions.count(pos) == 0) game.positions[pos] = 1;
+                    //else game.positions[pos]++;
+                    //std::cout << "FEN: " << fen << "\n";
+                    //std::cout << "FEN: " << move->fen << "\n";
+                }
+                if (m) delete m;
+            }
+            if (game.turn % 2 == computerTurn2)
             {
                 Move* m = p2.search(4);
                 if (m && m->piece)
@@ -175,14 +178,14 @@ void Window::init()
                     for (auto m : game.legalMoveList) delete m;
                     game.legalMoveList.clear();
                     game.generateLegalMoves(game.legalMoveList);
-            
-                    // finaly, update fen and position data
-                    std::string fen = game.getFEN();
-                    game.fens.push_back(fen);
-                    std::string pos = fen.substr(0, fen.find(" "));
-                    if (game.positions.count(pos) == 0) game.positions[pos] = 1;
-                    else game.positions[pos]++;
-                    std::cout << "FEN: " << fen << "\n";
+
+                    //// finaly, update fen and position data
+                    //std::string fen = game.getFEN();
+                    //game.fens.push_back(fen);
+                    //std::string pos = fen.substr(0, fen.find(" "));
+                    //if (game.positions.count(pos) == 0) game.positions[pos] = 1;
+                    //else game.positions[pos]++;
+                    //std::cout << "FEN: " << fen << "\n";
                     //std::cout << "FEN: " << move->fen << "\n";
                 }
                 if (m) delete m;
@@ -435,14 +438,15 @@ int Window::dropPiece()
         game.generateLegalMoves(game.legalMoveList);
         //for (auto m : game.legalMoveList) m->printMove();
 
-        // finaly, update fen and position data
-        std::string fen = game.getFEN();
-        game.fens.push_back(fen);
-        std::string pos = fen.substr(0, fen.find(" "));
-        if (game.positions.count(pos) == 0) game.positions[pos] = 1;
-        else game.positions[pos]++;
-        std::cout << "FEN: " << fen << "\n";
+        //// finaly, update fen and position data
+        //std::string fen = game.getFEN();
+        //game.fens.push_back(fen);
+        //std::string pos = fen.substr(0, fen.find(" "));
+        //if (game.positions.count(pos) == 0) game.positions[pos] = 1;
+        //else game.positions[pos]++;
 
+        // print out game FEN
+        std::cout << "FEN: " << game.getFEN() << "\n";
         return game.isCheckmate(game.turn); // check for checkmate!
     }
     else

@@ -158,7 +158,7 @@ class FangEngine :
         ~FangEngine();
 
         Move* search(int depth);
-        double minimax(int depth, bool trueDepth, bool maxer, double alpha, double beta, Move** move);
+        double minimax(int depth, int trueDepth, bool maxer, double alpha, double beta, Move** move);
         double eval();
 };
 

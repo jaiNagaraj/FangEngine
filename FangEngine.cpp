@@ -1,4 +1,5 @@
 #include "FangEngine.h"
+#include <algorithm>
 #define INF INT_MAX
 
 FangEngine::FangEngine()
@@ -21,16 +22,17 @@ FangEngine::~FangEngine()
 Move* FangEngine::search(int depth)
 {
 	Move* move = new Move;
-	double evaluation = minimax(depth, true, (game->turn % 2 == 0), -INF, INF, &move);
+	double evaluation = minimax(depth, depth, (game->turn % 2 == 0), -INF, INF, &move);
 	std::cout << "Evaluation: " << evaluation << '\n';
 	return move;
 }
 
 // uses alpha-beta pruning
-double FangEngine::minimax(int depth, bool trueDepth, bool maxer, double alpha, double beta, Move** move)
+double FangEngine::minimax(int depth, int trueDepth, bool maxer, double alpha, double beta, Move** move)
 {
 	std::vector<Move*> moves;
 	game->generateLegalMoves(moves);
+	std::sort(moves.begin(), moves.end());
 	if (depth == 0 || moves.size() == 0)
 	{
 		for (auto p : moves)
@@ -42,8 +44,8 @@ double FangEngine::minimax(int depth, bool trueDepth, bool maxer, double alpha, 
 		else if (end == 0 || end == DRAW_BY_FIFTY || end == DRAW_BY_MATERIAL || end == DRAW_BY_REPETITION) return 0;
 		else
 		{
-			if (maxer) return -10000; // white is checkmated
-			else return 10000; // black is checkmated
+			if (maxer) return -10000 + (trueDepth - depth); // white is checkmated, return based on mate quickness
+			else return 10000 - (trueDepth - depth); // black is checkmated, return based on mate quickness
 		}
 	}
 	if (maxer) // white maximizes
@@ -57,7 +59,7 @@ double FangEngine::minimax(int depth, bool trueDepth, bool maxer, double alpha, 
 			if (eval > maxEval)
 			{
 				maxEval = eval;
-				if (trueDepth) *move = m;
+				if (depth == trueDepth) *move = m;
 			}
 			alpha = std::max(alpha, eval); // change lower bound if necessary
 			game->unmakeMove(m);
@@ -80,7 +82,7 @@ double FangEngine::minimax(int depth, bool trueDepth, bool maxer, double alpha, 
 			if (eval < minEval)
 			{
 				minEval = eval;
-				if (trueDepth) *move = m;
+				if (depth == trueDepth) *move = m;
 			}
 			beta = std::min(beta, eval); // change upper bound if necessary
 			game->unmakeMove(m);
