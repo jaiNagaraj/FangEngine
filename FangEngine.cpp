@@ -11,6 +11,19 @@ FangEngine::FangEngine(Game* g)
 {
 	playing = true;
 	game = g;
+	// set up openings for white
+	// play king's pawn
+	openings["rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"] = "e4";
+	// play Vienna
+	openings["rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2"] = "Nc3";
+	// play open Sicilian
+	openings["rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2"] = "Nf3";
+
+	// set up openings for black
+	// play king's pawn
+	openings["rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"] = "e5";
+	// play Indian defense
+	openings["rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1"] = "Nf6";
 }
 
 FangEngine::~FangEngine()
@@ -21,6 +34,20 @@ FangEngine::~FangEngine()
 // calls Minimax algorithm
 Move* FangEngine::search(int depth)
 {
+	// check for book move
+	std::string currFEN = game->getFEN();
+	std::cout << currFEN << '\n';
+	if (openings.find(currFEN) != openings.end())
+	{
+		Move* tmp = game->strToMove(openings[currFEN]);
+		if (tmp != nullptr)
+		{
+			std::cout << "Using book move!\n";
+			return tmp;
+		}
+		else std::cout << "Book move failed! Check strToMove()\n";
+	}
+
 	Move* move = new Move;
 	double evaluation = minimax(depth, depth, (game->turn % 2 == 0), -INF, INF, &move);
 	std::cout << "Evaluation: " << evaluation << '\n';
@@ -33,6 +60,7 @@ double FangEngine::minimax(int depth, int trueDepth, bool maxer, double alpha, d
 	std::vector<Move*> moves;
 	game->generateLegalMoves(moves);
 	std::sort(moves.begin(), moves.end());
+
 	if (depth == 0 || moves.size() == 0)
 	{
 		for (auto p : moves)

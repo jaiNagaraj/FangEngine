@@ -143,7 +143,7 @@ bool Game::isInCheck(int turn)
 
 		// count number of attackers
 		uint64_t attackBoard = blackAttackingKnights | blackAttackingPawns | diagonalAttacks | adjAttacks;
-		attackers += std::bitset<64>(attackBoard).count();
+		attackers += (int)(std::bitset<64>(attackBoard).count());
 	}
 	// black
 	else
@@ -209,7 +209,7 @@ bool Game::isInCheck(int turn)
 
 		// count number of attackers
 		uint64_t attackBoard = whiteAttackingKnights | whiteAttackingPawns | diagonalAttacks | adjAttacks;
-		attackers += std::bitset<64>(attackBoard).count();
+		attackers += (int)(std::bitset<64>(attackBoard).count());
 	}
 
 	if (attackers > 0) return true;
@@ -1538,21 +1538,135 @@ inline void Game::bitsToMoves(uint64_t bitboard, unsigned long startSquare, uint
 	}
 }
 
-// returns nullptr if the move isn't possible
-// otherwise, returns a valid move
+// returns a Move object if legal, otherwise returns nullptr
 Move* Game::strToMove(std::string str)
 {
+	generateLegalMoves(legalMoveList);
+	uint8_t pieceType;
+	int newSq;
+	int file, rank;
+	bool isCapture = false;
 	if (turn % 2 == 0)
 	{
 		switch (str.length())
 		{
 			// pawn push
 			case 2:
-				int file = str[0] - 97, rank = str[1] - 48;
-				int index = ((rank - 1) * 8) + file;
-
+				pieceType = WHITE_PAWN;
+				file = str[0] - 97, rank = str[1] - 48;
+				newSq = ((rank - 1) * 8) + file;
+			// piece move
+			case 3:
+				switch (str[0])
+				{
+					case 'N':
+						pieceType = WHITE_KNIGHT;
+						break;
+					case 'B':
+						pieceType = WHITE_BISHOP;
+						break;
+					case 'R':
+						pieceType = WHITE_ROOK;
+						break;
+					case 'Q':
+						pieceType = WHITE_QUEEN;
+						break;
+					case 'K':
+						pieceType = WHITE_KING;
+						break;
+				}
+				file = str[1] - 97, rank = str[2] - 48;
+				newSq = ((rank - 1) * 8) + file;
+			// piece capture
+			case 4:
+				switch (str[0])
+				{
+					case 'N':
+						pieceType = WHITE_KNIGHT;
+						break;
+					case 'B':
+						pieceType = WHITE_BISHOP;
+						break;
+					case 'R':
+						pieceType = WHITE_ROOK;
+						break;
+					case 'Q':
+						pieceType = WHITE_QUEEN;
+						break;
+					case 'K':
+						pieceType = WHITE_KING;
+						break;
+				}
+				if (str[1] == 'x') isCapture = true;
+				file = str[2] - 97, rank = str[3] - 48;
+				newSq = ((rank - 1) * 8) + file;
 		}
 	}
+	// for black
+	else
+	{
+		switch (str.length())
+		{
+			// pawn push
+			case 2:
+				pieceType = BLACK_PAWN;
+				file = str[0] - 97, rank = str[1] - 48;
+				newSq = ((rank - 1) * 8) + file;
+				std::cout << "Square from strToMove: " << newSq << '\n';
+				// piece move
+			case 3:
+				switch (str[0])
+				{
+				case 'N':
+					pieceType = BLACK_KNIGHT;
+					break;
+				case 'B':
+					pieceType = BLACK_BISHOP;
+					break;
+				case 'R':
+					pieceType = BLACK_ROOK;
+					break;
+				case 'Q':
+					pieceType = BLACK_QUEEN;
+					break;
+				case 'K':
+					pieceType = BLACK_KING;
+					break;
+				}
+				file = str[1] - 97, rank = str[2] - 48;
+				newSq = ((rank - 1) * 8) + file;
+				// piece capture
+			case 4:
+				switch (str[0])
+				{
+				case 'N':
+					pieceType = BLACK_KNIGHT;
+					break;
+				case 'B':
+					pieceType = BLACK_BISHOP;
+					break;
+				case 'R':
+					pieceType = BLACK_ROOK;
+					break;
+				case 'Q':
+					pieceType = BLACK_QUEEN;
+					break;
+				case 'K':
+					pieceType = BLACK_KING;
+					break;
+				}
+				if (str[1] == 'x') isCapture = true;
+				file = str[2] - 97, rank = str[3] - 48;
+				newSq = ((rank - 1) * 8) + file;
+		}
+	}
+
+	// search for possible move
+	for (auto m : legalMoveList)
+	{
+		if (m->isCapture == isCapture && m->piece->info == pieceType && ((7 - m->newY) * 8 + m->newX) == newSq) return m;
+	}
+	return nullptr;
 }
 
 ull Game::generateLegalMoves(std::vector<Move*>& moves)
@@ -2015,7 +2129,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 
 			// count number of attackers
 			uint64_t attackBoard = blackAttackingKnights | blackAttackingPawns | diagonalAttacks | adjAttacks;
-			attackers += std::bitset<64>(attackBoard).count();
+			attackers += (int)(std::bitset<64>(attackBoard).count());
 
 
 			// Next, check for number of attackers (0, 1, 2)
@@ -3399,7 +3513,7 @@ ull Game::generateLegalMoves(std::vector<Move*>& moves)
 
 			// count number of attackers
 			uint64_t attackBoard = whiteAttackingKnights | whiteAttackingPawns | diagonalAttacks | adjAttacks;
-			attackers += std::bitset<64>(attackBoard).count();
+			attackers += (int)(std::bitset<64>(attackBoard).count());
 
 			// Next, check for number of attackers (0, 1, 2)
 			uint64_t legalKingMoves;
@@ -4466,7 +4580,7 @@ bool Game::insufficientMaterial()
 	if (pieceBoards[WP_INDEX] || pieceBoards[WR_INDEX] || pieceBoards[WQ_INDEX]) return false;
 	
 	// count knights
-	whiteKnights = std::bitset<64>(pieceBoards[WN_INDEX]).count();
+	whiteKnights = (int)(std::bitset<64>(pieceBoards[WN_INDEX]).count());
 
 	// loop through bishops
 	tmp = pieceBoards[WB_INDEX];
@@ -4518,7 +4632,7 @@ bool Game::insufficientMaterial()
 	if (pieceBoards[BP_INDEX] || pieceBoards[BR_INDEX] || pieceBoards[BQ_INDEX]) return false;
 	
 	// count knights
-	whiteKnights = std::bitset<64>(pieceBoards[BN_INDEX]).count();
+	whiteKnights = (int)(std::bitset<64>(pieceBoards[BN_INDEX]).count());
 
 	// loop through bishops
 	tmp = pieceBoards[BB_INDEX];
@@ -4752,7 +4866,7 @@ std::string Game::getFEN()
 	fenStr += std::to_string(halfmoves);
 
 	// move counter
-	fenStr += " " + std::to_string(turn / 2 + 1);
+	fenStr += " " + std::to_string(turn / 2);
 
 	return fenStr;
 }
@@ -4774,7 +4888,7 @@ void Game::buildFromFEN(std::string fen)
 	int pos = 0;
 	for (int i = 0; i < 8; i++)
 	{
-		int end = layout.find("/", pos);
+		int end = (int)(layout.find("/", pos));
 		std::string line = layout.substr(pos, end - pos);
 		pos = end;
 		pos++; // already set up for next line
