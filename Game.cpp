@@ -1541,7 +1541,10 @@ inline void Game::bitsToMoves(uint64_t bitboard, unsigned long startSquare, uint
 // returns a Move object if legal, otherwise returns nullptr
 Move* Game::strToMove(std::string str)
 {
-	generateLegalMoves(legalMoveList);
+	//for (auto p : legalMoveList) delete p;
+	//legalMoveList.clear();
+	//generateLegalMoves(legalMoveList);
+
 	uint8_t pieceType;
 	int newSq;
 	int file, rank;
@@ -1555,6 +1558,8 @@ Move* Game::strToMove(std::string str)
 				pieceType = WHITE_PAWN;
 				file = str[0] - 97, rank = str[1] - 48;
 				newSq = ((rank - 1) * 8) + file;
+				break;
+
 			// piece move
 			case 3:
 				switch (str[0])
@@ -1577,6 +1582,8 @@ Move* Game::strToMove(std::string str)
 				}
 				file = str[1] - 97, rank = str[2] - 48;
 				newSq = ((rank - 1) * 8) + file;
+				break;
+
 			// piece capture
 			case 4:
 				switch (str[0])
@@ -1612,8 +1619,9 @@ Move* Game::strToMove(std::string str)
 				pieceType = BLACK_PAWN;
 				file = str[0] - 97, rank = str[1] - 48;
 				newSq = ((rank - 1) * 8) + file;
-				std::cout << "Square from strToMove: " << newSq << '\n';
-				// piece move
+				//std::cout << "Square from strToMove: " << newSq << '\n';
+				break;
+			// piece move
 			case 3:
 				switch (str[0])
 				{
@@ -1635,7 +1643,8 @@ Move* Game::strToMove(std::string str)
 				}
 				file = str[1] - 97, rank = str[2] - 48;
 				newSq = ((rank - 1) * 8) + file;
-				// piece capture
+				break;
+			// piece capture
 			case 4:
 				switch (str[0])
 				{
@@ -1664,7 +1673,14 @@ Move* Game::strToMove(std::string str)
 	// search for possible move
 	for (auto m : legalMoveList)
 	{
-		if (m->isCapture == isCapture && m->piece->info == pieceType && ((7 - m->newY) * 8 + m->newX) == newSq) return m;
+		//std::cout << "Move index: " << ((7 - m->newY) * 8 + m->newX) << '\n';
+		//std::cout << "Is a capture: " << m->isCapture << '\n';
+		//std::cout << "Move piece: " << ((m->piece->info == BLACK_PAWN) ? "BLACK_PAWN" : "NOT BLACK_PAWN") << "\n\n";
+		if (m->isCapture == isCapture && m->piece->info == pieceType && ((7 - m->newY) * 8 + m->newX) == newSq)
+		{
+			//std::cout << "hooray!\n";
+			return m;
+		}
 	}
 	return nullptr;
 }

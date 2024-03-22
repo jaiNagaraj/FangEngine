@@ -24,6 +24,7 @@ FangEngine::FangEngine(Game* g)
 	openings["rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"] = "e5";
 	// play Indian defense
 	openings["rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1"] = "Nf6";
+	openings["rnbqkb1r/pppppppp/5n2/8/2PP4/8/PP2PPPP/RNBQKBNR b KQkq c3 0 2"] = "g6";
 }
 
 FangEngine::~FangEngine()
@@ -34,21 +35,23 @@ FangEngine::~FangEngine()
 // calls Minimax algorithm
 Move* FangEngine::search(int depth)
 {
+	Move* move = new Move;
+
 	// check for book move
 	std::string currFEN = game->getFEN();
 	std::cout << currFEN << '\n';
 	if (openings.find(currFEN) != openings.end())
 	{
 		Move* tmp = game->strToMove(openings[currFEN]);
-		if (tmp != nullptr)
+		if (tmp)
 		{
 			std::cout << "Using book move!\n";
-			return tmp;
+			move = tmp->cloneMove();
+			return move;
 		}
 		else std::cout << "Book move failed! Check strToMove()\n";
 	}
 
-	Move* move = new Move;
 	double evaluation = minimax(depth, depth, (game->turn % 2 == 0), -INF, INF, &move);
 	std::cout << "Evaluation: " << evaluation << '\n';
 	return move;

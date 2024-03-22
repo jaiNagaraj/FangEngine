@@ -44,6 +44,7 @@ void Window::init()
     std::string startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     std::string buildFEN = "r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1";
     std::string possibleErrFEN = "r7/B1p1kpp1/7p/4p3/4p3/2P5/5PPP/1R4K1 b - - 0 32";
+    std::string possibleErrFEN2 = "rnbqk2r/pppp1ppp/8/7n/1b1NPp2/2NP4/PPP3PP/R1BQKB1R b KQkq - 2 6";
     game.buildFromFEN(startingFEN);
 
     // test legal moves
@@ -138,7 +139,7 @@ void Window::init()
             //std::this_thread::sleep_until(std::chrono::system_clock::now() + std::chrono::milliseconds(50));
 
             // 0 for white, 1 for black, -1 to disable
-            int computerTurn1 = 1, computerTurn2 = -1;
+            int computerTurn1 = 0, computerTurn2 = -1;
 
             // make computer move
             if (game.turn % 2 == computerTurn1)
