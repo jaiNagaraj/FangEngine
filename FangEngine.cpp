@@ -300,7 +300,7 @@ bool FangEngine::isEndGame()
 		tmp &= tmp - 1;
 	}
 
-	if (whiteMaterial <= 16 && blackMaterial <= 16) return true;
+	if (whiteMaterial <= 1600 && blackMaterial <= 1600) return true;
 	else return false;
 }
 

@@ -139,7 +139,7 @@ void Window::init()
             //std::this_thread::sleep_until(std::chrono::system_clock::now() + std::chrono::milliseconds(50));
 
             // 0 for white, 1 for black, -1 to disable
-            int computerTurn1 = 1, computerTurn2 = -1;
+            int computerTurn1 = 0, computerTurn2 = -1;
 
             // make computer move
             if (game.turn % 2 == computerTurn1)
